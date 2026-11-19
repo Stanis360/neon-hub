@@ -58,6 +58,8 @@ public sealed class MainViewModel : ObservableObject
         RamUsed = new("Belegt", "GB", "0.0", points, barMaximum: 32);
         RamLoad = new("Auslastung", "%", "0", points, warnAt: 85, criticalAt: 95);
 
+        Fps = new FpsViewModel(monitor.Fps, settings, points);
+
         IsAdmin = SystemInfo.IsAdministrator();
         IsPawnIoInstalled = SystemInfo.IsPawnIoInstalled();
         UpdateWarnings();
@@ -89,6 +91,9 @@ public sealed class MainViewModel : ObservableObject
 
     public MetricViewModel RamUsed { get; }
     public MetricViewModel RamLoad { get; }
+
+    /// <summary>FPS-Seite und FPS-Zeile im Dashboard.</summary>
+    public FpsViewModel Fps { get; }
 
     public ObservableCollection<DriveViewModel> Drives { get; } = new();
 
@@ -189,6 +194,7 @@ public sealed class MainViewModel : ObservableObject
         RamTotalText = s.RamTotalGb is { } rt ? $"von {rt:0.0} GB" : "";
         if (s.RamTotalGb is { } ramTotal) RamUsed.BarMaximum = Math.Round(ramTotal, 1);
 
+        Fps.Apply(s);
         UpdateCoreClocks(s.CpuCoreClocks);
         UpdateDrives(s.Drives);
     }
@@ -226,8 +232,12 @@ public sealed class MainViewModel : ObservableObject
         var w = new List<string>();
         if (!IsAdmin)
             w.Add("Keine Adminrechte – CPU-Temperatur/-Leistung fehlen. Programm als Administrator starten.");
-        if (!IsPawnIoInstalled)
+        if (!IsPawnIoInstalled && !_settings.SafeMode)
             w.Add("PawnIO-Treiber fehlt – CPU-Temperatur, -Takt und -Leistung sind nicht verfügbar. Installation: winget install namazso.PawnIO");
+        if (!IsInitializing && !_monitor.Fps.IsAvailable)
+            w.Add("PresentMon fehlt – FPS sind nicht verfügbar. Bitte Installieren.bat erneut ausführen.");
+        if (_settings.SafeMode)
+            w.Add("Sicherer Modus aktiv: ohne PawnIO-Treiber, daher keine CPU-Temperatur/-Leistung/-Takte (umschalten im Reiter FPS).");
         if (!IsInitializing && _monitor.Sources.FirstOrDefault()?.IsAvailable == false)
             w.Add("LibreHardwareMonitor konnte nicht starten – es laufen nur die Windows-Fallbacks. Details im Log.");
         Warnings = string.Join(Environment.NewLine, w);
@@ -242,12 +252,14 @@ public sealed class MainViewModel : ObservableObject
 
         var points = HistoryPoints();
         foreach (var m in AllMetrics()) m.History.Resize(points);
+        Fps.Resize(points);
         OnPropertyChanged(nameof(IntervalText));
     }
 
     private void ResetPeaks()
     {
         foreach (var m in AllMetrics()) m.ResetPeak();
+        Fps.ResetPeaks();
     }
 
     private IEnumerable<MetricViewModel> AllMetrics() =>

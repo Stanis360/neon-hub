@@ -50,6 +50,16 @@ public sealed class ChartSeries
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Inhalt komplett ersetzen (ein einziges Changed-Ereignis statt vieler).</summary>
+    public void ReplaceAll(IReadOnlyList<double> values)
+    {
+        _start = 0;
+        Count = Math.Min(values.Count, _buffer.Length);
+        var offset = values.Count - Count;
+        for (var i = 0; i < Count; i++) _buffer[i] = values[offset + i];
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
     public void Clear()
     {
         _start = 0;

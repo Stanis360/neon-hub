@@ -42,7 +42,7 @@ public partial class App : Application
         Log.Info($"NeonMonitor startet (Admin={SystemInfo.IsAdministrator()}, PawnIO={SystemInfo.IsPawnIoInstalled()})");
 
         var settings = AppSettings.Load();
-        _monitor = new HardwareMonitorService(settings.PollIntervalMs);
+        _monitor = new HardwareMonitorService(settings.PollIntervalMs, settings.SafeMode);
 
         var window = new MainWindow { DataContext = new MainViewModel(_monitor, settings) };
         MainWindow = window;

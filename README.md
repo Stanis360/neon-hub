@@ -6,7 +6,7 @@ später FPS (per ETW, ohne Injection), Overlay, Aufzeichnung als CSV und Sitzung
 Gebaut mit **C# / .NET 10 / WPF**. Sensoren über **LibreHardwareMonitor**, ergänzt durch
 Windows-Leistungsindikatoren als Fallback.
 
-> Stand: **Schritt 1 von 5** – Projekt-Setup und Live-Anzeige. Die Reiter für FPS, Overlay,
+> Stand: **Schritt 2 von 5** – Live-Anzeige und FPS/Frametimes. Die Reiter für Overlay,
 > Aufzeichnung und Vergleich sind vorbereitet und werden in den nächsten Schritten gefüllt.
 
 ---
@@ -117,7 +117,29 @@ Einstellungen: `%AppData%\NeonMonitor\settings.json` · Log: `%AppData%\NeonMoni
 
 ---
 
-## 6. Projektstruktur
+## 6. FPS & Frametimes (Reiter „FPS“)
+
+* Gemessen wird mit **PresentMon** (Intel, Open Source). PresentMon liest die Ereignisse mit, die
+  Windows für jedes ausgegebene Bild ohnehin erzeugt (ETW). **Es wird nichts in das Spiel
+  eingeschleust** – das ist dieselbe Technik, die auch CapFrameX & Co. nutzen.
+* PresentMon wird beim Installieren automatisch heruntergeladen (feste Version, Prüfsumme wird kontrolliert)
+  und liegt als `Tools\PresentMon.exe` neben NeonMonitor. Es läuft unsichtbar und wird mit NeonMonitor beendet.
+* **Automatisch** misst das Spiel im Vordergrund und bleibt dabei, wenn du auf einem anderen Monitor
+  klickst (Browser, Discord, Steam usw. werden ignoriert). Über die Knöpfe lässt sich eine Anwendung fest wählen.
+* Angezeigt werden: FPS, **1 % Low** (= 1000 / 99. Perzentil der Frametimes der letzten 30 s),
+  Frametime Ø und Frametime max (Ruckler), FPS-Verlauf und die letzten 300 Einzel-Frametimes.
+* Die FPS stehen zusätzlich im Live-Dashboard unter dem GPU-Ring.
+
+### Anti-Cheat (z. B. Call of Duty / Ricochet)
+
+Die FPS-Messung ist passiv. Für CPU-Temperatur/-Leistung braucht NeonMonitor aber den signierten
+Treiber **PawnIO**. Sollte ein Spiel deswegen Probleme machen: im Reiter FPS **„Sicherer Modus“**
+einschalten und NeonMonitor neu starten – dann ganz ohne Treiber (CPU-Temperatur/-Leistung/-Takte fehlen,
+alles andere inkl. FPS funktioniert).
+
+---
+
+## 7. Projektstruktur
 
 ```
 NeonMonitor/
@@ -143,6 +165,11 @@ NeonMonitor/
    │  └─ HardwareSnapshot.cs      # eine Messung aller Werte (später = eine CSV-Zeile)
    ├─ Services/
    │  ├─ HardwareMonitorService.cs        # Mess-Thread, fragt alle Quellen ab
+   │  ├─ Fps/
+   │  │  ├─ PresentMonRunner.cs           # startet PresentMon unsichtbar, liest die CSV-Ausgabe
+   │  │  ├─ PresentMonCsvParser.cs        # ordnet die CSV-Spalten über die Kopfzeile zu
+   │  │  ├─ FrameTracker.cs               # wählt das Spiel, berechnet FPS / 1 % Low / Frametimes
+   │  │  └─ FpsSource.cs                  # FPS als Sensorquelle (landet im HardwareSnapshot)
    │  └─ Sensors/
    │     ├─ ISensorSource.cs              # Schnittstelle für Sensorquellen
    │     ├─ LibreHardwareSource.cs        # Hauptquelle (CPU/GPU/RAM)
@@ -164,14 +191,14 @@ zusätzliche Klasse, ohne den Rest anzufassen.
 
 ---
 
-## 7. Fahrplan
+## 8. Fahrplan
 
 1. ✅ Projekt-Setup, Live-Werte, Diagramme, Theme
-2. ⏳ FPS & Frametimes per ETW (PresentMon-Ansatz, keine Injection)
+2. ✅ FPS & Frametimes per ETW (PresentMon, keine Injection)
 3. ⏳ Overlay (transparentes Always-on-top-Fenster, Werte wählbar)
 4. ⏳ Aufzeichnung (Start/Stopp, Hotkey, CSV pro Sitzung)
 5. ⏳ Vergleich (Ø FPS, 1 % Lows, Höchsttemperaturen, Diagramme)
 
 ## Lizenzen
 
-LibreHardwareMonitorLib steht unter der MPL-2.0.
+Siehe [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md): LibreHardwareMonitorLib (MPL-2.0), PresentMon (MIT).

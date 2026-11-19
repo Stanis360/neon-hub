@@ -1,0 +1,93 @@
+<UserControl x:Class="NeonMonitor.Views.FpsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:NeonMonitor.Controls"
+             xmlns:vm="clr-namespace:NeonMonitor.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:FpsViewModel}"
+             d:DesignWidth="1100" d:DesignHeight="800">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+
+            <!-- ============ Kennzahlen ============ -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="FPS &amp; Frametimes" Style="{StaticResource CardTitle}" />
+                    <TextBlock Text="{Binding Application}" Style="{StaticResource SmallText}" FontSize="13"
+                               HorizontalAlignment="Center" Margin="0,2,0,8" />
+                    <UniformGrid Columns="4">
+                        <ContentControl Content="{Binding Fps}" ContentTemplate="{StaticResource StatBlock}" />
+                        <ContentControl Content="{Binding Low1}" ContentTemplate="{StaticResource StatBlock}" />
+                        <ContentControl Content="{Binding FrameTime}" ContentTemplate="{StaticResource StatBlock}" />
+                        <ContentControl Content="{Binding FrameTimeMax}" ContentTemplate="{StaticResource StatBlock}" />
+                    </UniformGrid>
+                    <TextBlock Text="{Binding Status}" Style="{StaticResource SmallText}" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- ============ FPS-Verlauf ============ -->
+                <Border Grid.Column="0" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="FPS-Verlauf" Style="{StaticResource CardTitle}" />
+                        <TextBlock Text="letzte 2 Minuten · grün = FPS, grau = 1 % Low" Style="{StaticResource SmallText}"
+                                   HorizontalAlignment="Center" Margin="0,2,0,8" />
+                        <controls:LineChart Height="180" Maximum="144"
+                                            Series="{Binding Fps.History}" Stroke="{StaticResource AccentBrush}"
+                                            Series2="{Binding Low1.History}" Stroke2="{StaticResource SecondaryBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ============ Frametimes ============ -->
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Frametimes" Style="{StaticResource CardTitle}" />
+                        <TextBlock Text="letzte 300 Bilder · Spitzen nach oben = Ruckler" Style="{StaticResource SmallText}"
+                                   HorizontalAlignment="Center" Margin="0,2,0,8" />
+                        <controls:LineChart Height="180" Maximum="33" Unit="ms"
+                                            Series="{Binding FrameTimes}" Stroke="{StaticResource AccentBrush}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ============ Anwendung wählen ============ -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Welche Anwendung messen?" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" />
+                    <TextBlock TextWrapping="Wrap" Style="{StaticResource SmallText}" FontSize="12" Margin="0,4,0,10"
+                               Text="„Automatisch“ nimmt das Spiel im Vordergrund und bleibt dabei, auch wenn du auf einem anderen Monitor klickst. Hier stehen alle Programme, die gerade Bilder ausgeben – ein Klick legt die Messung fest." />
+                    <ItemsControl ItemsSource="{Binding Choices}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- ============ Anti-Cheat ============ -->
+            <Border Style="{StaticResource Card}">
+                <DockPanel>
+                    <CheckBox DockPanel.Dock="Right" Style="{StaticResource Switch}" VerticalAlignment="Center"
+                              Content="Sicherer Modus" IsChecked="{Binding SafeMode}" Margin="16,0,0,0" />
+                    <StackPanel>
+                        <TextBlock Text="Anti-Cheat" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" />
+                        <TextBlock TextWrapping="Wrap" Style="{StaticResource SmallText}" FontSize="12" Margin="0,4,0,0"
+                                   Text="Die FPS-Messung greift nicht ins Spiel ein. Für CPU-Temperatur und -Leistung nutzt NeonMonitor aber den signierten Treiber PawnIO. Falls ein Spiel (z. B. Call of Duty mit Ricochet) deswegen meckert oder nicht startet: Sicheren Modus einschalten und NeonMonitor neu starten – dann ohne Treiber, CPU-Temperatur/-Leistung fehlen." />
+                        <TextBlock Text="{Binding SafeModeHint}" Style="{StaticResource SmallText}" Margin="0,4,0,0"
+                                   Foreground="{StaticResource WarnBrush}" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -58,10 +58,23 @@ public sealed class HardwareSnapshot
     // ---------- Laufwerke ----------
     public List<DriveUsage> Drives { get; set; } = new();
 
-    // ---------- FPS (ab Schritt 2) ----------
+    // ---------- FPS (über PresentMon / ETW) ----------
+    /// <summary>Bilder pro Sekunde der erfassten Anwendung (Mittel der letzten Sekunde).</summary>
     public double? Fps { get; set; }
+    /// <summary>Durchschnittliche Frametime der letzten Sekunde in ms.</summary>
     public double? FrameTimeMs { get; set; }
-    public string? ForegroundProcess { get; set; }
+    /// <summary>Längste Frametime der letzten Sekunde in ms (Ruckler).</summary>
+    public double? FrameTimeMaxMs { get; set; }
+    /// <summary>1 % Low der letzten 30 Sekunden (= 1000 / 99. Perzentil der Frametimes).</summary>
+    public double? Fps1PercentLow { get; set; }
+    /// <summary>Name der erfassten Anwendung, z. B. „cod.exe“.</summary>
+    public string? FpsApplication { get; set; }
+
+    // Nur für die Anzeige (nicht für die CSV-Aufzeichnung):
+    /// <summary>Die letzten Einzel-Frametimes (ms) für das Frametime-Diagramm.</summary>
+    public double[] RecentFrameTimes { get; set; } = [];
+    /// <summary>Alle Anwendungen, die gerade Bilder ausgeben (zur Auswahl).</summary>
+    public string[] FpsCandidates { get; set; } = [];
 }
 
 /// <summary>Takt eines CPU-Kerns.</summary>

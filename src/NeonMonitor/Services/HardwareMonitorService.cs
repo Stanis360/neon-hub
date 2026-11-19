@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using NeonMonitor.Infrastructure;
 using NeonMonitor.Models;
+using NeonMonitor.Services.Fps;
 using NeonMonitor.Services.Sensors;
 
 namespace NeonMonitor.Services;
@@ -28,17 +29,24 @@ public sealed class HardwareMonitorService : IDisposable
     /// <summary>Alle Quellen sind initialisiert (wird auf dem Mess-Thread ausgelöst!).</summary>
     public event EventHandler? Initialized;
 
-    public HardwareMonitorService(int intervalMs)
+    /// <param name="intervalMs">Abfrageintervall.</param>
+    /// <param name="safeMode">Sicherer Modus: kein Kernel-Treiber (PawnIO) – für empfindliche Anti-Cheats.</param>
+    public HardwareMonitorService(int intervalMs, bool safeMode)
     {
         IntervalMs = intervalMs;
+        Fps = new FpsSource();
         // Reihenfolge = Priorität. Spätere Quellen füllen nur noch fehlende Werte.
         _sources = new List<ISensorSource>
         {
-            new LibreHardwareSource(),
+            new LibreHardwareSource(safeMode),
             new WindowsCounterSource(),
             new DriveSource(),
+            Fps,
         };
     }
+
+    /// <summary>FPS-Quelle (für die Auswahl der Anwendung aus der Oberfläche).</summary>
+    public FpsSource Fps { get; }
 
     public IReadOnlyList<ISensorSource> Sources => _sources;
 

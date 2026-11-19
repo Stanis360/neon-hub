@@ -11,6 +11,12 @@ public sealed class AppSettings
     /// <summary>Hintergrundanimation an/aus (aus = weniger CPU/GPU-Last beim Spielen).</summary>
     public bool BackgroundAnimation { get; set; } = true;
 
+    /// <summary>
+    /// Sicherer Modus: verzichtet auf den PawnIO-Kernel-Treiber (keine CPU-Temperatur/-Leistung),
+    /// falls ein Anti-Cheat sich daran stört. Wirkt nach Neustart.
+    /// </summary>
+    public bool SafeMode { get; set; }
+
     /// <summary>Wie viele Sekunden die Live-Diagramme zurückreichen.</summary>
     public int HistorySeconds { get; set; } = 120;
 

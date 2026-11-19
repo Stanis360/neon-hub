@@ -29,4 +29,37 @@
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
   </ItemGroup>
 
+  <!--
+    PresentMon (Intel, MIT-Lizenz) für die FPS-Messung per ETW – ohne Injection ins Spiel.
+    Wird beim ersten Build automatisch von GitHub geladen, per SHA-256 geprüft und als
+    Tools\PresentMon.exe neben NeonMonitor.exe abgelegt.
+    Update: Version + Prüfsumme hier anpassen.
+  -->
+  <PropertyGroup>
+    <PresentMonVersion>2.6.0</PresentMonVersion>
+    <PresentMonSha256>B2A706BC6AD475749E3B7E3409263AA1E6906D45BDCF993F6DBC0F660188F1AF</PresentMonSha256>
+    <PresentMonUrl>https://github.com/GameTechDev/PresentMon/releases/download/v$(PresentMonVersion)/PresentMon-$(PresentMonVersion)-x64.exe</PresentMonUrl>
+    <PresentMonCacheDir>$(MSBuildProjectDirectory)\obj\tools\</PresentMonCacheDir>
+    <PresentMonFile>$(PresentMonCacheDir)PresentMon-$(PresentMonVersion)-x64.exe</PresentMonFile>
+  </PropertyGroup>
+
+  <Target Name="DownloadPresentMon" BeforeTargets="BeforeBuild" Condition="!Exists('$(PresentMonFile)')">
+    <Message Importance="high" Text="Lade PresentMon $(PresentMonVersion) …" />
+    <DownloadFile SourceUrl="$(PresentMonUrl)" DestinationFolder="$(PresentMonCacheDir)"
+                  DestinationFileName="PresentMon-$(PresentMonVersion)-x64.exe" Retries="3" ContinueOnError="true" />
+    <Warning Condition="!Exists('$(PresentMonFile)')"
+             Text="PresentMon konnte nicht geladen werden (keine Internetverbindung?). NeonMonitor läuft, aber ohne FPS." />
+    <GetFileHash Condition="Exists('$(PresentMonFile)')" Files="$(PresentMonFile)" Algorithm="SHA256">
+      <Output TaskParameter="Hash" PropertyName="_PresentMonHash" />
+    </GetFileHash>
+    <Delete Condition="Exists('$(PresentMonFile)') And '$(_PresentMonHash)' != '$(PresentMonSha256)'" Files="$(PresentMonFile)" />
+    <Error Condition="'$(_PresentMonHash)' != '' And '$(_PresentMonHash)' != '$(PresentMonSha256)'"
+           Text="PresentMon: Prüfsumme stimmt nicht ($(_PresentMonHash)) – Datei wurde verworfen." />
+  </Target>
+
+  <ItemGroup>
+    <None Include="$(PresentMonFile)" Link="Tools\PresentMon.exe" Visible="false"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

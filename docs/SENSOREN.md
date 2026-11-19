@@ -62,13 +62,15 @@ Hinweise:
 3. **HWiNFO Shared Memory** – HWiNFO hat sehr früh vollständige Zen-5-/RDNA-4-Unterstützung.
    NeonMonitor könnte dessen Shared-Memory-Schnittstelle lesen. Nachteil: HWiNFO muss parallel
    laufen und „Shared Memory Support“ aktiviert sein.
-4. **FPS kommen nicht aus LHM**, sondern in Schritt 2 aus ETW-Ereignissen (DXGI/D3D9/DxgKrnl),
-   genau wie PresentMon – ohne Code in das Spiel einzuschleusen.
+4. **FPS kommen nicht aus LHM**, sondern aus **PresentMon 2.6.0** (ETW-Ereignisse von DXGI/D3D9/DxgKrnl) –
+   ohne Code in das Spiel einzuschleusen. Getestet wird das Format `--v1_metrics`
+   (Spalten `TimeInSeconds`, `msBetweenPresents`), mit Fallback auf das 2.x-Format.
 
 ## Anti-Cheat
 
 NeonMonitor schleust nichts in Spiele ein. Der einzige Kernel-Zugriff ist der signierte
 PawnIO-Treiber für CPU-Sensoren. Er gilt als sicherer Ersatz für WinRing0; einzelne
 Kernel-Anti-Cheats (z. B. Vanguard, FACEIT) können trotzdem empfindlich auf Treiber für
-Hardwarezugriff reagieren. Falls ein Spiel meckert: NeonMonitor vor dem Spielstart schließen
-und mir Bescheid geben – dann baue ich einen Modus ohne CPU-Treiber ein.
+Hardwarezugriff reagieren. Dafür gibt es den **Sicheren Modus** (Reiter FPS): Dann lädt
+LibreHardwareMonitor nur die GPU (über den AMD-Treiber) – CPU und RAM-Module bleiben aus, PawnIO
+wird nicht benutzt. CPU-Last und RAM kommen dann über Windows.

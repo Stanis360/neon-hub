@@ -15,7 +15,7 @@ namespace NeonMonitor.Services.Sensors;
 /// Sensoren werden über Typ + Name gesucht. Für jeden Wert gibt es eine Prioritätsliste
 /// möglicher Sensornamen, weil sich die Namen je nach Hardware/Version unterscheiden.
 /// </summary>
-public sealed class LibreHardwareSource : ISensorSource
+public sealed class LibreHardwareSource(bool safeMode) : ISensorSource
 {
     private Computer? _computer;
     private IHardware? _cpu;
@@ -31,11 +31,13 @@ public sealed class LibreHardwareSource : ISensorSource
 
     public void Initialize()
     {
+        // Sicherer Modus: CPU und RAM brauchen den PawnIO-Kernel-Treiber (MSR/SMU/SMBus).
+        // Ohne sie bleibt nur die GPU über die AMD-Treiberschnittstelle; RAM und CPU-Last liefert dann Windows.
         _computer = new Computer
         {
-            IsCpuEnabled = true,
+            IsCpuEnabled = !safeMode,
             IsGpuEnabled = true,
-            IsMemoryEnabled = true,
+            IsMemoryEnabled = !safeMode,
             // Mainboard/Lüfter/Laufwerke vorerst aus: spart Startzeit; Laufwerke liest DriveSource.
             IsMotherboardEnabled = false,
             IsStorageEnabled = false,
@@ -54,6 +56,7 @@ public sealed class LibreHardwareSource : ISensorSource
         if (_gpu is not null) parts.Add("GPU");
         if (_memory is not null) parts.Add("RAM");
         Status = parts.Count > 0 ? "OK (" + string.Join(", ", parts) + ")" : "keine Hardware erkannt";
+        if (safeMode) Status += " · sicherer Modus";
 
         Log.Info($"LHM: CPU={_cpu?.Name ?? "-"}, GPU={_gpu?.Name ?? "-"}, RAM={(_memory is null ? "-" : "ok")}");
     }

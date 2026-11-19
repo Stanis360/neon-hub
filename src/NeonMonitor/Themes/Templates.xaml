@@ -49,6 +49,43 @@
         </DataTemplate.Triggers>
     </DataTemplate>
 
+    <!-- Große Kennzahl (FPS-Seite): Beschriftung, großer Wert, Einheit, Höchstwert -->
+    <DataTemplate x:Key="StatBlock" DataType="{x:Type vm:MetricViewModel}">
+        <Border Background="#1AFFFFFF" CornerRadius="10" Padding="16,10" Margin="5">
+            <StackPanel>
+                <TextBlock Text="{Binding Label}" Style="{StaticResource SectionLabel}" />
+                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                    <TextBlock x:Name="Value" Text="{Binding DisplayValue}" Style="{StaticResource BigValue}" />
+                    <TextBlock Text="{Binding Unit}" Style="{StaticResource SmallText}" FontSize="14"
+                               Margin="5,0,0,8" VerticalAlignment="Bottom" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Severity}" Value="Warning">
+                <Setter TargetName="Value" Property="Foreground" Value="{StaticResource WarnBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                <Setter TargetName="Value" Property="Foreground" Value="{StaticResource CriticalBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsAvailable}" Value="False">
+                <Setter TargetName="Value" Property="Foreground" Value="{StaticResource TextDimBrush}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Auswahlknopf für die FPS-Anwendung („Automatisch“, „cod.exe“ …) -->
+    <DataTemplate DataType="{x:Type vm:FpsChoiceViewModel}">
+        <Button x:Name="Btn" Style="{StaticResource FlatButton}" Margin="0,0,8,8" Padding="14,6"
+                Content="{Binding Title}" Command="{Binding SelectCommand}" CommandParameter="{Binding Application}" />
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                <Setter TargetName="Btn" Property="Background" Value="{StaticResource AccentBrush}" />
+                <Setter TargetName="Btn" Property="Foreground" Value="#15181A" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
     <!-- Kerntakt: „#1  ▬▬▬▬  5225 MHz“ -->
     <DataTemplate DataType="{x:Type vm:CoreClockViewModel}">
         <Grid Margin="0,2,10,2">

@@ -35,7 +35,7 @@
                         <Ellipse Width="10" Height="10" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,1,10,0" />
                         <TextBlock Text="NeonMonitor" FontFamily="{StaticResource DisplayFont}" FontSize="16"
                                    Foreground="{StaticResource TextBrush}" />
-                        <TextBlock Text="v0.3 · Schritt 1" Style="{StaticResource SmallText}" Margin="12,3,0,0" VerticalAlignment="Center" />
+                        <TextBlock Text="v0.4 · Schritt 2" Style="{StaticResource SmallText}" Margin="12,3,0,0" VerticalAlignment="Center" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Style="{StaticResource TitleBarButton}" Content="&#xE921;" ToolTip="Minimieren" Click="OnMinimize" />
@@ -87,8 +87,7 @@
                         <views:LiveView />
                     </TabItem>
                     <TabItem Header="◈  FPS">
-                        <views:PlaceholderView Title="FPS &amp; Frametimes" Step="Schritt 2"
-                                               Description="FPS und Frametimes per ETW (PresentMon-Ansatz) – ganz ohne Injection ins Spiel." />
+                        <views:FpsView DataContext="{Binding Fps}" />
                     </TabItem>
                     <TabItem Header="◧  Overlay">
                         <views:PlaceholderView Title="Overlay" Step="Schritt 3"
