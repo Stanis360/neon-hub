@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    NeonMonitor – Hardware-Überwachung für Windows (WPF).
+    Ziel: .NET 10 (aktuelles LTS). Auf Windows wird das .NET 10 SDK benötigt.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>NeonMonitor</RootNamespace>
+    <AssemblyName>NeonMonitor</AssemblyName>
+    <Version>0.1.0</Version>
+    <!-- Sensorzugriff (PawnIO-Treiber, MSRs) braucht Adminrechte → siehe app.manifest -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Nur 64-Bit: LibreHardwareMonitor und die PDH-Strukturen sind auf x64 ausgelegt -->
+    <PlatformTarget>x64</PlatformTarget>
+    <!-- Erlaubt das Kompilieren auch außerhalb von Windows (z. B. CI) -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Sensoren: CPU, GPU, RAM (nutzt PawnIO-Treiber + AMD ADL aus dem Grafiktreiber) -->
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+  </ItemGroup>
+
+</Project>

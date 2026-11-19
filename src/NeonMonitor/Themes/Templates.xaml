@@ -1,0 +1,68 @@
+<!--
+  DataTemplates: wie ViewModels automatisch dargestellt werden.
+  Eine ContentControl mit Content="{Binding CpuTemp}" zeigt so eine fertige Messwert-Kachel.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:NeonMonitor.ViewModels">
+
+    <!-- Messwert-Kachel: Beschriftung, großer Wert + Einheit, Höchstwert -->
+    <DataTemplate DataType="{x:Type vm:MetricViewModel}">
+        <Border x:Name="Bd" Style="{StaticResource Tile}">
+            <StackPanel>
+                <TextBlock Text="{Binding Label}" Style="{StaticResource TileLabel}" />
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="Value" Text="{Binding DisplayValue}" Style="{StaticResource TileValue}"
+                               Effect="{StaticResource GlowValue}" />
+                    <TextBlock Text="{Binding Unit}" Style="{StaticResource TileUnit}" />
+                </StackPanel>
+                <TextBlock Text="{Binding PeakText}" Style="{StaticResource SmallText}" />
+            </StackPanel>
+        </Border>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Severity}" Value="Warning">
+                <Setter TargetName="Value" Property="Foreground" Value="{StaticResource NeonAmberBrush}" />
+                <Setter TargetName="Value" Property="Effect" Value="{StaticResource GlowAmber}" />
+                <Setter TargetName="Bd" Property="BorderBrush" Value="#66FFD23F" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                <Setter TargetName="Value" Property="Foreground" Value="{StaticResource NeonRedBrush}" />
+                <Setter TargetName="Value" Property="Effect" Value="{StaticResource GlowRed}" />
+                <Setter TargetName="Bd" Property="BorderBrush" Value="#AAFF3B5C" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsAvailable}" Value="False">
+                <Setter TargetName="Value" Property="Foreground" Value="{StaticResource TextDimBrush}" />
+                <Setter TargetName="Value" Property="Effect" Value="{x:Null}" />
+                <Setter TargetName="Bd" Property="ToolTip" Value="Sensor liefert keinen Wert (siehe Sensorbericht)" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Laufwerkszeile: Name, Füllstandsbalken, Größe -->
+    <DataTemplate DataType="{x:Type vm:DriveViewModel}">
+        <Grid Margin="0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="54" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding Name}" FontFamily="{StaticResource DisplayFont}" FontSize="15"
+                       Foreground="{StaticResource NeonGreenBrush}" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Label}" Style="{StaticResource SmallText}" Margin="0,0,0,3" />
+                <ProgressBar x:Name="Bar" Style="{StaticResource NeonBar}" Maximum="100" Value="{Binding Percent, Mode=OneWay}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Margin="14,0,0,0" VerticalAlignment="Center" MinWidth="110">
+                <TextBlock Text="{Binding PercentText}" FontFamily="{StaticResource DisplayFont}" FontSize="15"
+                           Foreground="{StaticResource TextBrush}" HorizontalAlignment="Right" />
+                <TextBlock Text="{Binding SizeText}" Style="{StaticResource SmallText}" HorizontalAlignment="Right" />
+            </StackPanel>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsAlmostFull}" Value="True">
+                <Setter TargetName="Bar" Property="Foreground" Value="{StaticResource NeonRedBrush}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+</ResourceDictionary>

@@ -1,0 +1,151 @@
+<UserControl x:Class="NeonMonitor.Views.LiveView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:NeonMonitor.Controls"
+             xmlns:vm="clr-namespace:NeonMonitor.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:MainViewModel}"
+             d:DesignWidth="1100" d:DesignHeight="900">
+
+    <UserControl.Resources>
+        <!-- Kleine Legende: farbiger Strich + Text -->
+        <Style x:Key="LegendText" TargetType="TextBlock" BasedOn="{StaticResource SmallText}">
+            <Setter Property="Margin" Value="6,0,16,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="LegendLine" TargetType="Rectangle">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+
+            <!-- ============ Warnbanner (fehlende Rechte/Treiber) ============ -->
+            <Border Visibility="{Binding HasWarnings, Converter={StaticResource BoolToVisibility}}"
+                    Background="#26FFD23F" BorderBrush="#AAFFD23F" BorderThickness="1" CornerRadius="10"
+                    Padding="14,10" Margin="6">
+                <DockPanel>
+                    <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" FontSize="18"
+                               Foreground="{StaticResource NeonAmberBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
+                    <TextBlock Text="{Binding Warnings}" TextWrapping="Wrap" Foreground="{StaticResource NeonAmberBrush}" />
+                </DockPanel>
+            </Border>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- ============ CPU ============ -->
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource Card}">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock Text="CPU" Style="{StaticResource CardTitle}" />
+                            <TextBlock Text="{Binding CpuName}" Style="{StaticResource CardSubtitle}" Margin="12,0,0,0" />
+                        </DockPanel>
+                        <UniformGrid DockPanel.Dock="Top" Columns="3" Margin="-4,10,-4,8">
+                            <ContentControl Content="{Binding CpuLoad}" />
+                            <ContentControl Content="{Binding CpuTemp}" />
+                            <ContentControl Content="{Binding CpuPower}" />
+                            <ContentControl Content="{Binding CpuClock}" />
+                            <ContentControl Content="{Binding CpuClockMax}" />
+                        </UniformGrid>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonGreenBrush}" />
+                            <TextBlock Text="Last %" Style="{StaticResource LegendText}" />
+                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonCyanBrush}" />
+                            <TextBlock Text="Temperatur °C" Style="{StaticResource LegendText}" />
+                        </StackPanel>
+                        <controls:NeonChart Height="150" Maximum="100"
+                                            Series="{Binding CpuLoad.History}" Stroke="{StaticResource NeonGreenBrush}"
+                                            Series2="{Binding CpuTemp.History}" Stroke2="{StaticResource NeonCyanBrush}" />
+                    </DockPanel>
+                </Border>
+
+                <!-- ============ GPU ============ -->
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource Card}">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock Text="GPU" Style="{StaticResource CardTitle}" />
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding GpuFanText}" Style="{StaticResource SmallText}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding GpuName}" Style="{StaticResource CardSubtitle}" Margin="12,0,12,0" />
+                        </DockPanel>
+                        <UniformGrid DockPanel.Dock="Top" Columns="3" Margin="-4,10,-4,8">
+                            <ContentControl Content="{Binding GpuLoad}" />
+                            <ContentControl Content="{Binding GpuTemp}" />
+                            <ContentControl Content="{Binding GpuHotspot}" />
+                            <ContentControl Content="{Binding GpuClock}" />
+                            <ContentControl Content="{Binding GpuVram}" ToolTip="{Binding VramTotalText}" />
+                            <ContentControl Content="{Binding GpuPower}" />
+                        </UniformGrid>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonGreenBrush}" />
+                            <TextBlock Text="Last %" Style="{StaticResource LegendText}" />
+                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonCyanBrush}" />
+                            <TextBlock Text="Temperatur °C" Style="{StaticResource LegendText}" />
+                            <TextBlock Text="{Binding VramTotalText, StringFormat='VRAM {0}'}" Style="{StaticResource LegendText}" />
+                        </StackPanel>
+                        <controls:NeonChart Height="150" Maximum="100"
+                                            Series="{Binding GpuLoad.History}" Stroke="{StaticResource NeonGreenBrush}"
+                                            Series2="{Binding GpuTemp.History}" Stroke2="{StaticResource NeonCyanBrush}" />
+                    </DockPanel>
+                </Border>
+
+                <!-- ============ Leistungsaufnahme (CPU + GPU) ============ -->
+                <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource Card}">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <TextBlock Text="LEISTUNGSAUFNAHME" Style="{StaticResource CardTitle}" />
+                            <StackPanel Orientation="Horizontal" Margin="18,0,0,0" VerticalAlignment="Center">
+                                <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonGreenBrush}" />
+                                <TextBlock Text="GPU W" Style="{StaticResource LegendText}" />
+                                <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonMintBrush}" />
+                                <TextBlock Text="CPU W" Style="{StaticResource LegendText}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <controls:NeonChart Height="110" Maximum="150" Unit="W"
+                                            Series="{Binding GpuPower.History}" Stroke="{StaticResource NeonGreenBrush}"
+                                            Series2="{Binding CpuPower.History}" Stroke2="{StaticResource NeonMintBrush}" />
+                    </DockPanel>
+                </Border>
+
+                <!-- ============ RAM ============ -->
+                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource Card}">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock Text="ARBEITSSPEICHER" Style="{StaticResource CardTitle}" />
+                            <TextBlock Text="{Binding RamTotalText}" Style="{StaticResource CardSubtitle}" Margin="12,0,0,0" />
+                        </DockPanel>
+                        <UniformGrid DockPanel.Dock="Top" Columns="2" Margin="-4,10,-4,8">
+                            <ContentControl Content="{Binding RamUsed}" />
+                            <ContentControl Content="{Binding RamLoad}" />
+                        </UniformGrid>
+                        <ProgressBar DockPanel.Dock="Top" Style="{StaticResource NeonBar}" Maximum="100"
+                                     Value="{Binding RamLoad.Value, Mode=OneWay, TargetNullValue=0}" Margin="0,0,0,10" />
+                        <controls:NeonChart Height="90" Maximum="100" Unit="%"
+                                            Series="{Binding RamLoad.History}" Stroke="{StaticResource NeonGreenBrush}" />
+                    </DockPanel>
+                </Border>
+
+                <!-- ============ Laufwerke ============ -->
+                <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource Card}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="LAUFWERKE" Style="{StaticResource CardTitle}" Margin="0,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding Drives}" />
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
