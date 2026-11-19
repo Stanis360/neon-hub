@@ -10,140 +10,216 @@
              d:DesignWidth="1100" d:DesignHeight="900">
 
     <UserControl.Resources>
-        <!-- Kleine Legende: farbiger Strich + Text -->
+        <!-- Legende für Diagramme: farbiger Strich + Text -->
         <Style x:Key="LegendText" TargetType="TextBlock" BasedOn="{StaticResource SmallText}">
-            <Setter Property="Margin" Value="6,0,16,0" />
+            <Setter Property="Margin" Value="6,0,14,0" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style x:Key="LegendLine" TargetType="Rectangle">
-            <Setter Property="Width" Value="14" />
-            <Setter Property="Height" Value="2" />
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="3" />
+            <Setter Property="RadiusX" Value="1" />
+            <Setter Property="RadiusY" Value="1" />
             <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <!-- Ring: Größe für CPU und GPU gleich -->
+        <Style x:Key="Ring" TargetType="controls:RingGauge">
+            <Setter Property="Width" Value="190" />
+            <Setter Property="Height" Value="190" />
+            <Setter Property="Thickness" Value="16" />
+            <Setter Property="Stroke" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Stroke2" Value="{StaticResource SecondaryBrush}" />
+            <Setter Property="TrackBrush" Value="{StaticResource TrackBrush}" />
+        </Style>
+        <!-- Trennlinie zwischen Bereichen einer Karte -->
+        <Style x:Key="Divider" TargetType="Border">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Background" Value="{StaticResource DividerBrush}" />
+            <Setter Property="Margin" Value="0,10" />
         </Style>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
 
-            <!-- ============ Warnbanner (fehlende Rechte/Treiber) ============ -->
+            <!-- ============ Hinweisbanner (fehlende Rechte/Treiber) ============ -->
             <Border Visibility="{Binding HasWarnings, Converter={StaticResource BoolToVisibility}}"
-                    Background="#26FFD23F" BorderBrush="#AAFFD23F" BorderThickness="1" CornerRadius="10"
-                    Padding="14,10" Margin="6">
+                    Background="#2AE8B44C" CornerRadius="10" Padding="14,10" Margin="6">
                 <DockPanel>
-                    <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" FontSize="18"
-                               Foreground="{StaticResource NeonAmberBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
-                    <TextBlock Text="{Binding Warnings}" TextWrapping="Wrap" Foreground="{StaticResource NeonAmberBrush}" />
+                    <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" FontSize="16"
+                               Foreground="{StaticResource WarnBrush}" Margin="0,1,12,0" VerticalAlignment="Top" />
+                    <TextBlock Text="{Binding Warnings}" TextWrapping="Wrap" Foreground="{StaticResource WarnBrush}" />
                 </DockPanel>
             </Border>
 
+            <!-- ============ Obere Reihe: CPU | GPU ============ -->
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
 
                 <!-- ============ CPU ============ -->
-                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource Card}">
-                    <DockPanel>
-                        <DockPanel DockPanel.Dock="Top">
-                            <TextBlock Text="CPU" Style="{StaticResource CardTitle}" />
-                            <TextBlock Text="{Binding CpuName}" Style="{StaticResource CardSubtitle}" Margin="12,0,0,0" />
-                        </DockPanel>
-                        <UniformGrid DockPanel.Dock="Top" Columns="3" Margin="-4,10,-4,8">
-                            <ContentControl Content="{Binding CpuLoad}" />
-                            <ContentControl Content="{Binding CpuTemp}" />
-                            <ContentControl Content="{Binding CpuPower}" />
-                            <ContentControl Content="{Binding CpuClock}" />
-                            <ContentControl Content="{Binding CpuClockMax}" />
-                        </UniformGrid>
-                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
-                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonGreenBrush}" />
+                <Border Grid.Column="0" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding CpuName}" Style="{StaticResource CardTitle}" />
+
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="22" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Ring: außen Last, innen Temperatur -->
+                            <Grid VerticalAlignment="Top">
+                                <controls:RingGauge Style="{StaticResource Ring}"
+                                                    Value="{Binding CpuLoad.BarValue}" Maximum="100"
+                                                    Value2="{Binding CpuTemp.BarValue}" Maximum2="100" />
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding CpuLoad.DisplayValue}" Style="{StaticResource BigValue}" />
+                                        <TextBlock Text="%" Style="{StaticResource SmallText}" Margin="3,0,0,8" VerticalAlignment="Bottom" FontSize="14" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding CpuTemp.DisplayWithUnit}" FontFamily="{StaticResource DisplayFont}" FontSize="18"
+                                               Foreground="{StaticResource SecondaryBrush}" HorizontalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                                    <TextBlock Text="Last" Style="{StaticResource SmallText}" Foreground="{StaticResource AccentBrush}" />
+                                    <TextBlock Text="·" Style="{StaticResource SmallText}" Margin="5,0" />
+                                    <TextBlock Text="Temp" Style="{StaticResource SmallText}" Foreground="{StaticResource SecondaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Rechte Spalte: Werte als Balken, darunter die einzelnen Kerne -->
+                            <StackPanel Grid.Column="2">
+                                <ContentControl Content="{Binding CpuPower}" />
+                                <ContentControl Content="{Binding CpuClock}" />
+                                <ContentControl Content="{Binding CpuClockMax}" />
+                                <TextBlock Text="Kerntakte" Style="{StaticResource SectionLabel}" Margin="0,8,0,4" />
+                                <ItemsControl ItemsSource="{Binding CoreClocks}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Style="{StaticResource Divider}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource AccentBrush}" />
                             <TextBlock Text="Last %" Style="{StaticResource LegendText}" />
-                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonCyanBrush}" />
+                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource SecondaryBrush}" />
                             <TextBlock Text="Temperatur °C" Style="{StaticResource LegendText}" />
                         </StackPanel>
-                        <controls:NeonChart Height="150" Maximum="100"
-                                            Series="{Binding CpuLoad.History}" Stroke="{StaticResource NeonGreenBrush}"
-                                            Series2="{Binding CpuTemp.History}" Stroke2="{StaticResource NeonCyanBrush}" />
-                    </DockPanel>
+                        <controls:LineChart Height="110" Maximum="100"
+                                            Series="{Binding CpuLoad.History}" Stroke="{StaticResource AccentBrush}"
+                                            Series2="{Binding CpuTemp.History}" Stroke2="{StaticResource SecondaryBrush}" />
+                    </StackPanel>
                 </Border>
 
                 <!-- ============ GPU ============ -->
-                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource Card}">
-                    <DockPanel>
-                        <DockPanel DockPanel.Dock="Top">
-                            <TextBlock Text="GPU" Style="{StaticResource CardTitle}" />
-                            <TextBlock DockPanel.Dock="Right" Text="{Binding GpuFanText}" Style="{StaticResource SmallText}" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding GpuName}" Style="{StaticResource CardSubtitle}" Margin="12,0,12,0" />
-                        </DockPanel>
-                        <UniformGrid DockPanel.Dock="Top" Columns="3" Margin="-4,10,-4,8">
-                            <ContentControl Content="{Binding GpuLoad}" />
-                            <ContentControl Content="{Binding GpuTemp}" />
-                            <ContentControl Content="{Binding GpuHotspot}" />
-                            <ContentControl Content="{Binding GpuClock}" />
-                            <ContentControl Content="{Binding GpuVram}" ToolTip="{Binding VramTotalText}" />
-                            <ContentControl Content="{Binding GpuPower}" />
-                        </UniformGrid>
-                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
-                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonGreenBrush}" />
-                            <TextBlock Text="Last %" Style="{StaticResource LegendText}" />
-                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonCyanBrush}" />
-                            <TextBlock Text="Temperatur °C" Style="{StaticResource LegendText}" />
-                            <TextBlock Text="{Binding VramTotalText, StringFormat='VRAM {0}'}" Style="{StaticResource LegendText}" />
-                        </StackPanel>
-                        <controls:NeonChart Height="150" Maximum="100"
-                                            Series="{Binding GpuLoad.History}" Stroke="{StaticResource NeonGreenBrush}"
-                                            Series2="{Binding GpuTemp.History}" Stroke2="{StaticResource NeonCyanBrush}" />
-                    </DockPanel>
-                </Border>
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding GpuName}" Style="{StaticResource CardTitle}" />
 
-                <!-- ============ Leistungsaufnahme (CPU + GPU) ============ -->
-                <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource Card}">
-                    <DockPanel>
-                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                            <TextBlock Text="LEISTUNGSAUFNAHME" Style="{StaticResource CardTitle}" />
-                            <StackPanel Orientation="Horizontal" Margin="18,0,0,0" VerticalAlignment="Center">
-                                <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonGreenBrush}" />
-                                <TextBlock Text="GPU W" Style="{StaticResource LegendText}" />
-                                <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource NeonMintBrush}" />
-                                <TextBlock Text="CPU W" Style="{StaticResource LegendText}" />
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="22" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel VerticalAlignment="Top">
+                                <Grid>
+                                    <controls:RingGauge Style="{StaticResource Ring}"
+                                                        Value="{Binding GpuLoad.BarValue}" Maximum="100"
+                                                        Value2="{Binding GpuTemp.BarValue}" Maximum2="100" />
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding GpuLoad.DisplayValue}" Style="{StaticResource BigValue}" />
+                                            <TextBlock Text="%" Style="{StaticResource SmallText}" Margin="3,0,0,8" VerticalAlignment="Bottom" FontSize="14" />
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding GpuTemp.DisplayWithUnit}" FontFamily="{StaticResource DisplayFont}" FontSize="18"
+                                                   Foreground="{StaticResource SecondaryBrush}" HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                                        <TextBlock Text="Last" Style="{StaticResource SmallText}" Foreground="{StaticResource AccentBrush}" />
+                                        <TextBlock Text="·" Style="{StaticResource SmallText}" Margin="5,0" />
+                                        <TextBlock Text="Temp" Style="{StaticResource SmallText}" Foreground="{StaticResource SecondaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="{Binding GpuFanText}" Style="{StaticResource SmallText}"
+                                           HorizontalAlignment="Center" Margin="0,6,0,0" />
                             </StackPanel>
-                        </DockPanel>
-                        <controls:NeonChart Height="110" Maximum="150" Unit="W"
-                                            Series="{Binding GpuPower.History}" Stroke="{StaticResource NeonGreenBrush}"
-                                            Series2="{Binding CpuPower.History}" Stroke2="{StaticResource NeonMintBrush}" />
-                    </DockPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <ContentControl Content="{Binding GpuClock}" />
+                                <ContentControl Content="{Binding GpuMemClock}" />
+                                <ContentControl Content="{Binding GpuVram}" />
+                                <ContentControl Content="{Binding GpuPower}" />
+                                <ContentControl Content="{Binding GpuHotspot}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Style="{StaticResource Divider}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource AccentBrush}" />
+                            <TextBlock Text="Last %" Style="{StaticResource LegendText}" />
+                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource SecondaryBrush}" />
+                            <TextBlock Text="Temperatur °C" Style="{StaticResource LegendText}" />
+                        </StackPanel>
+                        <controls:LineChart Height="110" Maximum="100"
+                                            Series="{Binding GpuLoad.History}" Stroke="{StaticResource AccentBrush}"
+                                            Series2="{Binding GpuTemp.History}" Stroke2="{StaticResource SecondaryBrush}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ============ Untere Reihe: Leistung | RAM | Laufwerke ============ -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5*" />
+                    <ColumnDefinition Width="4*" />
+                    <ColumnDefinition Width="4*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Leistungsaufnahme CPU + GPU -->
+                <Border Grid.Column="0" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Leistungsaufnahme" Style="{StaticResource CardTitle}" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,8">
+                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource AccentBrush}" />
+                            <TextBlock Text="{Binding GpuPower.DisplayWithUnit, StringFormat='GPU {0}'}" Style="{StaticResource LegendText}" />
+                            <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource SecondaryBrush}" />
+                            <TextBlock Text="{Binding CpuPower.DisplayWithUnit, StringFormat='CPU {0}'}" Style="{StaticResource LegendText}" />
+                        </StackPanel>
+                        <controls:LineChart Height="150" Maximum="150" Unit="W"
+                                            Series="{Binding GpuPower.History}" Stroke="{StaticResource AccentBrush}"
+                                            Series2="{Binding CpuPower.History}" Stroke2="{StaticResource SecondaryBrush}" />
+                    </StackPanel>
                 </Border>
 
-                <!-- ============ RAM ============ -->
-                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource Card}">
-                    <DockPanel>
-                        <DockPanel DockPanel.Dock="Top">
-                            <TextBlock Text="ARBEITSSPEICHER" Style="{StaticResource CardTitle}" />
-                            <TextBlock Text="{Binding RamTotalText}" Style="{StaticResource CardSubtitle}" Margin="12,0,0,0" />
-                        </DockPanel>
-                        <UniformGrid DockPanel.Dock="Top" Columns="2" Margin="-4,10,-4,8">
-                            <ContentControl Content="{Binding RamUsed}" />
-                            <ContentControl Content="{Binding RamLoad}" />
-                        </UniformGrid>
-                        <ProgressBar DockPanel.Dock="Top" Style="{StaticResource NeonBar}" Maximum="100"
-                                     Value="{Binding RamLoad.Value, Mode=OneWay, TargetNullValue=0}" Margin="0,0,0,10" />
-                        <controls:NeonChart Height="90" Maximum="100" Unit="%"
-                                            Series="{Binding RamLoad.History}" Stroke="{StaticResource NeonGreenBrush}" />
-                    </DockPanel>
+                <!-- Arbeitsspeicher -->
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Arbeitsspeicher" Style="{StaticResource CardTitle}" />
+                        <controls:LineChart Height="90" Maximum="100" Unit="%" Margin="0,12,0,6"
+                                            Series="{Binding RamLoad.History}" Stroke="{StaticResource AccentBrush}" />
+                        <ContentControl Content="{Binding RamLoad}" />
+                        <ContentControl Content="{Binding RamUsed}" />
+                        <TextBlock Text="{Binding RamTotalText}" Style="{StaticResource SmallText}" HorizontalAlignment="Right" />
+                    </StackPanel>
                 </Border>
 
-                <!-- ============ Laufwerke ============ -->
-                <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource Card}">
-                    <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="LAUFWERKE" Style="{StaticResource CardTitle}" Margin="0,0,0,8" />
+                <!-- Laufwerke -->
+                <Border Grid.Column="2" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Laufwerke" Style="{StaticResource CardTitle}" Margin="0,0,0,8" />
                         <ItemsControl ItemsSource="{Binding Drives}" />
-                    </DockPanel>
+                    </StackPanel>
                 </Border>
             </Grid>
         </StackPanel>

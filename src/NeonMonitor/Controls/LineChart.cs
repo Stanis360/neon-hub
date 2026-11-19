@@ -6,37 +6,37 @@ using NeonMonitor.ViewModels;
 namespace NeonMonitor.Controls;
 
 /// <summary>
-/// Leichtgewichtiges Liniendiagramm im Neon-Look (bis zu zwei Verläufe).
+/// Leichtgewichtiges Liniendiagramm (bis zu zwei Verläufe) mit dezenter Flächenfüllung.
 /// Zeichnet direkt per <see cref="OnRender"/> – keine externe Chart-Bibliothek nötig,
 /// sehr sparsam (wichtig, weil das Tool neben Spielen läuft).
 /// <para>Neuester Wert rechts. NaN-Werte erzeugen eine Lücke.</para>
 /// </summary>
-public sealed class NeonChart : FrameworkElement
+public sealed class LineChart : FrameworkElement
 {
     // ---------------- Dependency Properties ----------------
 
     public static readonly DependencyProperty SeriesProperty = DependencyProperty.Register(
-        nameof(Series), typeof(ChartSeries), typeof(NeonChart),
+        nameof(Series), typeof(ChartSeries), typeof(LineChart),
         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnSeriesChanged));
 
     public static readonly DependencyProperty Series2Property = DependencyProperty.Register(
-        nameof(Series2), typeof(ChartSeries), typeof(NeonChart),
+        nameof(Series2), typeof(ChartSeries), typeof(LineChart),
         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnSeriesChanged));
 
     public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
-        nameof(Stroke), typeof(Brush), typeof(NeonChart),
-        new FrameworkPropertyMetadata(Brushes.Lime, FrameworkPropertyMetadataOptions.AffectsRender, OnStyleChanged));
+        nameof(Stroke), typeof(Brush), typeof(LineChart),
+        new FrameworkPropertyMetadata(Brushes.MediumSeaGreen, FrameworkPropertyMetadataOptions.AffectsRender, OnStyleChanged));
 
     public static readonly DependencyProperty Stroke2Property = DependencyProperty.Register(
-        nameof(Stroke2), typeof(Brush), typeof(NeonChart),
-        new FrameworkPropertyMetadata(Brushes.Cyan, FrameworkPropertyMetadataOptions.AffectsRender, OnStyleChanged));
+        nameof(Stroke2), typeof(Brush), typeof(LineChart),
+        new FrameworkPropertyMetadata(Brushes.LightGray, FrameworkPropertyMetadataOptions.AffectsRender, OnStyleChanged));
 
     public static readonly DependencyProperty MaximumProperty = DependencyProperty.Register(
-        nameof(Maximum), typeof(double), typeof(NeonChart),
+        nameof(Maximum), typeof(double), typeof(LineChart),
         new FrameworkPropertyMetadata(100.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public static readonly DependencyProperty UnitProperty = DependencyProperty.Register(
-        nameof(Unit), typeof(string), typeof(NeonChart),
+        nameof(Unit), typeof(string), typeof(LineChart),
         new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.AffectsRender));
 
     /// <summary>Hauptverlauf (mit Flächenfüllung).</summary>
@@ -56,11 +56,11 @@ public sealed class NeonChart : FrameworkElement
 
     // ---------------- Zeichenressourcen (gecacht) ----------------
 
-    private static readonly Pen GridPen = Freeze(new Pen(new SolidColorBrush(Color.FromArgb(0x22, 0x39, 0xFF, 0x14)), 1)
+    private static readonly Pen GridPen = Freeze(new Pen(new SolidColorBrush(Color.FromArgb(0x1E, 0xFF, 0xFF, 0xFF)), 1)
     {
         DashStyle = new DashStyle([2, 4], 0)
     });
-    private static readonly Brush LabelBrush = Freeze(new SolidColorBrush(Color.FromArgb(0x90, 0x6F, 0xA7, 0x7E)));
+    private static readonly Brush LabelBrush = Freeze(new SolidColorBrush(Color.FromArgb(0xA0, 0x8A, 0x95, 0x99)));
     private static readonly Typeface LabelFont = new("Cascadia Mono, Consolas");
 
     private Pen? _pen1, _glow1, _pen2, _glow2;
@@ -68,13 +68,13 @@ public sealed class NeonChart : FrameworkElement
 
     private static void OnSeriesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        var chart = (NeonChart)d;
+        var chart = (LineChart)d;
         if (e.OldValue is ChartSeries old) old.Changed -= chart.OnDataChanged;
         if (e.NewValue is ChartSeries neu) neu.Changed += chart.OnDataChanged;
     }
 
     private static void OnStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((NeonChart)d)._pen1 = null; // Stifte beim nächsten Zeichnen neu erzeugen
+        ((LineChart)d)._pen1 = null; // Stifte beim nächsten Zeichnen neu erzeugen
 
     private void OnDataChanged(object? sender, EventArgs e)
     {
@@ -165,7 +165,7 @@ public sealed class NeonChart : FrameworkElement
             area.Freeze();
             dc.DrawGeometry(fill, null, area);
         }
-        dc.DrawGeometry(null, glow, line); // breiter, transparenter Strich = Leuchteffekt
+        dc.DrawGeometry(null, glow, line); // breiter, sehr transparenter Strich = weiche Kante
         dc.DrawGeometry(null, pen, line);
     }
 
@@ -188,14 +188,14 @@ public sealed class NeonChart : FrameworkElement
         var c2 = ColorOf(Stroke2);
 
         _pen1 = Freeze(new Pen(new SolidColorBrush(c1), 1.6) { LineJoin = PenLineJoin.Round });
-        _glow1 = Freeze(new Pen(new SolidColorBrush(Color.FromArgb(0x30, c1.R, c1.G, c1.B)), 6) { LineJoin = PenLineJoin.Round });
+        _glow1 = Freeze(new Pen(new SolidColorBrush(Color.FromArgb(0x14, c1.R, c1.G, c1.B)), 4) { LineJoin = PenLineJoin.Round });
         _pen2 = Freeze(new Pen(new SolidColorBrush(c2), 1.4) { LineJoin = PenLineJoin.Round });
-        _glow2 = Freeze(new Pen(new SolidColorBrush(Color.FromArgb(0x28, c2.R, c2.G, c2.B)), 5) { LineJoin = PenLineJoin.Round });
+        _glow2 = Freeze(new Pen(new SolidColorBrush(Color.FromArgb(0x10, c2.R, c2.G, c2.B)), 4) { LineJoin = PenLineJoin.Round });
         _fill1 = Freeze(new LinearGradientBrush(
-            Color.FromArgb(0x50, c1.R, c1.G, c1.B), Color.FromArgb(0x00, c1.R, c1.G, c1.B), 90));
+            Color.FromArgb(0x55, c1.R, c1.G, c1.B), Color.FromArgb(0x08, c1.R, c1.G, c1.B), 90));
     }
 
-    private static Color ColorOf(Brush b) => b is SolidColorBrush sc ? sc.Color : Colors.Lime;
+    private static Color ColorOf(Brush b) => b is SolidColorBrush sc ? sc.Color : Colors.MediumSeaGreen;
 
     private static T Freeze<T>(T f) where T : Freezable
     {

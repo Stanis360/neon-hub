@@ -92,16 +92,18 @@ public sealed class LibreHardwareSource : ISensorSource
             s.CpuPower ??= FindValue(_cpu, SensorType.Power, "Package", "CPU Package");
 
             // Kerntakte: „Core #1“ … „Core #8“
-            var clocks = AllSensors(_cpu)
+            var cores = AllSensors(_cpu)
                 .Where(x => x.SensorType == SensorType.Clock
                             && x.Name.StartsWith("Core #", StringComparison.OrdinalIgnoreCase)
                             && x.Value is > 0)
-                .Select(x => (double)x.Value!.Value)
+                .OrderBy(x => x.Index)
+                .Select(x => new CoreClock(x.Name.Replace("Core ", ""), x.Value!.Value))
                 .ToList();
-            if (clocks.Count > 0)
+            if (cores.Count > 0)
             {
-                s.CpuClockAvg ??= clocks.Average();
-                s.CpuClockMax ??= clocks.Max();
+                s.CpuClockAvg ??= cores.Average(c => c.Mhz);
+                s.CpuClockMax ??= cores.Max(c => c.Mhz);
+                if (s.CpuCoreClocks.Count == 0) s.CpuCoreClocks = cores;
             }
         }
 

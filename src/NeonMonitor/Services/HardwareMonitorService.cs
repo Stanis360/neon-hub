@@ -137,7 +137,7 @@ public sealed class HardwareMonitorService : IDisposable
 
         r.AppendLine("=== Zuordnung in NeonMonitor (aktueller Snapshot) ===");
         var s = Sample();
-        foreach (var p in typeof(HardwareSnapshot).GetProperties().Where(p => p.Name != nameof(HardwareSnapshot.Drives)))
+        foreach (var p in typeof(HardwareSnapshot).GetProperties().Where(p => p.PropertyType.IsValueType || p.PropertyType == typeof(string)))
             r.AppendLine($"  {p.Name,-18} = {p.GetValue(s) ?? "— (nicht verfügbar)"}");
         return r.ToString();
     }

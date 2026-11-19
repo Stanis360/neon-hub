@@ -1,6 +1,6 @@
 # NeonMonitor
 
-Hardware-Überwachung für Windows 11 mit Neon-Oberfläche: Live-Werte, Verlaufsdiagramme,
+Hardware-Überwachung für Windows 11 mit ruhiger, dunkler Oberfläche (Anthrazit + Mintgrün): Live-Werte, Verlaufsdiagramme,
 später FPS (per ETW, ohne Injection), Overlay, Aufzeichnung als CSV und Sitzungsvergleich.
 
 Gebaut mit **C# / .NET 10 / WPF**. Sensoren über **LibreHardwareMonitor**, ergänzt durch
@@ -107,8 +107,10 @@ Windows auf deinem System finden, und welcher Sensor welchem Anzeigewert zugeord
 
 | Element | Funktion |
 |---|---|
-| Kacheln | aktueller Wert, darunter Höchstwert seit Start. Gelb/Rot bei hohen Temperaturen. „—“ = Sensor liefert nichts |
-| Diagramme | Verlauf der letzten 2 Minuten (Last grün, Temperatur cyan) |
+| Ringe | außen Last, innen Temperatur (CPU und GPU) |
+| Wertezeilen | Wert mit Balken; Höchstwert seit Start als Tooltip. Gelb/Rot bei hohen Temperaturen. „—“ = Sensor liefert nichts |
+| Kerntakte | Takt jedes einzelnen CPU-Kerns |
+| Diagramme | Verlauf der letzten 2 Minuten (Last grün, Temperatur hellgrau) |
 | Animation | Hintergrundanimation an/aus – zum Spielen ggf. ausschalten |
 | Intervall | Abfrage alle 0,5 / 1 / 2 Sekunden |
 | Max-Werte zurücksetzen | Höchstwerte neu beginnen (z. B. vor einem Benchmark) |
@@ -131,11 +133,12 @@ NeonMonitor/
    ├─ App.xaml(.cs)               # Start, Dienste verdrahten, Fehlerbehandlung
    ├─ MainWindow.xaml(.cs)        # Fenster mit eigener Titelleiste, Navigation, Statusleiste
    ├─ Themes/
-   │  ├─ Neon.xaml                # Farben, Schriften, Stile aller Steuerelemente
-   │  └─ Templates.xaml           # Darstellung von Messwert-Kacheln und Laufwerken
+   │  ├─ Theme.xaml               # Farben, Schriften, Stile aller Steuerelemente (zum Umfärben nur hier ändern)
+   │  └─ Templates.xaml           # Darstellung von Messwert-Zeilen, Kerntakten und Laufwerken
    ├─ Controls/
-   │  ├─ NeonBackground.cs        # animierter Hintergrund (Raster, Leuchtwolken, Partikel)
-   │  └─ NeonChart.cs             # schlankes Neon-Liniendiagramm
+   │  ├─ AnimatedBackground.cs    # ruhiger animierter Hintergrund (Raster, Lichtflecken, Punkte)
+   │  ├─ LineChart.cs             # schlankes Liniendiagramm
+   │  └─ RingGauge.cs             # Ringanzeige (Last außen, Temperatur innen)
    ├─ Models/
    │  └─ HardwareSnapshot.cs      # eine Messung aller Werte (später = eine CSV-Zeile)
    ├─ Services/
@@ -163,7 +166,7 @@ zusätzliche Klasse, ohne den Rest anzufassen.
 
 ## 7. Fahrplan
 
-1. ✅ Projekt-Setup, Live-Werte, Diagramme, Neon-Theme
+1. ✅ Projekt-Setup, Live-Werte, Diagramme, Theme
 2. ⏳ FPS & Frametimes per ETW (PresentMon-Ansatz, keine Injection)
 3. ⏳ Overlay (transparentes Always-on-top-Fenster, Werte wählbar)
 4. ⏳ Aufzeichnung (Start/Stopp, Hotkey, CSV pro Sitzung)

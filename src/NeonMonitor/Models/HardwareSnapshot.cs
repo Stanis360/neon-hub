@@ -25,6 +25,8 @@ public sealed class HardwareSnapshot
     public double? CpuClockMax { get; set; }
     /// <summary>Package-Leistung in Watt.</summary>
     public double? CpuPower { get; set; }
+    /// <summary>Takt jedes einzelnen Kerns in MHz (Reihenfolge Kern 1 … n).</summary>
+    public List<CoreClock> CpuCoreClocks { get; set; } = new();
 
     // ---------- GPU ----------
     public string? GpuName { get; set; }
@@ -61,6 +63,9 @@ public sealed class HardwareSnapshot
     public double? FrameTimeMs { get; set; }
     public string? ForegroundProcess { get; set; }
 }
+
+/// <summary>Takt eines CPU-Kerns.</summary>
+public sealed record CoreClock(string Name, double Mhz);
 
 /// <summary>Belegung eines Laufwerks (Partition).</summary>
 public sealed record DriveUsage(string Name, string Label, double UsedGb, double TotalGb)

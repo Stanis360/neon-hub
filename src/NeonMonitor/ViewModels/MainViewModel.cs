@@ -40,21 +40,23 @@ public sealed class MainViewModel : ObservableObject
         var points = HistoryPoints();
 
         // Warnschwellen: 9800X3D drosselt bei 95 °C, RX 9070 XT Hotspot-Limit ~110 °C
-        CpuLoad = new("LAST", "%", "0", points);
-        CpuTemp = new("TEMPERATUR", "°C", "0", points, warnAt: 80, criticalAt: 90);
-        CpuPower = new("LEISTUNG", "W", "0", points);
-        CpuClock = new("TAKT Ø", "MHz", "0", points);
-        CpuClockMax = new("TAKT MAX", "MHz", "0", points);
+        // barMaximum = Vollausschlag der Balken (passend zu 9800X3D / RX 9070 XT, wächst bei Bedarf mit)
+        CpuLoad = new("Last", "%", "0", points);
+        CpuTemp = new("Temperatur", "°C", "0", points, warnAt: 80, criticalAt: 90);
+        CpuPower = new("Leistung", "W", "0", points, barMaximum: 150);
+        CpuClock = new("Takt Ø", "MHz", "0", points, barMaximum: 5500);
+        CpuClockMax = new("Takt max", "MHz", "0", points, barMaximum: 5500);
 
-        GpuLoad = new("LAST", "%", "0", points);
-        GpuTemp = new("TEMPERATUR", "°C", "0", points, warnAt: 80, criticalAt: 90);
-        GpuHotspot = new("HOTSPOT", "°C", "0", points, warnAt: 95, criticalAt: 105);
-        GpuClock = new("TAKT", "MHz", "0", points);
-        GpuVram = new("VRAM", "GB", "0.0", points);
-        GpuPower = new("LEISTUNG", "W", "0", points);
+        GpuLoad = new("Last", "%", "0", points);
+        GpuTemp = new("Temperatur", "°C", "0", points, warnAt: 80, criticalAt: 90);
+        GpuHotspot = new("Hotspot", "°C", "0", points, warnAt: 95, criticalAt: 105, barMaximum: 110);
+        GpuClock = new("GPU-Takt", "MHz", "0", points, barMaximum: 3200);
+        GpuMemClock = new("Speichertakt", "MHz", "0", points, barMaximum: 2600);
+        GpuVram = new("VRAM", "GB", "0.0", points, barMaximum: 16);
+        GpuPower = new("Leistung", "W", "0", points, barMaximum: 340);
 
-        RamUsed = new("BELEGT", "GB", "0.0", points);
-        RamLoad = new("AUSLASTUNG", "%", "0", points, warnAt: 85, criticalAt: 95);
+        RamUsed = new("Belegt", "GB", "0.0", points, barMaximum: 32);
+        RamLoad = new("Auslastung", "%", "0", points, warnAt: 85, criticalAt: 95);
 
         IsAdmin = SystemInfo.IsAdministrator();
         IsPawnIoInstalled = SystemInfo.IsPawnIoInstalled();
@@ -81,6 +83,7 @@ public sealed class MainViewModel : ObservableObject
     public MetricViewModel GpuTemp { get; }
     public MetricViewModel GpuHotspot { get; }
     public MetricViewModel GpuClock { get; }
+    public MetricViewModel GpuMemClock { get; }
     public MetricViewModel GpuVram { get; }
     public MetricViewModel GpuPower { get; }
 
@@ -88,6 +91,9 @@ public sealed class MainViewModel : ObservableObject
     public MetricViewModel RamLoad { get; }
 
     public ObservableCollection<DriveViewModel> Drives { get; } = new();
+
+    /// <summary>Takt pro CPU-Kern (beim 9800X3D: 8 Einträge).</summary>
+    public ObservableCollection<CoreClockViewModel> CoreClocks { get; } = new();
 
     public string CpuName { get => _cpuName; private set => SetProperty(ref _cpuName, value); }
     public string GpuName { get => _gpuName; private set => SetProperty(ref _gpuName, value); }
@@ -166,7 +172,9 @@ public sealed class MainViewModel : ObservableObject
         GpuTemp.Update(s.GpuTemp);
         GpuHotspot.Update(s.GpuHotspot);
         GpuClock.Update(s.GpuClock);
+        GpuMemClock.Update(s.GpuMemClock);
         GpuVram.Update(s.GpuVramUsedMb / 1024.0);
+        if (s.GpuVramTotalMb is { } vramTotal) GpuVram.BarMaximum = Math.Round(vramTotal / 1024.0);
         GpuPower.Update(s.GpuPower);
         VramTotalText = s.GpuVramTotalMb is { } vt ? $"von {vt / 1024.0:0} GB" : "";
         GpuFanText = s.GpuFan is { } fan ? $"Lüfter {fan:0} U/min" : "";
@@ -174,8 +182,21 @@ public sealed class MainViewModel : ObservableObject
         RamUsed.Update(s.RamUsedGb);
         RamLoad.Update(s.RamLoad);
         RamTotalText = s.RamTotalGb is { } rt ? $"von {rt:0.0} GB" : "";
+        if (s.RamTotalGb is { } ramTotal) RamUsed.BarMaximum = Math.Round(ramTotal, 1);
 
+        UpdateCoreClocks(s.CpuCoreClocks);
         UpdateDrives(s.Drives);
+    }
+
+    /// <summary>Kernliste aktualisieren; wird beim ersten Snapshot einmalig aufgebaut.</summary>
+    private void UpdateCoreClocks(IReadOnlyList<CoreClock> cores)
+    {
+        if (cores.Count != CoreClocks.Count)
+        {
+            CoreClocks.Clear();
+            foreach (var c in cores) CoreClocks.Add(new CoreClockViewModel(c.Name, 5500));
+        }
+        for (var i = 0; i < cores.Count; i++) CoreClocks[i].Update(cores[i].Mhz);
     }
 
     /// <summary>Laufwerksliste aktualisieren, ohne die Collection neu aufzubauen (kein Flackern).</summary>
@@ -227,7 +248,7 @@ public sealed class MainViewModel : ObservableObject
     private IEnumerable<MetricViewModel> AllMetrics() =>
     [
         CpuLoad, CpuTemp, CpuPower, CpuClock, CpuClockMax,
-        GpuLoad, GpuTemp, GpuHotspot, GpuClock, GpuVram, GpuPower,
+        GpuLoad, GpuTemp, GpuHotspot, GpuClock, GpuMemClock, GpuVram, GpuPower,
         RamUsed, RamLoad,
     ];
 
