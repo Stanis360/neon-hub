@@ -91,13 +91,19 @@ public sealed class LibreHardwareSource : ISensorSource
                           ?? MaxValue(_cpu, SensorType.Temperature, n => !n.Contains("Distance", StringComparison.OrdinalIgnoreCase));
             s.CpuPower ??= FindValue(_cpu, SensorType.Power, "Package", "CPU Package");
 
-            // Kerntakte: „Core #1“ … „Core #8“
-            var cores = AllSensors(_cpu)
+            // Kerntakte: LHM liefert pro Kern zwei Werte – „Core #1“ (Nenntakt) und
+            // „Core #1 (Effective)“ (tatsächlich gearbeiteter Takt, wie in Ryzen Master/HWiNFO).
+            // Wir zeigen nur einen Wert pro Kern und bevorzugen den effektiven.
+            var coreSensors = AllSensors(_cpu)
                 .Where(x => x.SensorType == SensorType.Clock
                             && x.Name.StartsWith("Core #", StringComparison.OrdinalIgnoreCase)
                             && x.Value is > 0)
-                .OrderBy(x => x.Index)
-                .Select(x => new CoreClock(x.Name.Replace("Core ", ""), x.Value!.Value))
+                .ToList();
+            var effective = coreSensors.Where(IsEffective).ToList();
+            var cores = (effective.Count > 0 ? effective : coreSensors.Where(x => !IsEffective(x)))
+                .Select(x => (Number: CoreNumber(x.Name), Mhz: (double)x.Value!.Value))
+                .OrderBy(x => x.Number)
+                .Select(x => new CoreClock($"#{x.Number}", x.Mhz))
                 .ToList();
             if (cores.Count > 0)
             {
@@ -160,6 +166,15 @@ public sealed class LibreHardwareSource : ISensorSource
     }
 
     // ---------------- Hilfsfunktionen ----------------
+
+    private static bool IsEffective(ISensor s) => s.Name.Contains("Effective", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>„Core #3 (Effective)“ → 3</summary>
+    private static int CoreNumber(string name)
+    {
+        var digits = new string(name.SkipWhile(c => c != '#').Skip(1).TakeWhile(char.IsDigit).ToArray());
+        return int.TryParse(digits, out var n) ? n : 0;
+    }
 
     private static void UpdateRecursive(IHardware hw)
     {

@@ -26,9 +26,12 @@ public sealed class MetricViewModel : ObservableObject
     /// <param name="warnAt">Ab diesem Wert gelb (optional).</param>
     /// <param name="criticalAt">Ab diesem Wert rot (optional).</param>
     /// <param name="barMaximum">Vollausschlag für Balken/Ring; wächst automatisch mit, falls überschritten.</param>
+    /// <param name="showPeak">Höchstwert direkt in der Zeile anzeigen (sinnvoll für Temperaturen).</param>
     public MetricViewModel(string label, string unit, string format, int historyCapacity,
-                           double? warnAt = null, double? criticalAt = null, double barMaximum = 100)
+                           double? warnAt = null, double? criticalAt = null, double barMaximum = 100,
+                           bool showPeak = false)
     {
+        ShowPeak = showPeak;
         _barMaximum = barMaximum;
         Label = label;
         Unit = unit;
@@ -39,6 +42,9 @@ public sealed class MetricViewModel : ObservableObject
     }
 
     public string Label { get; }
+
+    /// <summary>Soll der Höchstwert sichtbar neben dem Wert stehen?</summary>
+    public bool ShowPeak { get; }
     public string Unit { get; }
     public ChartSeries History { get; }
 

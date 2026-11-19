@@ -42,14 +42,14 @@ public sealed class MainViewModel : ObservableObject
         // Warnschwellen: 9800X3D drosselt bei 95 °C, RX 9070 XT Hotspot-Limit ~110 °C
         // barMaximum = Vollausschlag der Balken (passend zu 9800X3D / RX 9070 XT, wächst bei Bedarf mit)
         CpuLoad = new("Last", "%", "0", points);
-        CpuTemp = new("Temperatur", "°C", "0", points, warnAt: 80, criticalAt: 90);
+        CpuTemp = new("Temperatur", "°C", "0", points, warnAt: 80, criticalAt: 90, showPeak: true);
         CpuPower = new("Leistung", "W", "0", points, barMaximum: 150);
-        CpuClock = new("Takt Ø", "MHz", "0", points, barMaximum: 5500);
-        CpuClockMax = new("Takt max", "MHz", "0", points, barMaximum: 5500);
+        CpuClock = new("Takt Ø alle Kerne", "MHz", "0", points, barMaximum: 5500);
+        CpuClockMax = new("Takt schnellster Kern", "MHz", "0", points, barMaximum: 5500);
 
         GpuLoad = new("Last", "%", "0", points);
-        GpuTemp = new("Temperatur", "°C", "0", points, warnAt: 80, criticalAt: 90);
-        GpuHotspot = new("Hotspot", "°C", "0", points, warnAt: 95, criticalAt: 105, barMaximum: 110);
+        GpuTemp = new("Temperatur", "°C", "0", points, warnAt: 80, criticalAt: 90, showPeak: true);
+        GpuHotspot = new("Hotspot", "°C", "0", points, warnAt: 95, criticalAt: 105, barMaximum: 110, showPeak: true);
         GpuClock = new("GPU-Takt", "MHz", "0", points, barMaximum: 3200);
         GpuMemClock = new("Speichertakt", "MHz", "0", points, barMaximum: 2600);
         GpuVram = new("VRAM", "GB", "0.0", points, barMaximum: 16);
@@ -177,7 +177,12 @@ public sealed class MainViewModel : ObservableObject
         if (s.GpuVramTotalMb is { } vramTotal) GpuVram.BarMaximum = Math.Round(vramTotal / 1024.0);
         GpuPower.Update(s.GpuPower);
         VramTotalText = s.GpuVramTotalMb is { } vt ? $"von {vt / 1024.0:0} GB" : "";
-        GpuFanText = s.GpuFan is { } fan ? $"Lüfter {fan:0} U/min" : "";
+        GpuFanText = s.GpuFan switch
+        {
+            null => "",
+            < 1 => "Lüfter steht (Zero-RPM)",
+            var fan => $"Lüfter {fan:0} U/min",
+        };
 
         RamUsed.Update(s.RamUsedGb);
         RamLoad.Update(s.RamLoad);

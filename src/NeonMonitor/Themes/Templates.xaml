@@ -18,12 +18,22 @@
             </Grid.ToolTip>
             <TextBlock Text="{Binding Label}" FontFamily="{StaticResource DisplayFont}" FontSize="13"
                        Foreground="{StaticResource TextBrush}" />
-            <TextBlock x:Name="Value" Text="{Binding DisplayWithUnit}" HorizontalAlignment="Right"
-                       FontFamily="{StaticResource DisplayFont}" FontSize="13" Foreground="{StaticResource TextBrush}" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <!-- Höchstwert (nur bei Temperaturen eingeblendet) -->
+                <TextBlock x:Name="Peak" Text="{Binding PeakText}" Visibility="Collapsed" Margin="0,0,10,0"
+                           FontFamily="{StaticResource DisplayFont}" FontSize="12" VerticalAlignment="Bottom"
+                           Foreground="{StaticResource TextDimBrush}" />
+                <TextBlock x:Name="Value" Text="{Binding DisplayWithUnit}"
+                           FontFamily="{StaticResource DisplayFont}" FontSize="14" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextBrush}" />
+            </StackPanel>
             <ProgressBar x:Name="Bar" Grid.Row="1" Style="{StaticResource Bar}" Margin="0,5,0,0"
                          Maximum="{Binding BarMaximum}" Value="{Binding BarValue, Mode=OneWay}" />
         </Grid>
         <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding ShowPeak}" Value="True">
+                <Setter TargetName="Peak" Property="Visibility" Value="Visible" />
+            </DataTrigger>
             <DataTrigger Binding="{Binding Severity}" Value="Warning">
                 <Setter TargetName="Value" Property="Foreground" Value="{StaticResource WarnBrush}" />
                 <Setter TargetName="Bar" Property="Foreground" Value="{StaticResource WarnBrush}" />

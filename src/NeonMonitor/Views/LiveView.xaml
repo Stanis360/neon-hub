@@ -93,6 +93,7 @@
 
                             <!-- Rechte Spalte: Werte als Balken, darunter die einzelnen Kerne -->
                             <StackPanel Grid.Column="2">
+                                <ContentControl Content="{Binding CpuTemp}" />
                                 <ContentControl Content="{Binding CpuPower}" />
                                 <ContentControl Content="{Binding CpuClock}" />
                                 <ContentControl Content="{Binding CpuClockMax}" />
@@ -110,9 +111,10 @@
                         <Border Style="{StaticResource Divider}" />
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                             <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource AccentBrush}" />
-                            <TextBlock Text="Last %" Style="{StaticResource LegendText}" />
+                            <TextBlock Text="{Binding CpuLoad.DisplayWithUnit, StringFormat='Last {0}'}" Style="{StaticResource LegendText}" />
                             <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource SecondaryBrush}" />
-                            <TextBlock Text="Temperatur °C" Style="{StaticResource LegendText}" />
+                            <TextBlock Text="{Binding CpuTemp.DisplayWithUnit, StringFormat='Temperatur {0}'}" Style="{StaticResource LegendText}" />
+                            <TextBlock Text="· letzte 2 Minuten" Style="{StaticResource LegendText}" />
                         </StackPanel>
                         <controls:LineChart Height="110" Maximum="100"
                                             Series="{Binding CpuLoad.History}" Stroke="{StaticResource AccentBrush}"
@@ -156,20 +158,22 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
+                                <ContentControl Content="{Binding GpuTemp}" />
+                                <ContentControl Content="{Binding GpuHotspot}" />
+                                <ContentControl Content="{Binding GpuPower}" />
                                 <ContentControl Content="{Binding GpuClock}" />
                                 <ContentControl Content="{Binding GpuMemClock}" />
                                 <ContentControl Content="{Binding GpuVram}" />
-                                <ContentControl Content="{Binding GpuPower}" />
-                                <ContentControl Content="{Binding GpuHotspot}" />
                             </StackPanel>
                         </Grid>
 
                         <Border Style="{StaticResource Divider}" />
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                             <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource AccentBrush}" />
-                            <TextBlock Text="Last %" Style="{StaticResource LegendText}" />
+                            <TextBlock Text="{Binding GpuLoad.DisplayWithUnit, StringFormat='Last {0}'}" Style="{StaticResource LegendText}" />
                             <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource SecondaryBrush}" />
-                            <TextBlock Text="Temperatur °C" Style="{StaticResource LegendText}" />
+                            <TextBlock Text="{Binding GpuTemp.DisplayWithUnit, StringFormat='Temperatur {0}'}" Style="{StaticResource LegendText}" />
+                            <TextBlock Text="· letzte 2 Minuten" Style="{StaticResource LegendText}" />
                         </StackPanel>
                         <controls:LineChart Height="110" Maximum="100"
                                             Series="{Binding GpuLoad.History}" Stroke="{StaticResource AccentBrush}"

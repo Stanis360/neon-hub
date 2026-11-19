@@ -55,39 +55,36 @@ Zum reinen Bauen und Starten reicht das SDK aus Schritt 1.1.
 
 ---
 
-## 2. Code holen
+## 2. Installieren – per Doppelklick
 
-```powershell
-git clone https://github.com/stanis360/familyhub-password-reset.git
-cd familyhub-password-reset
-git checkout claude/windows-hardware-monitor-app-rqfxbi
-cd NeonMonitor
-```
+1. Die ZIP-Datei entpacken, z. B. nach `C:\Projekte` → es entsteht `C:\Projekte\NeonMonitor`.
+2. Im Ordner `NeonMonitor` **doppelt auf `Installieren.bat`** klicken und die Windows-Abfrage
+   („Änderungen zulassen?“) mit **Ja** bestätigen.
+   Falls Windows „Der Computer wurde durch Windows geschützt“ zeigt: **Weitere Informationen → Trotzdem ausführen**.
+3. Das Skript baut das Programm, legt das Symbol **NeonMonitor** auf dem Desktop und im Startmenü an
+   und startet es.
 
-(Alternativ auf GitHub den Branch auswählen → „Code“ → „Download ZIP“.)
+**Ab dann nur noch das Desktop-Symbol doppelklicken.**
+
+* **Update** (neue ZIP von mir): entpacken, alten Ordner ersetzen, wieder `Installieren.bat` – Einstellungen bleiben erhalten.
+  Ein laufendes NeonMonitor wird dabei automatisch beendet.
+* **Entfernen:** `Deinstallieren.bat`.
+* Das Programm liegt danach in `%LOCALAPPDATA%\NeonMonitor\App`.
+* Startet man NeonMonitor ein zweites Mal, wird einfach das schon offene Fenster nach vorne geholt.
 
 ---
 
-## 3. Bauen und starten
+## 3. Für Entwickler: direkt aus dem Quellcode starten
 
-Das Programm fordert **Adminrechte** an (nötig für die CPU-Sensoren und später für ETW/FPS).
-Deshalb das Terminal **als Administrator** öffnen (Rechtsklick auf Windows Terminal →
-„Als Administrator ausführen“), sonst bricht `dotnet run` mit „erfordert erhöhte Rechte“ ab.
+Terminal **als Administrator** öffnen (das Programm fordert Adminrechte an), dann:
 
 ```powershell
+cd C:\Projekte\NeonMonitor
 dotnet run --project src\NeonMonitor -c Release
 ```
 
-### Als eigenständige EXE veröffentlichen
-
-```powershell
-dotnet publish src\NeonMonitor -c Release -r win-x64 --self-contained false -o publish
-.\publish\NeonMonitor.exe
-```
-
-Den Ordner `publish` kannst du beliebig verschieben. Beim Start erscheint die UAC-Abfrage.
-Wer die .NET-Runtime nicht separat installieren möchte, nimmt `--self-contained true`
-(Ordner wird dann ca. 150 MB groß).
+Meldung „Datei wird durch NeonMonitor gesperrt“? → Es läuft noch eine Instanz:
+`taskkill /IM NeonMonitor.exe /F`, dann erneut starten.
 
 ---
 
@@ -107,9 +104,9 @@ Windows auf deinem System finden, und welcher Sensor welchem Anzeigewert zugeord
 
 | Element | Funktion |
 |---|---|
-| Ringe | außen Last, innen Temperatur (CPU und GPU) |
-| Wertezeilen | Wert mit Balken; Höchstwert seit Start als Tooltip. Gelb/Rot bei hohen Temperaturen. „—“ = Sensor liefert nichts |
-| Kerntakte | Takt jedes einzelnen CPU-Kerns |
+| Ringe | außen Last, innen Temperatur (CPU und GPU), Werte in der Mitte |
+| Wertezeilen | Wert mit Balken. Bei Temperaturen steht der Höchstwert seit Start daneben („max 81“). Gelb/Rot bei hohen Temperaturen. „—“ = Sensor liefert nichts |
+| Kerntakte | effektiver Takt jedes CPU-Kerns (wie Ryzen Master/HWiNFO – im Leerlauf daher niedrig) |
 | Diagramme | Verlauf der letzten 2 Minuten (Last grün, Temperatur hellgrau) |
 | Animation | Hintergrundanimation an/aus – zum Spielen ggf. ausschalten |
 | Intervall | Abfrage alle 0,5 / 1 / 2 Sekunden |
@@ -125,11 +122,14 @@ Einstellungen: `%AppData%\NeonMonitor\settings.json` · Log: `%AppData%\NeonMoni
 ```
 NeonMonitor/
 ├─ NeonMonitor.sln
+├─ Installieren.bat / .ps1       # Doppelklick-Installation inkl. Desktop-Symbol
+├─ Deinstallieren.bat / .ps1     # Entfernen
 ├─ global.json                    # SDK-Version (.NET 10)
 ├─ docs/SENSOREN.md               # Kompatibilität Zen 5 / RDNA 4, Alternativen (ADLX …)
 └─ src/NeonMonitor/
    ├─ NeonMonitor.csproj
    ├─ app.manifest                # fordert Adminrechte an, DPI-Einstellungen
+   ├─ Assets/NeonMonitor.ico      # Programmsymbol
    ├─ App.xaml(.cs)               # Start, Dienste verdrahten, Fehlerbehandlung
    ├─ MainWindow.xaml(.cs)        # Fenster mit eigener Titelleiste, Navigation, Statusleiste
    ├─ Themes/

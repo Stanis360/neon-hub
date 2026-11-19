@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Threading;
 using NeonMonitor.Infrastructure;
@@ -12,10 +14,20 @@ namespace NeonMonitor;
 public partial class App : Application
 {
     private HardwareMonitorService? _monitor;
+    private Mutex? _singleInstance;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Nur eine Instanz: Läuft NeonMonitor schon, holen wir dieses Fenster nach vorne und beenden uns.
+        _singleInstance = new Mutex(true, @"Local\NeonMonitor.SingleInstance", out var isFirst);
+        if (!isFirst)
+        {
+            BringExistingInstanceToFront();
+            Shutdown();
+            return;
+        }
 
         // Unbehandelte Fehler protokollieren statt kommentarlos abzustürzen
         DispatcherUnhandledException += OnDispatcherUnhandledException;
@@ -43,9 +55,27 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _monitor?.Dispose(); // wichtig: gibt den PawnIO-Treiber frei
+        _singleInstance?.Dispose();
         Log.Info("NeonMonitor beendet");
         base.OnExit(e);
     }
+
+    private static void BringExistingInstanceToFront()
+    {
+        var current = Environment.ProcessId;
+        var other = Process.GetProcessesByName("NeonMonitor").FirstOrDefault(p => p.Id != current);
+        if (other is null || other.MainWindowHandle == IntPtr.Zero) return;
+        ShowWindow(other.MainWindowHandle, SwRestore);
+        SetForegroundWindow(other.MainWindowHandle);
+    }
+
+    private const int SwRestore = 9;
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
