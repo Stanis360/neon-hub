@@ -1,6 +1,7 @@
 <Application x:Class="NeonMonitor.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:infra="clr-namespace:NeonMonitor.Infrastructure"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
         <ResourceDictionary>
@@ -9,6 +10,8 @@
                 <ResourceDictionary Source="Themes/Templates.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+            <infra:InverseBoolConverter x:Key="InverseBool" />
+            <infra:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

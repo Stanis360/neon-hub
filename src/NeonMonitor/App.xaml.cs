@@ -16,6 +16,7 @@ public partial class App : Application
 {
     private HardwareMonitorService? _monitor;
     private GlobalHotkeys? _hotkeys;
+    private Services.Recording.RecordingService? _recorder;
     private Mutex? _singleInstance;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -46,7 +47,8 @@ public partial class App : Application
         var settings = AppSettings.Load();
         _monitor = new HardwareMonitorService(settings.PollIntervalMs, settings.SafeMode);
 
-        var vm = new MainViewModel(_monitor, settings);
+        _recorder = new Services.Recording.RecordingService(_monitor);
+        var vm = new MainViewModel(_monitor, settings, _recorder);
         var window = new MainWindow { DataContext = vm };
         MainWindow = window;
         window.Show();
@@ -57,7 +59,9 @@ public partial class App : Application
         // Systemweite Tastenkürzel – funktionieren auch mitten im Spiel
         _hotkeys = new GlobalHotkeys(new System.Windows.Interop.WindowInteropHelper(window).Handle);
         const uint vkO = 0x4F;
+        const uint vkR = 0x52;
         _hotkeys.Register(GlobalHotkeys.ModControl | GlobalHotkeys.ModAlt, vkO, () => vm.Overlay.ToggleCommand.Execute(null));
+        _hotkeys.Register(GlobalHotkeys.ModControl | GlobalHotkeys.ModAlt, vkR, () => vm.Recording.ToggleCommand.Execute(null));
 
         // Sensoren erst nach dem Anzeigen starten – LHM braucht beim Öffnen ein paar Sekunden.
         _monitor.Start();
@@ -66,7 +70,8 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _hotkeys?.Dispose();
-        _monitor?.Dispose(); // wichtig: gibt den PawnIO-Treiber frei
+        _recorder?.Dispose(); // laufende Aufnahme sauber abschließen
+        _monitor?.Dispose();  // wichtig: gibt den PawnIO-Treiber frei
         _singleInstance?.Dispose();
         Log.Info("NeonMonitor beendet");
         base.OnExit(e);

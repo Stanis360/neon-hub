@@ -27,6 +27,13 @@
                 BorderBrush="#3DDC97" BorderThickness="0,0,0,2" />
 
         <StackPanel Margin="14,10,14,12" MinWidth="170">
+            <!-- Aufnahme läuft -->
+            <TextBlock Margin="0,0,0,4" FontSize="13" Foreground="#E5626F"
+                       Visibility="{Binding Main.Recording.IsRecording, Converter={StaticResource BoolToVisibility}}">
+                <Run Text="● REC" />
+                <Run Text="{Binding Main.Recording.ElapsedText, Mode=OneWay}" />
+            </TextBlock>
+
             <!-- Kopfzeile: Spielname und Uhrzeit -->
             <DockPanel Margin="0,0,0,4">
                 <TextBlock DockPanel.Dock="Right" Text="{Binding ClockText}" FontSize="12" Foreground="#C5D0CD"

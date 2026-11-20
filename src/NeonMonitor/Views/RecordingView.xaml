@@ -1,0 +1,124 @@
+<UserControl x:Class="NeonMonitor.Views.RecordingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:NeonMonitor.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:RecordingViewModel}"
+             d:DesignWidth="1100" d:DesignHeight="800">
+
+    <UserControl.Resources>
+        <!-- Kennzahl der letzten Sitzung -->
+        <Style x:Key="ResultLabel" TargetType="TextBlock" BasedOn="{StaticResource SectionLabel}">
+            <Setter Property="Margin" Value="0,0,0,2" />
+        </Style>
+        <Style x:Key="ResultValue" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+
+            <!-- ============ Start / Stopp ============ -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Aufzeichnung" Style="{StaticResource CardTitle}" />
+                    <TextBlock Style="{StaticResource SmallText}" FontSize="12" HorizontalAlignment="Center" Margin="0,2,0,16"
+                               Text="Zeichnet alle Sensorwerte und jedes einzelne Bild auf und speichert die Sitzung als CSV (Excel-tauglich)." />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <StackPanel Margin="0,0,24,0" VerticalAlignment="Center">
+                            <TextBlock Text="Spielname" Style="{StaticResource SectionLabel}" Margin="0,0,0,4" />
+                            <TextBox Width="260" Text="{Binding GameName, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding IsRecording, Converter={StaticResource InverseBool}}"
+                                     ToolTip="Wird automatisch aus dem erkannten Spiel gefüllt – du kannst ihn überschreiben." />
+                        </StackPanel>
+                        <Button x:Name="RecordButton" Content="{Binding ButtonText}" Command="{Binding ToggleCommand}"
+                                Padding="28,12" FontSize="16" VerticalAlignment="Bottom">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource FlatButton}">
+                                    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                                    <Setter Property="Foreground" Value="#15181A" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource CriticalBrush}" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+
+                    <TextBlock Text="Tastenkürzel: Strg + Alt + R (funktioniert auch im Spiel)" Style="{StaticResource SmallText}"
+                               HorizontalAlignment="Center" Margin="0,12,0,0" />
+                    <TextBlock Text="{Binding StatusText}" FontFamily="{StaticResource DisplayFont}" FontSize="13"
+                               Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center" Margin="0,8,0,0"
+                               TextTrimming="CharacterEllipsis" />
+                    <Button Style="{StaticResource FlatButton}" Content="Ordner mit Sitzungen öffnen" HorizontalAlignment="Center"
+                            Margin="0,12,0,0" Command="{Binding OpenFolderCommand}" />
+                </StackPanel>
+            </Border>
+
+            <!-- ============ Ergebnis der letzten Sitzung ============ -->
+            <Border Style="{StaticResource Card}" Visibility="{Binding HasLastSession, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <TextBlock Text="Letzte Sitzung" Style="{StaticResource CardTitle}" />
+                    <TextBlock Style="{StaticResource SmallText}" FontSize="12" HorizontalAlignment="Center" Margin="0,2,0,14">
+                        <Run Text="{Binding LastSession.Game, Mode=OneWay}" />
+                        <Run Text="·" />
+                        <Run Text="{Binding LastSession.Start, Mode=OneWay, StringFormat='dd.MM.yyyy HH:mm'}" />
+                        <Run Text="· Vergleich im Reiter „Vergleich“" />
+                    </TextBlock>
+                    <UniformGrid Columns="6">
+                        <StackPanel>
+                            <TextBlock Text="Ø FPS" Style="{StaticResource ResultLabel}" />
+                            <TextBlock Text="{Binding LastSession.AvgFps, StringFormat='0.0', TargetNullValue='—'}" Style="{StaticResource ResultValue}"
+                                       Foreground="{StaticResource AccentBrush}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="1 % Low" Style="{StaticResource ResultLabel}" />
+                            <TextBlock Text="{Binding LastSession.Low1, StringFormat='0.0', TargetNullValue='—'}" Style="{StaticResource ResultValue}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="0,1 % Low" Style="{StaticResource ResultLabel}" />
+                            <TextBlock Text="{Binding LastSession.Low01, StringFormat='0.0', TargetNullValue='—'}" Style="{StaticResource ResultValue}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Max. CPU-Temp" Style="{StaticResource ResultLabel}" />
+                            <TextBlock Text="{Binding LastSession.MaxCpuTemp, StringFormat='0 °C', TargetNullValue='—'}" Style="{StaticResource ResultValue}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Max. GPU-Temp" Style="{StaticResource ResultLabel}" />
+                            <TextBlock Text="{Binding LastSession.MaxGpuTemp, StringFormat='0 °C', TargetNullValue='—'}" Style="{StaticResource ResultValue}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Max. Hotspot" Style="{StaticResource ResultLabel}" />
+                            <TextBlock Text="{Binding LastSession.MaxGpuHotspot, StringFormat='0 °C', TargetNullValue='—'}" Style="{StaticResource ResultValue}" />
+                        </StackPanel>
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- ============ Hinweise ============ -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="So funktioniert's" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" />
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextDimBrush}" FontSize="13" Margin="0,6,0,0" LineHeight="20">
+                        <Run Text="• Spiel starten, dann Strg + Alt + R drücken – oben in der Titelleiste und im Overlay erscheint ● REC." />
+                        <LineBreak />
+                        <Run Text="• Gespeichert wird in Dokumente\NeonMonitor\Sitzungen:  Spiel_Datum_Uhrzeit.csv  (alle Werte je Messung),  …-frames.csv  (jedes Bild)  und  ….json  (Zusammenfassung)." />
+                        <LineBreak />
+                        <Run Text="• Die CSV öffnet sich direkt in Excel (Semikolon, Dezimalkomma). Der Spielname lässt sich im Reiter „Vergleich“ später noch ändern." />
+                        <LineBreak />
+                        <Run Text="• Gemessen wird das Spiel, das gerade erkannt ist (siehe Reiter FPS). Für saubere Vergleiche immer ähnlich lange und an ähnlicher Stelle aufnehmen." />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

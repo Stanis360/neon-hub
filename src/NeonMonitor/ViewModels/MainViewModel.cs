@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using NeonMonitor.Infrastructure;
 using NeonMonitor.Models;
 using NeonMonitor.Services;
+using NeonMonitor.Services.Recording;
 
 namespace NeonMonitor.ViewModels;
 
@@ -30,7 +31,7 @@ public sealed class MainViewModel : ObservableObject
     private string _warnings = "";
     private bool _isInitializing = true;
 
-    public MainViewModel(HardwareMonitorService monitor, AppSettings settings)
+    public MainViewModel(HardwareMonitorService monitor, AppSettings settings, RecordingService recorder)
     {
         _monitor = monitor;
         _settings = settings;
@@ -60,6 +61,9 @@ public sealed class MainViewModel : ObservableObject
 
         Fps = new FpsViewModel(monitor.Fps, settings, points);
 
+        Recording = new RecordingViewModel(recorder);
+        Compare = new CompareViewModel();
+        Recording.SessionSaved += _ => Compare.Refresh();
         Overlay = new OverlayViewModel(this, settings);
 
         IsAdmin = SystemInfo.IsAdministrator();
@@ -96,6 +100,12 @@ public sealed class MainViewModel : ObservableObject
 
     /// <summary>FPS-Seite und FPS-Zeile im Dashboard.</summary>
     public FpsViewModel Fps { get; }
+
+    /// <summary>Reiter „Aufzeichnung“.</summary>
+    public RecordingViewModel Recording { get; }
+
+    /// <summary>Reiter „Vergleich“.</summary>
+    public CompareViewModel Compare { get; }
 
     /// <summary>Overlay-Einstellungen und -Inhalt.</summary>
     public OverlayViewModel Overlay { get; }
@@ -201,6 +211,7 @@ public sealed class MainViewModel : ObservableObject
 
         Fps.Apply(s);
         Overlay.Tick();
+        Recording.Tick();
         UpdateCoreClocks(s.CpuCoreClocks);
         UpdateDrives(s.Drives);
     }

@@ -15,6 +15,12 @@ public sealed class FpsSource : ISensorSource
     private PresentMonRunner? _runner;
     private volatile string? _pinnedApplication;
 
+    /// <summary>
+    /// Jedes einzelne Bild aller Anwendungen (für die Aufzeichnung der exakten Frametimes).
+    /// Wird auf dem PresentMon-Lese-Thread ausgelöst – Handler müssen schnell und threadsicher sein.
+    /// </summary>
+    public event Action<FrameSample>? FrameReceived;
+
     public string Name => "FPS (PresentMon)";
     public bool IsAvailable { get; private set; }
     public string Status => _runner is null ? "PresentMon fehlt" : _runner.Status;
@@ -38,7 +44,11 @@ public sealed class FpsSource : ISensorSource
         if (!File.Exists(ExePath))
             throw new FileNotFoundException("PresentMon.exe nicht gefunden – bitte Installieren.bat erneut ausführen.", ExePath);
 
-        _runner = new PresentMonRunner(ExePath, _tracker.Add);
+        _runner = new PresentMonRunner(ExePath, frame =>
+        {
+            _tracker.Add(frame);
+            FrameReceived?.Invoke(frame);
+        });
         _runner.Start();
         IsAvailable = true;
     }

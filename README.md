@@ -6,8 +6,8 @@ später FPS (per ETW, ohne Injection), Overlay, Aufzeichnung als CSV und Sitzung
 Gebaut mit **C# / .NET 10 / WPF**. Sensoren über **LibreHardwareMonitor**, ergänzt durch
 Windows-Leistungsindikatoren als Fallback.
 
-> Stand: **Schritt 3 von 5** – Live-Anzeige, FPS/Frametimes und Overlay. Die Reiter für
-> Aufzeichnung und Vergleich sind vorbereitet und werden in den nächsten Schritten gefüllt.
+> Stand: **Version 1.0** – alle fünf Schritte umgesetzt: Live-Anzeige, FPS/Frametimes, Overlay,
+> Aufzeichnung und Sitzungsvergleich.
 
 ---
 
@@ -156,7 +156,33 @@ alles andere inkl. FPS funktioniert).
 
 ---
 
-## 8. Projektstruktur
+## 8. Aufzeichnung (Reiter „Aufzeichnung“)
+
+* **Start/Stopp:** großer Knopf oder systemweit **Strg + Alt + R**. Während der Aufnahme steht **● REC 03:12**
+  in der Titelleiste und im Overlay.
+* **Spielname:** wird automatisch aus dem erkannten Spiel gefüllt (z. B. „Satisfactory“, „Dyson Sphere Program“,
+  „Call of Duty“) und kann vorher überschrieben oder später im Reiter „Vergleich“ geändert werden.
+* **Dateien** in `Dokumente\NeonMonitor\Sitzungen`:
+  * `Spiel_JJJJ-MM-TT_HH-MM-SS.csv` – eine Zeile pro Messung mit allen Sensorwerten und FPS
+  * `…-frames.csv` – jedes einzelne Bild mit Frametime (für exakte 1 % / 0,1 % Lows)
+  * `….json` – Zusammenfassung für den Vergleich
+* Die CSVs öffnen sich direkt in **Excel** (Semikolon, Dezimalkomma, UTF-8).
+* Nach dem Stoppen zeigt der Reiter sofort Ø FPS, 1 % / 0,1 % Low und die Höchsttemperaturen.
+
+## 9. Vergleich (Reiter „Vergleich“)
+
+* Links alle Sitzungen (neueste oben) – anhaken, um sie zu vergleichen (bis zu 6, jede bekommt eine Farbe).
+  Spielname direkt im Feld ändern (benennt die Dateien um), CSV öffnen oder löschen.
+* **Tabelle:** Dauer, Ø FPS, 1 % Low, 0,1 % Low, Ø Frametime, max. CPU-/GPU-Temperatur, max. Hotspot,
+  Ø Last und Leistung von CPU/GPU, max. RAM – der jeweils beste Wert ist grün hervorgehoben.
+* **Diagramm:** Verlauf über die Zeit für FPS, Ruckler (längste Frametime), Temperaturen, Last oder Leistung.
+
+**Definitionen:** 1 % Low = 1000 / 99. Perzentil der Frametimes (99 % aller Bilder waren mindestens so schnell),
+0,1 % Low entsprechend mit dem 99,9. Perzentil. Ø FPS = 1000 / mittlere Frametime.
+
+---
+
+## 10. Projektstruktur
 
 ```
 NeonMonitor/
@@ -177,6 +203,7 @@ NeonMonitor/
    ├─ Controls/
    │  ├─ AnimatedBackground.cs    # ruhiger animierter Hintergrund (Raster, Lichtflecken, Punkte)
    │  ├─ LineChart.cs             # schlankes Liniendiagramm
+   │  ├─ MultiLineChart.cs        # Vergleichsdiagramm mit mehreren Sitzungen
    │  └─ RingGauge.cs             # Ringanzeige (Last außen, Temperatur innen)
    ├─ Models/
    │  └─ HardwareSnapshot.cs      # eine Messung aller Werte (später = eine CSV-Zeile)
@@ -187,6 +214,11 @@ NeonMonitor/
    │  │  ├─ PresentMonCsvParser.cs        # ordnet die CSV-Spalten über die Kopfzeile zu
    │  │  ├─ FrameTracker.cs               # wählt das Spiel, berechnet FPS / 1 % Low / Frametimes
    │  │  └─ FpsSource.cs                  # FPS als Sensorquelle (landet im HardwareSnapshot)
+   │  ├─ Recording/
+   │  │  ├─ RecordingService.cs           # schreibt Sensor-CSV, Frame-CSV, berechnet die Zusammenfassung
+   │  │  ├─ SessionStore.cs               # Sitzungen auflisten, einlesen, umbenennen, löschen
+   │  │  ├─ SessionSummary.cs             # Inhalt der .json-Zusammenfassung
+   │  │  └─ GameNames.cs                  # Exe-Name → Spielname
    │  └─ Sensors/
    │     ├─ ISensorSource.cs              # Schnittstelle für Sensorquellen
    │     ├─ LibreHardwareSource.cs        # Hauptquelle (CPU/GPU/RAM)
@@ -194,7 +226,7 @@ NeonMonitor/
    │     ├─ PdhQuery.cs                   # Wrapper für pdh.dll
    │     └─ DriveSource.cs                # Laufwerksbelegung
    ├─ ViewModels/                 # MVVM: MainViewModel, MetricViewModel, ChartSeries …
-   ├─ Views/                      # LiveView, FpsView, OverlayView/-Window/-Controller, Platzhalter
+   ├─ Views/                      # Live, FPS, Overlay (+Fenster/Controller), Aufzeichnung, Vergleich
    └─ Infrastructure/             # Pfade, Einstellungen, Log, System-Checks, Monitore, globale Hotkeys
 ```
 
@@ -208,13 +240,16 @@ zusätzliche Klasse, ohne den Rest anzufassen.
 
 ---
 
-## 9. Fahrplan
+## 11. Fahrplan
 
 1. ✅ Projekt-Setup, Live-Werte, Diagramme, Theme
 2. ✅ FPS & Frametimes per ETW (PresentMon, keine Injection)
 3. ✅ Overlay (Always-on-top-Fenster für den Nebenmonitor, Werte wählbar, Strg+Alt+O)
-4. ⏳ Aufzeichnung (Start/Stopp, Hotkey, CSV pro Sitzung)
-5. ⏳ Vergleich (Ø FPS, 1 % Lows, Höchsttemperaturen, Diagramme)
+4. ✅ Aufzeichnung (Start/Stopp, Strg+Alt+R, CSV pro Sitzung mit Spielname, Datum und Uhrzeit)
+5. ✅ Vergleich (Ø FPS, 1 % / 0,1 % Lows, Höchsttemperaturen, Verlaufsdiagramme)
+
+Mögliche Erweiterungen: ADLX als zusätzliche GPU-Quelle (falls Sensoren fehlen), Lüfter/Mainboard-Sensoren,
+Export des Vergleichs als Bild.
 
 ## Lizenzen
 
