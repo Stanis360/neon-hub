@@ -301,6 +301,44 @@
         </Style.Triggers>
     </Style>
 
+    <!-- ===================== Auswahl-Chips (RadioButton) ===================== -->
+    <!-- Mehrere RadioButtons im selben Panel bilden eine Gruppe; der gewählte ist grün hinterlegt. -->
+    <Style x:Key="Chip" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Margin" Value="0,0,6,6" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Bd" Background="#2A3034" CornerRadius="6" Padding="12,5">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#353D42" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentBrush}" />
+                            <Setter Property="Foreground" Value="#15181A" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- −/+ Knopf -->
+    <Style x:Key="StepButton" TargetType="Button" BasedOn="{StaticResource FlatButton}">
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Padding" Value="0,4" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
     <!-- ===================== Eingabefeld ===================== -->
     <Style TargetType="TextBox">
         <Setter Property="Foreground" Value="{StaticResource TextBrush}" />

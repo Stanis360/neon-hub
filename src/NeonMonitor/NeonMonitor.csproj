@@ -8,12 +8,16 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <!-- nur für das Symbol im Infobereich (NotifyIcon) – WPF hat dafür kein eigenes Steuerelement -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- WFO0003: WinForms möchte DPI per API statt Manifest – gilt nicht für WPF, das das Manifest braucht -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <RootNamespace>NeonMonitor</RootNamespace>
     <AssemblyName>NeonMonitor</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <!-- Sensorzugriff (PawnIO-Treiber, MSRs) braucht Adminrechte → siehe app.manifest -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Programmsymbol (Taskleiste, Desktop-Verknüpfung) -->
@@ -23,6 +27,12 @@
     <!-- Erlaubt das Kompilieren auch außerhalb von Windows (z. B. CI) -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WinForms/Drawing nicht global einbinden, sonst kollidieren Namen wie Application, Color, Brush mit WPF -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Sensoren: CPU, GPU, RAM (nutzt PawnIO-Treiber + AMD ADL aus dem Grafiktreiber) -->

@@ -21,6 +21,7 @@ public sealed record RecordingStatus(bool IsRecording, TimeSpan Elapsed, int Sam
 public sealed class RecordingService : IDisposable
 {
     private readonly HardwareMonitorService _monitor;
+    private readonly Func<double> _pricePerKwh;
     private readonly object _sync = new();
 
     private StreamWriter? _csv;
@@ -35,11 +36,17 @@ public sealed class RecordingService : IDisposable
 
     // Laufende Summen/Maxima für die Zusammenfassung
     private readonly Accumulator _cpuLoad = new(), _gpuLoad = new(), _cpuPower = new(), _gpuPower = new(),
-                                 _cpuTemp = new(), _gpuTemp = new(), _hotspot = new(), _ramLoad = new(), _fps = new();
+                                 _cpuTemp = new(), _gpuTemp = new(), _hotspot = new(), _ramLoad = new(), _fps = new(),
+                                 _totalPower = new(), _cpuFan = new(), _caseFan = new();
+    private double _energyWh;
+    private TimeSpan _lastSampleAt;
 
-    public RecordingService(HardwareMonitorService monitor)
+    /// <param name="monitor">Messdienst (liefert Snapshots und Frames).</param>
+    /// <param name="pricePerKwh">Liefert den aktuellen Strompreis in €/kWh.</param>
+    public RecordingService(HardwareMonitorService monitor, Func<double> pricePerKwh)
     {
         _monitor = monitor;
+        _pricePerKwh = pricePerKwh;
         monitor.SnapshotReady += OnSnapshot;
         monitor.Fps.FrameReceived += OnFrame;
     }
@@ -101,7 +108,10 @@ public sealed class RecordingService : IDisposable
             _frameTimes.Clear();
             _firstFrameTime = null;
             _samples = 0;
-            foreach (var a in new[] { _cpuLoad, _gpuLoad, _cpuPower, _gpuPower, _cpuTemp, _gpuTemp, _hotspot, _ramLoad, _fps }) a.Reset();
+            foreach (var a in new[] { _cpuLoad, _gpuLoad, _cpuPower, _gpuPower, _cpuTemp, _gpuTemp, _hotspot, _ramLoad, _fps,
+                                      _totalPower, _cpuFan, _caseFan }) a.Reset();
+            _energyWh = 0;
+            _lastSampleAt = TimeSpan.Zero;
             _clock.Restart();
             Log.Info($"Aufnahme gestartet: {_session.CsvFile}");
         }
@@ -129,6 +139,15 @@ public sealed class RecordingService : IDisposable
             result.AvgCpuPower = _cpuPower.Average;
             result.AvgGpuPower = _gpuPower.Average;
             result.MaxRamLoad = _ramLoad.Max;
+            result.AvgCpuFan = _cpuFan.Average;
+            result.AvgCaseFan = _caseFan.Average;
+            result.AvgTotalPower = _totalPower.Average;
+            if (_totalPower.Average is not null)
+            {
+                result.EnergyWh = _energyWh;
+                result.CostEuro = _energyWh / 1000.0 * _pricePerKwh();
+                if (result.AvgFps is { } fps && _totalPower.Average > 0) result.FpsPerWatt = fps / _totalPower.Average;
+            }
 
             _csv?.Dispose();
             _frames?.Dispose();
@@ -194,6 +213,8 @@ public sealed class RecordingService : IDisposable
                 f(s.GpuLoad, "0.0"), f(s.GpuTemp, "0.0"), f(s.GpuHotspot, "0.0"), f(s.GpuClock, "0"), f(s.GpuMemClock, "0"),
                 f(s.GpuVramUsedMb, "0"), f(s.GpuPower, "0.0"), f(s.GpuFan, "0"),
                 f(s.RamUsedGb, "0.00"), f(s.RamLoad, "0.0"),
+                f(TotalPower(s), "0.0"), f(s.CpuFanRpm, "0"), f(s.CaseFanRpm, "0"),
+                f(s.NetDownMbit, "0.00"), f(s.NetUpMbit, "0.00"), f(s.DiskReadMBs, "0.0"), f(s.DiskWriteMBs, "0.0"),
             };
             _csv.WriteLine(string.Join(SessionStore.Separator, row));
             _csv.Flush();
@@ -204,8 +225,22 @@ public sealed class RecordingService : IDisposable
             _cpuPower.Add(s.CpuPower); _gpuPower.Add(s.GpuPower);
             _cpuTemp.Add(s.CpuTemp); _gpuTemp.Add(s.GpuTemp); _hotspot.Add(s.GpuHotspot);
             _ramLoad.Add(s.RamLoad); _fps.Add(s.Fps);
+            _cpuFan.Add(s.CpuFanRpm); _caseFan.Add(s.CaseFanRpm);
+
+            // Energie: Leistung × Zeit seit der letzten Messung
+            var now = _clock.Elapsed;
+            if (TotalPower(s) is { } watt)
+            {
+                _totalPower.Add(watt);
+                _energyWh += watt * (now - _lastSampleAt).TotalHours;
+            }
+            _lastSampleAt = now;
         }
     }
+
+    /// <summary>CPU-Package + GPU in Watt (null, wenn beides fehlt).</summary>
+    public static double? TotalPower(HardwareSnapshot s) =>
+        s.CpuPower is null && s.GpuPower is null ? null : (s.CpuPower ?? 0) + (s.GpuPower ?? 0);
 
     private void OnFrame(FrameSample frame)
     {

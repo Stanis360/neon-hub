@@ -31,7 +31,8 @@ public sealed class SessionItemViewModel : ObservableObject
 
     public string DateText => Summary.Start.ToString("ddd dd.MM.yyyy  HH:mm");
     public string DurationText => FormatDuration(Summary.DurationSeconds);
-    public string FpsText => Summary.AvgFps is { } f ? $"{f:0} FPS" + (Summary.Low1 is { } l ? $" · 1% {l:0}" : "") : "keine FPS";
+    public string FpsText => (Summary.AvgFps is { } f ? $"{f:0} FPS" + (Summary.Low1 is { } l ? $" · 1% {l:0}" : "") : "keine FPS")
+                             + (Summary.CostEuro is { } c ? $" · {c:0.00} €" : "");
 
     /// <summary>Spielname – Änderung benennt die Dateien um.</summary>
     public string Game
@@ -129,6 +130,8 @@ public sealed class CompareViewModel : ObservableObject
             new("GPU Last", RecordingColumns.GpuLoad, "%", select),
             new("CPU Watt", RecordingColumns.CpuPower, "W", select),
             new("GPU Watt", RecordingColumns.GpuPower, "W", select),
+            new("CPU-Lüfter", RecordingColumns.CpuFan, "", select),
+            new("Gehäuselüfter", RecordingColumns.CaseFan, "", select),
         ];
         _metric = Metrics[0];
         _metric.IsSelected = true;
@@ -275,6 +278,11 @@ public sealed class CompareViewModel : ObservableObject
         Add("Ø CPU-Leistung", s => s.AvgCpuPower, "0", "W", false);
         Add("Ø GPU-Leistung", s => s.AvgGpuPower, "0", "W", false);
         Add("Max. RAM", s => s.MaxRamLoad, "0", "%", null);
+        Add("Ø CPU-Lüfter", s => s.AvgCpuFan, "0", "U/min", false);
+        Add("Ø Gehäuselüfter", s => s.AvgCaseFan, "0", "U/min", false);
+        Add("FPS pro Watt", s => s.FpsPerWatt, "0.00", "", true);
+        Add("Energie CPU+GPU", s => s.EnergyWh, "0", "Wh", false);
+        Add("Stromkosten", s => s.CostEuro, "0.00", "€", false);
     }
 
     private void UpdateChart()

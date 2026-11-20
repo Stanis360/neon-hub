@@ -1,4 +1,5 @@
 using System.Text.Json;
+using NeonMonitor.Services.Sensors;
 
 namespace NeonMonitor.Infrastructure;
 
@@ -38,6 +39,40 @@ public sealed class AppSettings
 
     /// <summary>Fixiert: Mausklicks gehen durch das Overlay hindurch, Verschieben nicht möglich.</summary>
     public bool OverlayClickThrough { get; set; }
+
+    // ---------- Kühlung ----------
+
+    /// <summary>Eigene Namen für Lüfteranschlüsse (LHM-Kennung → Name, z. B. „Gehäuselüfter (4×)“).</summary>
+    public Dictionary<string, string> FanNames { get; set; } = new();
+    /// <summary>Welcher Anschluss ist der CPU-Lüfter bzw. die Gehäuselüfter (LHM-Kennung, null = automatisch).</summary>
+    public string? CpuFanId { get; set; }
+    public string? CaseFanId { get; set; }
+    /// <summary>Hauptschalter der Lüftersteuerung (aus = Mainboard/BIOS regelt).</summary>
+    public bool FanControlEnabled { get; set; }
+    public List<FanCurveConfig> FanCurves { get; set; } = new();
+
+    // ---------- Programmverhalten ----------
+
+    /// <summary>Schließen-Knopf versteckt das Fenster nur (Programm läuft im Infobereich weiter).</summary>
+    public bool CloseToTray { get; set; } = true;
+    /// <summary>Minimieren versteckt das Fenster im Infobereich.</summary>
+    public bool MinimizeToTray { get; set; }
+
+    // ---------- Aufnahme ----------
+
+    /// <summary>Aufnahme automatisch starten, sobald ein Spiel läuft, und beim Beenden stoppen.</summary>
+    public bool AutoRecord { get; set; }
+    /// <summary>Dauer des Benchmark-Modus in Sekunden.</summary>
+    public int BenchmarkSeconds { get; set; } = 60;
+    /// <summary>Strompreis in €/kWh für die Kostenberechnung.</summary>
+    public double PricePerKwh { get; set; } = 0.35;
+
+    // ---------- Warnungen ----------
+
+    public bool AlertsEnabled { get; set; } = true;
+    public double AlertCpuTemp { get; set; } = 90;
+    public double AlertGpuTemp { get; set; } = 90;
+    public double AlertHotspot { get; set; } = 105;
 
     /// <summary>Wie viele Sekunden die Live-Diagramme zurückreichen.</summary>
     public int HistorySeconds { get; set; } = 120;

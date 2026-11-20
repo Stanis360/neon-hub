@@ -202,6 +202,13 @@
                             <Rectangle Style="{StaticResource LegendLine}" Fill="{StaticResource SecondaryBrush}" />
                             <TextBlock Text="{Binding CpuPower.DisplayWithUnit, StringFormat='CPU {0}'}" Style="{StaticResource LegendText}" />
                         </StackPanel>
+                        <TextBlock HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="{StaticResource DisplayFont}" FontSize="13"
+                                   Foreground="{StaticResource TextBrush}">
+                            <Run Text="Zusammen" Foreground="{StaticResource TextDimBrush}" />
+                            <Run Text="{Binding TotalPower.DisplayWithUnit, Mode=OneWay}" />
+                            <Run Text="  ·  FPS pro Watt" Foreground="{StaticResource TextDimBrush}" />
+                            <Run Text="{Binding FpsPerWatt.DisplayValue, Mode=OneWay}" />
+                        </TextBlock>
                         <controls:LineChart Height="150" Maximum="150" Unit="W"
                                             Series="{Binding GpuPower.History}" Stroke="{StaticResource AccentBrush}"
                                             Series2="{Binding CpuPower.History}" Stroke2="{StaticResource SecondaryBrush}" />
@@ -225,6 +232,63 @@
                     <StackPanel>
                         <TextBlock Text="Laufwerke" Style="{StaticResource CardTitle}" Margin="0,0,0,8" />
                         <ItemsControl ItemsSource="{Binding Drives}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ============ Dritte Reihe: Kühlung | Netzwerk | Datenträger-Aktivität ============ -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Kühlung (Kurzfassung, Details im Reiter „Kühlung“) -->
+                <Border Grid.Column="0" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Kühlung" Style="{StaticResource CardTitle}" Margin="0,0,0,8" />
+                        <ContentControl Content="{Binding CpuFan}" />
+                        <ContentControl Content="{Binding CaseFan}" />
+                        <ItemsControl ItemsSource="{Binding Cooling.TopTemps}" Margin="0,6,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:TempItemViewModel}">
+                                    <DockPanel Margin="0,2">
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding ValueText}" FontFamily="{StaticResource DisplayFont}"
+                                                   FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                                        <TextBlock FontFamily="{StaticResource DisplayFont}" FontSize="13" Foreground="{StaticResource TextBrush}"
+                                                   TextTrimming="CharacterEllipsis" Margin="0,0,8,0">
+                                            <Run Text="{Binding Group, Mode=OneWay}" Foreground="{StaticResource TextDimBrush}" />
+                                            <Run Text="{Binding Name, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Netzwerk -->
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Netzwerk" Style="{StaticResource CardTitle}" />
+                        <controls:LineChart Height="80" Maximum="10" Unit="" Margin="0,10,0,6"
+                                            Series="{Binding NetDown.History}" Stroke="{StaticResource AccentBrush}"
+                                            Series2="{Binding NetUp.History}" Stroke2="{StaticResource SecondaryBrush}" />
+                        <ContentControl Content="{Binding NetDown}" />
+                        <ContentControl Content="{Binding NetUp}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Datenträger-Aktivität -->
+                <Border Grid.Column="2" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Datenträger-Aktivität" Style="{StaticResource CardTitle}" />
+                        <controls:LineChart Height="80" Maximum="10" Unit="" Margin="0,10,0,6"
+                                            Series="{Binding DiskRead.History}" Stroke="{StaticResource AccentBrush}"
+                                            Series2="{Binding DiskWrite.History}" Stroke2="{StaticResource SecondaryBrush}" />
+                        <ContentControl Content="{Binding DiskRead}" />
+                        <ContentControl Content="{Binding DiskWrite}" />
                     </StackPanel>
                 </Border>
             </Grid>

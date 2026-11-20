@@ -29,16 +29,18 @@ public sealed class HardwareMonitorService : IDisposable
     /// <summary>Alle Quellen sind initialisiert (wird auf dem Mess-Thread ausgelöst!).</summary>
     public event EventHandler? Initialized;
 
-    /// <param name="intervalMs">Abfrageintervall.</param>
-    /// <param name="safeMode">Sicherer Modus: kein Kernel-Treiber (PawnIO) – für empfindliche Anti-Cheats.</param>
-    public HardwareMonitorService(int intervalMs, bool safeMode)
+    /// <param name="settings">Einstellungen (Intervall, sicherer Modus = ohne PawnIO, Lüfter).</param>
+    public HardwareMonitorService(AppSettings settings)
     {
-        IntervalMs = intervalMs;
+        IntervalMs = settings.PollIntervalMs;
         Fps = new FpsSource();
+        Lhm = new LibreHardwareSource(settings.SafeMode, settings);
+        Lhm.FanControl.Enabled = settings.FanControlEnabled;
+        Lhm.FanControl.SetConfigs(settings.FanCurves);
         // Reihenfolge = Priorität. Spätere Quellen füllen nur noch fehlende Werte.
         _sources = new List<ISensorSource>
         {
-            new LibreHardwareSource(safeMode),
+            Lhm,
             new WindowsCounterSource(),
             new DriveSource(),
             Fps,
@@ -47,6 +49,9 @@ public sealed class HardwareMonitorService : IDisposable
 
     /// <summary>FPS-Quelle (für die Auswahl der Anwendung aus der Oberfläche).</summary>
     public FpsSource Fps { get; }
+
+    /// <summary>LibreHardwareMonitor-Quelle (u. a. für die Lüftersteuerung).</summary>
+    public LibreHardwareSource Lhm { get; }
 
     public IReadOnlyList<ISensorSource> Sources => _sources;
 

@@ -21,6 +21,11 @@ public sealed partial class WindowsCounterSource : ISensorSource
     private const string CpuUtility = @"\Processor Information(_Total)\% Processor Utility";
     private const string GpuEngine3D = @"\GPU Engine(*engtype_3D)\Utilization Percentage";
     private const string GpuDedicated = @"\GPU Adapter Memory(*)\Dedicated Usage";
+    private const string NetDown = @"\Network Interface(*)\Bytes Received/sec";
+    private const string NetUp = @"\Network Interface(*)\Bytes Sent/sec";
+    private const string DiskRead = @"\PhysicalDisk(_Total)\Disk Read Bytes/sec";
+    private const string DiskWrite = @"\PhysicalDisk(_Total)\Disk Write Bytes/sec";
+    private static readonly string[] AllCounters = [CpuUtility, GpuEngine3D, GpuDedicated, NetDown, NetUp, DiskRead, DiskWrite];
 
     private PdhQuery? _pdh;
 
@@ -32,14 +37,14 @@ public sealed partial class WindowsCounterSource : ISensorSource
     {
         _pdh = new PdhQuery();
         var added = new List<string>();
-        foreach (var path in new[] { CpuUtility, GpuEngine3D, GpuDedicated })
+        foreach (var path in AllCounters)
         {
             try { _pdh.Add(path); added.Add(path); }
             catch { /* einzelner Zähler fehlt (z. B. ältere Windows-Version) – weiter */ }
         }
         _pdh.Collect(); // erste Messung als Basis für Ratenzähler
         IsAvailable = true;
-        Status = $"OK ({added.Count}/3 Zähler)";
+        Status = $"OK ({added.Count}/{AllCounters.Length} Zähler)";
     }
 
     public void Fill(HardwareSnapshot s)
@@ -65,6 +70,24 @@ public sealed partial class WindowsCounterSource : ISensorSource
             var cpu = _pdh.Read(CpuUtility);
             if (cpu.Count > 0) s.CpuLoad = Math.Clamp(cpu[0].Value, 0, 100);
         }
+
+        // Netzwerk: Summe aller echten Adapter (virtuelle Hyper-V/WSL-Adapter würden doppelt zählen)
+        static bool IsPhysical(string name) =>
+            !name.Contains("Loopback", StringComparison.OrdinalIgnoreCase)
+            && !name.Contains("isatap", StringComparison.OrdinalIgnoreCase)
+            && !name.Contains("Teredo", StringComparison.OrdinalIgnoreCase)
+            && !name.Contains("vEthernet", StringComparison.OrdinalIgnoreCase)
+            && !name.Contains("Hyper-V", StringComparison.OrdinalIgnoreCase);
+        const double bytesToMbit = 8.0 / 1_000_000;
+        const double bytesToMB = 1.0 / (1024 * 1024);
+        var down = _pdh.Read(NetDown).Where(x => IsPhysical(x.Instance)).ToList();
+        if (down.Count > 0) s.NetDownMbit ??= down.Sum(x => x.Value) * bytesToMbit;
+        var up = _pdh.Read(NetUp).Where(x => IsPhysical(x.Instance)).ToList();
+        if (up.Count > 0) s.NetUpMbit ??= up.Sum(x => x.Value) * bytesToMbit;
+        var read = _pdh.Read(DiskRead);
+        if (read.Count > 0) s.DiskReadMBs ??= read[0].Value * bytesToMB;
+        var write = _pdh.Read(DiskWrite);
+        if (write.Count > 0) s.DiskWriteMBs ??= write[0].Value * bytesToMB;
 
         if (s.GpuLoad is null || s.GpuVramUsedMb is null)
         {

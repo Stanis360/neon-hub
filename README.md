@@ -6,8 +6,9 @@ später FPS (per ETW, ohne Injection), Overlay, Aufzeichnung als CSV und Sitzung
 Gebaut mit **C# / .NET 10 / WPF**. Sensoren über **LibreHardwareMonitor**, ergänzt durch
 Windows-Leistungsindikatoren als Fallback.
 
-> Stand: **Version 1.0** – alle fünf Schritte umgesetzt: Live-Anzeige, FPS/Frametimes, Overlay,
-> Aufzeichnung und Sitzungsvergleich.
+> Stand: **Version 1.1** – Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich,
+> dazu Kühlung mit Lüftersteuerung, Infobereich-Symbol, Autostart, automatische Aufnahme, Benchmark,
+> Warnungen, Netzwerk/Datenträger, Energie & Kosten und Spielzeit-Statistik.
 
 ---
 
@@ -177,12 +178,44 @@ alles andere inkl. FPS funktioniert).
   Ø Last und Leistung von CPU/GPU, max. RAM – der jeweils beste Wert ist grün hervorgehoben.
 * **Diagramm:** Verlauf über die Zeit für FPS, Ruckler (längste Frametime), Temperaturen, Last oder Leistung.
 
+Zusätzlich im Vergleich: Ø CPU-/Gehäuselüfter, **FPS pro Watt**, **Energie** (Wh) und **Stromkosten** (€) je Sitzung.
+
 **Definitionen:** 1 % Low = 1000 / 99. Perzentil der Frametimes (99 % aller Bilder waren mindestens so schnell),
 0,1 % Low entsprechend mit dem 99,9. Perzentil. Ø FPS = 1000 / mittlere Frametime.
 
 ---
 
-## 10. Projektstruktur
+## 10. Kühlung (Reiter „Kühlung“)
+
+* **Lüfter:** alle Lüfteranschlüsse des Mainboards mit Drehzahl. Namen direkt im Feld ändern
+  (z. B. „Gehäuselüfter (4×)“, wenn mehrere Lüfter an einem Anschluss hängen). Mit **CPU** / **Gehäuse** festlegen,
+  welcher Anschluss in Live-Ansicht, Overlay und Aufnahme als CPU- bzw. Gehäuselüfter zählt.
+  Ohne Festlegung rät NeonMonitor (Name enthält „CPU“, sonst bei ASUS/Nuvoton meist „Fan #2“).
+* **Temperaturen:** Mainboard-Sensoren, SSDs (SMART) und DDR5-Module.
+* **Lüftersteuerung** (standardmäßig **aus**): pro Anschluss *BIOS*, *Fest* (in 5-%-Schritten) oder *Kurve*
+  (Leise / Ausgewogen / Leistung, nach CPU-Temperatur oder dem höheren Wert von CPU und GPU).
+  **Sicherheitsnetz:** nie unter 20 %, Vollgas ab 90 °C CPU bzw. 105 °C GPU-Hotspot oder wenn ein
+  Temperaturwert fehlt, nach unten nur langsam, beim Beenden regelt wieder das Mainboard.
+  Bei einem Absturz kann ein Lüfter auf dem letzten Wert bleiben, bis NeonMonitor neu startet.
+* GPU-Lüfter bleiben bewusst bei AMD Adrenalin. Mainboard-Sensoren brauchen PawnIO (im sicheren Modus aus).
+
+## 11. Komfort
+
+* **Infobereich-Symbol** (unten rechts): Temperaturen und FPS beim Darüberfahren, Doppelklick öffnet,
+  Rechtsklick: Overlay, Aufnahme, Benchmark, Beenden. Schließen (✕) versteckt das Fenster nur (abschaltbar).
+* **Autostart** (Einstellungen): über die Windows-Aufgabenplanung – startet bei der Anmeldung **ohne
+  Admin-Abfrage** unsichtbar im Infobereich.
+* **Automatische Aufnahme** (Einstellungen): startet 10 s nach Spielbeginn, stoppt 15 s nach Spielende.
+* **Benchmark** (Strg + Alt + B): Aufnahme mit fester Dauer (30 s / 60 s / 2 min / 5 min) für faire Vergleiche.
+* **Warnungen** als Windows-Benachrichtigung bei hohen Temperaturen (Grenzen einstellbar) und wenn der
+  CPU-Lüfter steht, obwohl die CPU warm ist.
+* **Netzwerk & Datenträger:** Empfang/Senden in Mbit/s, Lesen/Schreiben in MB/s (Live-Ansicht, Overlay, Aufnahme).
+* **Energie:** CPU + GPU zusammen und FPS pro Watt live; Energie und Kosten je Sitzung (Strompreis einstellbar).
+* **Statistik:** Spielzeit pro Spiel (läuft automatisch mit, auch ohne Aufnahme), Ø FPS, Summe aller Aufnahmen.
+
+---
+
+## 12. Projektstruktur
 
 ```
 NeonMonitor/
@@ -219,14 +252,19 @@ NeonMonitor/
    │  │  ├─ SessionStore.cs               # Sitzungen auflisten, einlesen, umbenennen, löschen
    │  │  ├─ SessionSummary.cs             # Inhalt der .json-Zusammenfassung
    │  │  └─ GameNames.cs                  # Exe-Name → Spielname
+   │  ├─ Comfort/
+   │  │  ├─ PlaytimeService.cs            # Spielzeit pro Spiel
+   │  │  ├─ AlertService.cs               # Temperatur-/Lüfter-Warnungen
+   │  │  └─ AutostartService.cs           # Autostart über die Aufgabenplanung
    │  └─ Sensors/
    │     ├─ ISensorSource.cs              # Schnittstelle für Sensorquellen
-   │     ├─ LibreHardwareSource.cs        # Hauptquelle (CPU/GPU/RAM)
+   │     ├─ LibreHardwareSource.cs        # Hauptquelle (CPU/GPU/RAM/Mainboard/SSD)
+   │     ├─ FanControlEngine.cs           # Lüftersteuerung mit Sicherheitsnetz
    │     ├─ WindowsCounterSource.cs       # Fallback: Windows-Leistungsindikatoren
    │     ├─ PdhQuery.cs                   # Wrapper für pdh.dll
    │     └─ DriveSource.cs                # Laufwerksbelegung
    ├─ ViewModels/                 # MVVM: MainViewModel, MetricViewModel, ChartSeries …
-   ├─ Views/                      # Live, FPS, Overlay (+Fenster/Controller), Aufzeichnung, Vergleich
+   ├─ Views/                      # alle Reiter, Overlay-Fenster/-Controller, TrayIcon
    └─ Infrastructure/             # Pfade, Einstellungen, Log, System-Checks, Monitore, globale Hotkeys
 ```
 
@@ -240,7 +278,7 @@ zusätzliche Klasse, ohne den Rest anzufassen.
 
 ---
 
-## 11. Fahrplan
+## 13. Fahrplan
 
 1. ✅ Projekt-Setup, Live-Werte, Diagramme, Theme
 2. ✅ FPS & Frametimes per ETW (PresentMon, keine Injection)
@@ -248,8 +286,11 @@ zusätzliche Klasse, ohne den Rest anzufassen.
 4. ✅ Aufzeichnung (Start/Stopp, Strg+Alt+R, CSV pro Sitzung mit Spielname, Datum und Uhrzeit)
 5. ✅ Vergleich (Ø FPS, 1 % / 0,1 % Lows, Höchsttemperaturen, Verlaufsdiagramme)
 
-Mögliche Erweiterungen: ADLX als zusätzliche GPU-Quelle (falls Sensoren fehlen), Lüfter/Mainboard-Sensoren,
-Export des Vergleichs als Bild.
+6. ✅ Kühlung (Lüfter, Mainboard/SSD/RAM-Temperaturen, Lüftersteuerung mit Sicherheitsnetz)
+7. ✅ Komfort (Infobereich, Autostart, Auto-Aufnahme, Benchmark, Warnungen, Netzwerk/Datenträger, Energie, Statistik)
+
+Mögliche Erweiterungen: ADLX als zusätzliche GPU-Quelle (falls Sensoren fehlen), eigene Lüfterkurven mit
+frei setzbaren Punkten, Export des Vergleichs als Bild.
 
 ## Lizenzen
 

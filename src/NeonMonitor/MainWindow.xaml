@@ -35,7 +35,7 @@
                         <Ellipse Width="10" Height="10" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,1,10,0" />
                         <TextBlock Text="NeonMonitor" FontFamily="{StaticResource DisplayFont}" FontSize="16"
                                    Foreground="{StaticResource TextBrush}" />
-                        <TextBlock Text="v1.0" Style="{StaticResource SmallText}" Margin="12,3,0,0" VerticalAlignment="Center" />
+                        <TextBlock Text="v1.1" Style="{StaticResource SmallText}" Margin="12,3,0,0" VerticalAlignment="Center" />
                         <TextBlock Margin="20,1,0,0" VerticalAlignment="Center" FontFamily="{StaticResource DisplayFont}" FontSize="13"
                                    Foreground="{StaticResource CriticalBrush}"
                                    Visibility="{Binding Recording.IsRecording, Converter={StaticResource BoolToVisibility}}">
@@ -95,6 +95,9 @@
                     <TabItem Header="◈  FPS">
                         <views:FpsView DataContext="{Binding Fps}" />
                     </TabItem>
+                    <TabItem Header="❄  Kühlung">
+                        <views:CoolingView DataContext="{Binding Cooling}" />
+                    </TabItem>
                     <TabItem Header="◧  Overlay">
                         <views:OverlayView DataContext="{Binding Overlay}" />
                     </TabItem>
@@ -103,6 +106,12 @@
                     </TabItem>
                     <TabItem Header="⇄  Vergleich">
                         <views:CompareView DataContext="{Binding Compare}" />
+                    </TabItem>
+                    <TabItem Header="▤  Statistik">
+                        <views:StatsView DataContext="{Binding Stats}" />
+                    </TabItem>
+                    <TabItem Header="⚙  Einstellungen">
+                        <views:SettingsView DataContext="{Binding Settings}" />
                     </TabItem>
                 </TabControl>
             </DockPanel>

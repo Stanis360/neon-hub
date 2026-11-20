@@ -1,0 +1,140 @@
+<UserControl x:Class="NeonMonitor.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:NeonMonitor.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:SettingsViewModel}"
+             d:DesignWidth="1100" d:DesignHeight="900">
+
+    <UserControl.Resources>
+        <Style x:Key="Hint" TargetType="TextBlock" BasedOn="{StaticResource SmallText}">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="44,0,0,14" />
+        </Style>
+        <Style x:Key="Option" TargetType="CheckBox" BasedOn="{StaticResource Switch}">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="RowLabel" TargetType="TextBlock">
+            <Setter Property="Width" Value="190" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+        <Style x:Key="StepValue" TargetType="TextBlock">
+            <Setter Property="Width" Value="110" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <!-- ============ Start & Infobereich ============ -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Start &amp; Infobereich" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" Margin="0,0,0,12" />
+                        <CheckBox Style="{StaticResource Option}" Content="Mit Windows starten" IsChecked="{Binding Autostart}" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Startet bei der Anmeldung unsichtbar im Infobereich – über die Windows-Aufgabenplanung, daher ohne Admin-Abfrage." />
+                        <CheckBox Style="{StaticResource Option}" Content="Schließen (✕) versteckt nur das Fenster" IsChecked="{Binding CloseToTray}" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="NeonMonitor läuft im Infobereich weiter (Symbol unten rechts). Beenden über Rechtsklick → Beenden." />
+                        <CheckBox Style="{StaticResource Option}" Content="Minimieren in den Infobereich" IsChecked="{Binding MinimizeToTray}" />
+                        <TextBlock Style="{StaticResource Hint}" Text="Statt in der Taskleiste zu bleiben." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ============ Aufnahme ============ -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Aufnahme" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" Margin="0,0,0,12" />
+                        <CheckBox Style="{StaticResource Option}" Content="Automatisch aufnehmen, wenn ein Spiel läuft" IsChecked="{Binding AutoRecord}" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Startet 10 Sekunden nach Spielbeginn (flüssige FPS und GPU-Last), stoppt 15 Sekunden nach Spielende. Manuell gestoppt? Dann erst beim nächsten Spielstart wieder." />
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                            <TextBlock Text="Benchmark-Dauer" Style="{StaticResource RowLabel}" />
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Style="{StaticResource Chip}" Content="30 s" IsChecked="{Binding Bench30}" />
+                                <RadioButton Style="{StaticResource Chip}" Content="60 s" IsChecked="{Binding Bench60}" />
+                                <RadioButton Style="{StaticResource Chip}" Content="2 min" IsChecked="{Binding Bench120}" />
+                                <RadioButton Style="{StaticResource Chip}" Content="5 min" IsChecked="{Binding Bench300}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,14"
+                                   Text="Benchmark = Aufnahme mit fester Dauer (Strg + Alt + B) – für faire Vergleiche zwischen Grafikeinstellungen." />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Strompreis" Style="{StaticResource RowLabel}" />
+                            <Button Style="{StaticResource StepButton}" Content="−" Command="{Binding PriceDown}" />
+                            <TextBlock Text="{Binding PriceText}" Style="{StaticResource StepValue}" />
+                            <Button Style="{StaticResource StepButton}" Content="+" Command="{Binding PriceUp}" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource Hint}" Margin="0,6,0,0"
+                                   Text="Für die Kosten pro Sitzung. Gerechnet wird nur CPU-Package + Grafikkarte – der ganze PC braucht etwas mehr (Mainboard, RAM, Lüfter, Netzteil-Verluste)." />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1">
+                <!-- ============ Warnungen ============ -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Warnungen" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" Margin="0,0,0,12" />
+                        <CheckBox Style="{StaticResource Option}" Content="Windows-Benachrichtigung bei hohen Temperaturen" IsChecked="{Binding AlertsEnabled}" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Höchstens alle 5 Minuten pro Wert. Zusätzlich: Warnung, wenn der CPU-Lüfter steht, obwohl die CPU warm ist." />
+                        <StackPanel IsEnabled="{Binding AlertsEnabled}">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBlock Text="CPU ab" Style="{StaticResource RowLabel}" />
+                                <Button Style="{StaticResource StepButton}" Content="−" Command="{Binding CpuDown}" />
+                                <TextBlock Text="{Binding AlertCpuText}" Style="{StaticResource StepValue}" />
+                                <Button Style="{StaticResource StepButton}" Content="+" Command="{Binding CpuUp}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBlock Text="GPU ab" Style="{StaticResource RowLabel}" />
+                                <Button Style="{StaticResource StepButton}" Content="−" Command="{Binding GpuDown}" />
+                                <TextBlock Text="{Binding AlertGpuText}" Style="{StaticResource StepValue}" />
+                                <Button Style="{StaticResource StepButton}" Content="+" Command="{Binding GpuUp}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="GPU-Hotspot ab" Style="{StaticResource RowLabel}" />
+                                <Button Style="{StaticResource StepButton}" Content="−" Command="{Binding HotDown}" />
+                                <TextBlock Text="{Binding AlertHotText}" Style="{StaticResource StepValue}" />
+                                <Button Style="{StaticResource StepButton}" Content="+" Command="{Binding HotUp}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ============ Tastenkürzel & Info ============ -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Tastenkürzel" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" Margin="0,0,0,10" />
+                        <TextBlock Foreground="{StaticResource TextBrush}" FontSize="13" LineHeight="22">
+                            <Run Text="Strg + Alt + O" FontWeight="SemiBold" /><Run Text="   Overlay ein/aus" /><LineBreak />
+                            <Run Text="Strg + Alt + R" FontWeight="SemiBold" /><Run Text="   Aufnahme starten/stoppen" /><LineBreak />
+                            <Run Text="Strg + Alt + B" FontWeight="SemiBold" /><Run Text="   Benchmark starten" />
+                        </TextBlock>
+                        <TextBlock Text="{Binding VersionText}" Style="{StaticResource SmallText}" Margin="0,16,0,8" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource FlatButton}" Content="Dokumente\NeonMonitor" Margin="0,0,8,0" Command="{Binding OpenDocumentsCommand}" />
+                            <Button Style="{StaticResource FlatButton}" Content="Einstellungen &amp; Log" Command="{Binding OpenAppDataCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

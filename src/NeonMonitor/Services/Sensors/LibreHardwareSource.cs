@@ -15,12 +15,18 @@ namespace NeonMonitor.Services.Sensors;
 /// Sensoren werden über Typ + Name gesucht. Für jeden Wert gibt es eine Prioritätsliste
 /// möglicher Sensornamen, weil sich die Namen je nach Hardware/Version unterscheiden.
 /// </summary>
-public sealed class LibreHardwareSource(bool safeMode) : ISensorSource
+public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : ISensorSource
 {
     private Computer? _computer;
     private IHardware? _cpu;
     private IHardware? _gpu;
     private IHardware? _memory;
+    private IHardware? _board;
+    private List<IHardware> _storage = new();
+    private int _storageTick;
+
+    /// <summary>Lüftersteuerung (Mainboard-Lüfter).</summary>
+    public FanControlEngine FanControl { get; } = new();
 
     public string Name => "LibreHardwareMonitor";
     public bool IsAvailable { get; private set; }
@@ -39,8 +45,10 @@ public sealed class LibreHardwareSource(bool safeMode) : ISensorSource
             IsGpuEnabled = true,
             IsMemoryEnabled = !safeMode,
             // Mainboard/Lüfter/Laufwerke vorerst aus: spart Startzeit; Laufwerke liest DriveSource.
-            IsMotherboardEnabled = false,
-            IsStorageEnabled = false,
+            // Mainboard (Lüfter, Mainboard-Temperaturen) braucht ebenfalls PawnIO → im sicheren Modus aus
+            IsMotherboardEnabled = !safeMode,
+            // SSD-Temperaturen über SMART (ohne PawnIO)
+            IsStorageEnabled = true,
         };
         _computer.Open(); // kann einige Sekunden dauern (Treiber laden, Hardware erkennen)
 
@@ -49,16 +57,20 @@ public sealed class LibreHardwareSource(bool safeMode) : ISensorSource
         _cpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);
         _memory = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Memory);
         _gpu = SelectDiscreteGpu(_computer.Hardware);
+        _board = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Motherboard);
+        _storage = _computer.Hardware.Where(h => h.HardwareType == HardwareType.Storage).ToList();
 
         IsAvailable = true;
         var parts = new List<string>();
         if (_cpu is not null) parts.Add("CPU");
         if (_gpu is not null) parts.Add("GPU");
         if (_memory is not null) parts.Add("RAM");
+        if (_board is not null) parts.Add("Mainboard");
+        if (_storage.Count > 0) parts.Add($"{_storage.Count} Laufwerk(e)");
         Status = parts.Count > 0 ? "OK (" + string.Join(", ", parts) + ")" : "keine Hardware erkannt";
         if (safeMode) Status += " · sicherer Modus";
 
-        Log.Info($"LHM: CPU={_cpu?.Name ?? "-"}, GPU={_gpu?.Name ?? "-"}, RAM={(_memory is null ? "-" : "ok")}");
+        Log.Info($"LHM: CPU={_cpu?.Name ?? "-"}, GPU={_gpu?.Name ?? "-"}, RAM={(_memory is null ? "-" : "ok")}, Board={_board?.Name ?? "-"}");
     }
 
     /// <summary>
@@ -139,8 +151,72 @@ public sealed class LibreHardwareSource(bool safeMode) : ISensorSource
             s.RamUsedGb ??= used;
             if (used is not null && avail is not null) s.RamTotalGb ??= used + avail;
             s.RamLoad ??= FindValue(_memory, SensorType.Load, "Memory");
+
+            // DDR5-Module haben eigene Temperatursensoren
+            foreach (var t in AllSensors(_memory).Where(x => x.SensorType == SensorType.Temperature && IsPlausible(x.Value)))
+                s.ExtraTemps.Add(new TempReading("RAM", t.Hardware.Name == _memory.Name ? t.Name : t.Hardware.Name, t.Value!.Value));
+        }
+
+        FillBoard(s);
+        FillStorage(s);
+    }
+
+    /// <summary>Mainboard: Lüfter, Lüftersteuerung, Temperaturen.</summary>
+    private void FillBoard(HardwareSnapshot s)
+    {
+        if (_board is null) return;
+        UpdateRecursive(_board);
+        var sensors = AllSensors(_board).ToList();
+
+        foreach (var f in sensors.Where(x => x.SensorType == SensorType.Fan && x.Value is not null))
+            s.Fans.Add(new FanReading(f.Identifier.ToString(), f.Name, f.Value!.Value));
+
+        foreach (var t in sensors.Where(x => x.SensorType == SensorType.Temperature && IsPlausible(x.Value)))
+            s.ExtraTemps.Add(new TempReading("Mainboard", t.Name, t.Value!.Value));
+
+        // Zuordnung CPU-/Gehäuselüfter: Einstellung, sonst automatisch
+        var active = s.Fans.Where(f => f.Rpm > 0).ToList();
+        var cpuFan = s.Fans.FirstOrDefault(f => f.Id == settings.CpuFanId)
+                     ?? active.FirstOrDefault(f => f.Name.Contains("CPU", StringComparison.OrdinalIgnoreCase))
+                     ?? active.FirstOrDefault(f => f.Name == "Fan #2") // bei ASUS/Nuvoton meist CPU_FAN
+                     ?? active.FirstOrDefault();
+        var caseFan = s.Fans.FirstOrDefault(f => f.Id == settings.CaseFanId)
+                      ?? active.FirstOrDefault(f => f != cpuFan);
+        s.CpuFanRpm ??= cpuFan?.Rpm;
+        s.CaseFanRpm ??= caseFan?.Rpm;
+
+        // Lüftersteuerung (erst nach den Temperaturen, die kommen aus CPU/GPU oben)
+        var controls = sensors.Where(x => x.SensorType == SensorType.Control && x.Control is not null).ToList();
+        FanControl.Apply(controls, s);
+        foreach (var c in controls)
+        {
+            var id = c.Identifier.ToString();
+            s.FanControls.Add(new FanControlReading(id, c.Name, c.Value, FanControl.IsControlled(id)));
         }
     }
+
+    /// <summary>SSD/HDD-Temperaturen (SMART). Nur alle 10 Messungen – SMART-Abfragen sind vergleichsweise langsam.</summary>
+    private List<TempReading> _lastStorageTemps = new();
+    private void FillStorage(HardwareSnapshot s)
+    {
+        if (_storage.Count == 0) return;
+        if (_storageTick++ % 10 == 0)
+        {
+            var temps = new List<TempReading>();
+            foreach (var d in _storage)
+            {
+                try { d.Update(); } catch { continue; }
+                var t = d.Sensors.Where(x => x.SensorType == SensorType.Temperature && IsPlausible(x.Value))
+                                 .OrderBy(x => x.Index).FirstOrDefault();
+                if (t is not null) temps.Add(new TempReading("SSD", d.Name, t.Value!.Value));
+            }
+            _lastStorageTemps = temps;
+        }
+        s.ExtraTemps.AddRange(_lastStorageTemps);
+    }
+
+    /// <summary>Unbelegte Sensoreingänge melden oft 0, -128 oder 127 °C.</summary>
+    private static bool IsPlausible(float? v) => v is > 1 and < 125;
 
     public void AppendReport(StringBuilder r)
     {
@@ -212,6 +288,14 @@ public sealed class LibreHardwareSource(bool safeMode) : ISensorSource
 
     public void Dispose()
     {
+        // Lüfter zuerst zurück ans Mainboard geben
+        try
+        {
+            if (_board is not null)
+                FanControl.ReleaseAll(AllSensors(_board).Where(x => x.SensorType == SensorType.Control));
+        }
+        catch (Exception ex) { Log.Warn($"Lüfter zurücksetzen: {ex.Message}"); }
+
         try { _computer?.Close(); } // entlädt Treiber/Handles sauber
         catch (Exception ex) { Log.Warn($"LHM Close: {ex.Message}"); }
         _computer = null;

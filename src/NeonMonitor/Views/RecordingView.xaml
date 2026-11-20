@@ -54,8 +54,12 @@
                         </Button>
                     </StackPanel>
 
-                    <TextBlock Text="Tastenkürzel: Strg + Alt + R (funktioniert auch im Spiel)" Style="{StaticResource SmallText}"
-                               HorizontalAlignment="Center" Margin="0,12,0,0" />
+                    <Button Style="{StaticResource FlatButton}" Content="{Binding BenchmarkText}" Command="{Binding BenchmarkCommand}"
+                            HorizontalAlignment="Center" Margin="0,12,0,0" Padding="16,6"
+                            ToolTip="Aufnahme mit fester Dauer (einstellbar unter Einstellungen) – Strg + Alt + B" />
+                    <TextBlock Text="Tastenkürzel: Strg + Alt + R = Aufnahme · Strg + Alt + B = Benchmark (funktionieren auch im Spiel)"
+                               Style="{StaticResource SmallText}" HorizontalAlignment="Center" Margin="0,10,0,0" />
+                    <TextBlock Text="{Binding AutoText}" Style="{StaticResource SmallText}" HorizontalAlignment="Center" Margin="0,4,0,0" />
                     <TextBlock Text="{Binding StatusText}" FontFamily="{StaticResource DisplayFont}" FontSize="13"
                                Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center" Margin="0,8,0,0"
                                TextTrimming="CharacterEllipsis" />

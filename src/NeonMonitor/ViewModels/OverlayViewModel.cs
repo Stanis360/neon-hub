@@ -99,6 +99,14 @@ public sealed class OverlayViewModel : ObservableObject
             Item("ramload", "RAM", "RAM", main.RamLoad),
             Item("ramused", "RAM", "RAM belegt", main.RamUsed),
 
+            Item("fpsw", "FPS", "FPS/Watt", main.FpsPerWatt),
+
+            Item("cpufan", "Kühlung", "CPU-Lüfter", main.CpuFan),
+            Item("casefan", "Kühlung", "Gehäuse", main.CaseFan),
+
+            Item("totalpower", "Sonstiges", "CPU+GPU W", main.TotalPower),
+            Item("netdown", "Sonstiges", "Netz ↓", main.NetDown),
+            Item("netup", "Sonstiges", "Netz ↑", main.NetUp),
             Item("clock", "Sonstiges", "Uhrzeit", null),
         };
         foreach (var i in all) i.Init(settings.OverlayItems.Contains(i.Key));

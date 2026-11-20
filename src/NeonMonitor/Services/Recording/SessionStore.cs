@@ -154,12 +154,19 @@ public static class RecordingColumns
     public const string GpuFan = "GPU Lüfter U/min";
     public const string RamUsed = "RAM GB";
     public const string RamLoad = "RAM %";
+    public const string TotalPower = "CPU+GPU Leistung W";
+    public const string CpuFan = "CPU-Lüfter U/min";
+    public const string CaseFan = "Gehäuselüfter U/min";
+    public const string NetDown = "Netz Empfang Mbit/s";
+    public const string NetUp = "Netz Senden Mbit/s";
+    public const string DiskRead = "Datenträger Lesen MB/s";
+    public const string DiskWrite = "Datenträger Schreiben MB/s";
 
     public static readonly string[] All =
     [
         Time, Seconds, Application, Fps, Low1, FrameTime, FrameTimeMax,
         CpuLoad, CpuTemp, CpuPower, CpuClock,
         GpuLoad, GpuTemp, GpuHotspot, GpuClock, GpuMemClock, GpuVram, GpuPower, GpuFan,
-        RamUsed, RamLoad,
+        RamUsed, RamLoad, TotalPower, CpuFan, CaseFan, NetDown, NetUp, DiskRead, DiskWrite,
     ];
 }

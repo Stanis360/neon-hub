@@ -35,6 +35,18 @@ public sealed class SessionSummary
     public double? AvgCpuPower { get; set; }
     public double? AvgGpuPower { get; set; }
     public double? MaxRamLoad { get; set; }
+    public double? AvgCpuFan { get; set; }
+    public double? AvgCaseFan { get; set; }
+
+    // ---- Energie (nur CPU-Package + Grafikkarte, ohne Rest des PCs) ----
+    /// <summary>Ø Leistung CPU + GPU in Watt.</summary>
+    public double? AvgTotalPower { get; set; }
+    /// <summary>Verbrauchte Energie CPU + GPU in Wattstunden.</summary>
+    public double? EnergyWh { get; set; }
+    /// <summary>Kosten in € (Strompreis zum Zeitpunkt der Aufnahme).</summary>
+    public double? CostEuro { get; set; }
+    /// <summary>Ø FPS pro Watt (CPU + GPU).</summary>
+    public double? FpsPerWatt { get; set; }
 
     /// <summary>Dateiname der Sensor-CSV (eine Zeile pro Messung).</summary>
     public string CsvFile { get; set; } = "";

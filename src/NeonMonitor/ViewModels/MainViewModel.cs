@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using NeonMonitor.Infrastructure;
 using NeonMonitor.Models;
 using NeonMonitor.Services;
+using NeonMonitor.Services.Comfort;
 using NeonMonitor.Services.Recording;
 
 namespace NeonMonitor.ViewModels;
@@ -19,6 +20,9 @@ public sealed class MainViewModel : ObservableObject
     private static readonly int[] Intervals = [500, 1000, 2000];
 
     private readonly HardwareMonitorService _monitor;
+    private readonly PlaytimeService _playtime;
+    private readonly AlertService _alerts;
+    private string _trayText = "NeonMonitor";
     private readonly AppSettings _settings;
     private readonly Dispatcher _dispatcher;
 
@@ -31,8 +35,11 @@ public sealed class MainViewModel : ObservableObject
     private string _warnings = "";
     private bool _isInitializing = true;
 
-    public MainViewModel(HardwareMonitorService monitor, AppSettings settings, RecordingService recorder)
+    public MainViewModel(HardwareMonitorService monitor, AppSettings settings, RecordingService recorder,
+                         PlaytimeService playtime, AlertService alerts)
     {
+        _playtime = playtime;
+        _alerts = alerts;
         _monitor = monitor;
         _settings = settings;
         _dispatcher = Application.Current.Dispatcher;
@@ -59,10 +66,23 @@ public sealed class MainViewModel : ObservableObject
         RamUsed = new("Belegt", "GB", "0.0", points, barMaximum: 32);
         RamLoad = new("Auslastung", "%", "0", points, warnAt: 85, criticalAt: 95);
 
+        CpuFan = new("CPU-Lüfter", "U/min", "0", points, barMaximum: 2000);
+        CaseFan = new("Gehäuselüfter", "U/min", "0", points, barMaximum: 2000);
+        NetDown = new("Empfang", "Mbit/s", "0.0", points, barMaximum: 100);
+        NetUp = new("Senden", "Mbit/s", "0.0", points, barMaximum: 100);
+        DiskRead = new("Lesen", "MB/s", "0", points, barMaximum: 500);
+        DiskWrite = new("Schreiben", "MB/s", "0", points, barMaximum: 500);
+        TotalPower = new("CPU + GPU", "W", "0", points, barMaximum: 500);
+        FpsPerWatt = new("FPS pro Watt", "", "0.00", points, barMaximum: 1);
+
         Fps = new FpsViewModel(monitor.Fps, settings, points);
 
-        Recording = new RecordingViewModel(recorder);
+        Recording = new RecordingViewModel(recorder, settings);
         Compare = new CompareViewModel();
+        Cooling = new CoolingViewModel(settings, monitor.Lhm.FanControl);
+        Settings = new SettingsViewModel(settings);
+        Stats = new StatsViewModel(playtime);
+        Recording.SessionSaved += _ => Stats.Refresh();
         Recording.SessionSaved += _ => Compare.Refresh();
         Overlay = new OverlayViewModel(this, settings);
 
@@ -100,6 +120,27 @@ public sealed class MainViewModel : ObservableObject
 
     /// <summary>FPS-Seite und FPS-Zeile im Dashboard.</summary>
     public FpsViewModel Fps { get; }
+
+    public MetricViewModel CpuFan { get; }
+    public MetricViewModel CaseFan { get; }
+    public MetricViewModel NetDown { get; }
+    public MetricViewModel NetUp { get; }
+    public MetricViewModel DiskRead { get; }
+    public MetricViewModel DiskWrite { get; }
+    public MetricViewModel TotalPower { get; }
+    public MetricViewModel FpsPerWatt { get; }
+
+    /// <summary>Reiter „Kühlung“.</summary>
+    public CoolingViewModel Cooling { get; }
+
+    /// <summary>Reiter „Einstellungen“.</summary>
+    public SettingsViewModel Settings { get; }
+
+    /// <summary>Reiter „Statistik“.</summary>
+    public StatsViewModel Stats { get; }
+
+    /// <summary>Kurzinfo für das Symbol im Infobereich (max. 127 Zeichen).</summary>
+    public string TrayText { get => _trayText; private set => SetProperty(ref _trayText, value); }
 
     /// <summary>Reiter „Aufzeichnung“.</summary>
     public RecordingViewModel Recording { get; }
@@ -209,11 +250,35 @@ public sealed class MainViewModel : ObservableObject
         RamTotalText = s.RamTotalGb is { } rt ? $"von {rt:0.0} GB" : "";
         if (s.RamTotalGb is { } ramTotal) RamUsed.BarMaximum = Math.Round(ramTotal, 1);
 
+        CpuFan.Update(s.CpuFanRpm);
+        CaseFan.Update(s.CaseFanRpm);
+        NetDown.Update(s.NetDownMbit);
+        NetUp.Update(s.NetUpMbit);
+        DiskRead.Update(s.DiskReadMBs);
+        DiskWrite.Update(s.DiskWriteMBs);
+        var total = RecordingService.TotalPower(s);
+        TotalPower.Update(total);
+        FpsPerWatt.Update(s.Fps is { } fpsNow && total > 10 ? fpsNow / total : null);
+
         Fps.Apply(s);
+        Cooling.Apply(s);
         Overlay.Tick();
-        Recording.Tick();
+        Recording.Tick(s);
+        _playtime.Track(s);
+        _alerts.Check(s);
+        TrayText = BuildTrayText(s);
         UpdateCoreClocks(s.CpuCoreClocks);
         UpdateDrives(s.Drives);
+    }
+
+    private static string BuildTrayText(HardwareSnapshot s)
+    {
+        var parts = new List<string>();
+        if (s.CpuTemp is { } c) parts.Add($"CPU {c:0}°");
+        if (s.GpuTemp is { } g) parts.Add($"GPU {g:0}°");
+        if (s.Fps is { } f) parts.Add($"{f:0} FPS");
+        var text = "NeonMonitor" + (parts.Count > 0 ? "\n" + string.Join(" · ", parts) : "");
+        return text.Length > 127 ? text[..127] : text;
     }
 
     /// <summary>Kernliste aktualisieren; wird beim ersten Snapshot einmalig aufgebaut.</summary>
@@ -283,7 +348,7 @@ public sealed class MainViewModel : ObservableObject
     [
         CpuLoad, CpuTemp, CpuPower, CpuClock, CpuClockMax,
         GpuLoad, GpuTemp, GpuHotspot, GpuClock, GpuMemClock, GpuVram, GpuPower,
-        RamUsed, RamLoad,
+        RamUsed, RamLoad, CpuFan, CaseFan, NetDown, NetUp, DiskRead, DiskWrite, TotalPower, FpsPerWatt,
     ];
 
     /// <summary>Schreibt den Sensorbericht nach Dokumente\NeonMonitor\Berichte und öffnet ihn.</summary>

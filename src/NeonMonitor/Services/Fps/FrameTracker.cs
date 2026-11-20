@@ -44,6 +44,9 @@ public sealed class FrameTracker
         "Teams.exe", "ms-teams.exe", "Code.exe", "WindowsTerminal.exe",
     };
 
+    /// <summary>Ist die Anwendung ein Browser/Overlay/Systemprogramm (also kein Spiel)?</summary>
+    public static bool IsIgnored(string application) => IgnoredApps.Contains(application);
+
     private sealed class ProcessFrames(string application)
     {
         public string Application { get; } = application;

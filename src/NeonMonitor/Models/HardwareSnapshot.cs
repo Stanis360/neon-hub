@@ -57,6 +57,28 @@ public sealed class HardwareSnapshot
 
     // ---------- Laufwerke ----------
     public List<DriveUsage> Drives { get; set; } = new();
+    /// <summary>Lesen vom Datenträger (alle Laufwerke) in MB/s.</summary>
+    public double? DiskReadMBs { get; set; }
+    /// <summary>Schreiben auf Datenträger (alle Laufwerke) in MB/s.</summary>
+    public double? DiskWriteMBs { get; set; }
+
+    // ---------- Netzwerk ----------
+    /// <summary>Empfang aller Netzwerkadapter in Mbit/s.</summary>
+    public double? NetDownMbit { get; set; }
+    /// <summary>Senden aller Netzwerkadapter in Mbit/s.</summary>
+    public double? NetUpMbit { get; set; }
+
+    // ---------- Kühlung (Mainboard) ----------
+    /// <summary>Drehzahl des als CPU-Lüfter zugeordneten Anschlusses (U/min).</summary>
+    public double? CpuFanRpm { get; set; }
+    /// <summary>Drehzahl des als Gehäuselüfter zugeordneten Anschlusses (U/min).</summary>
+    public double? CaseFanRpm { get; set; }
+    /// <summary>Alle Lüfteranschlüsse des Mainboards.</summary>
+    public List<FanReading> Fans { get; set; } = new();
+    /// <summary>Alle steuerbaren Lüfterkanäle (Leistung in %).</summary>
+    public List<FanControlReading> FanControls { get; set; } = new();
+    /// <summary>Weitere Temperaturen: Mainboard, SSDs, RAM-Module.</summary>
+    public List<TempReading> ExtraTemps { get; set; } = new();
 
     // ---------- FPS (über PresentMon / ETW) ----------
     /// <summary>Bilder pro Sekunde der erfassten Anwendung (Mittel der letzten Sekunde).</summary>
@@ -76,6 +98,15 @@ public sealed class HardwareSnapshot
     /// <summary>Alle Anwendungen, die gerade Bilder ausgeben (zur Auswahl).</summary>
     public string[] FpsCandidates { get; set; } = [];
 }
+
+/// <summary>Ein Lüfteranschluss. <paramref name="Id"/> ist die feste LHM-Kennung (für Namen/Zuordnung).</summary>
+public sealed record FanReading(string Id, string Name, double Rpm);
+
+/// <summary>Ein steuerbarer Lüfterkanal und seine aktuelle Leistung in %.</summary>
+public sealed record FanControlReading(string Id, string Name, double? Percent, bool ControlledByUs);
+
+/// <summary>Eine zusätzliche Temperatur, z. B. Gruppe „SSD“, Name „Samsung 990 Pro“.</summary>
+public sealed record TempReading(string Group, string Name, double Celsius);
 
 /// <summary>Takt eines CPU-Kerns.</summary>
 public sealed record CoreClock(string Name, double Mhz);
