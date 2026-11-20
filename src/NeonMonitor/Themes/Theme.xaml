@@ -3,7 +3,14 @@
   Alle Farben, Schriften und Steuerelement-Stile an einem Ort – zum Umfärben nur hier ändern.
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:infra="clr-namespace:NeonMonitor.Infrastructure">
+
+    <!-- ===================== Umrechner ===================== -->
+    <!-- Hier (und nicht in App.xaml), damit auch die Vorlagen in Templates.xaml sie per StaticResource finden. -->
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    <infra:InverseBoolConverter x:Key="InverseBool" />
+    <infra:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
 
     <!-- ===================== Farben ===================== -->
     <Color x:Key="AccentColor">#3DDC97</Color>       <!-- Hauptakzent: Last, Titel, Balken -->

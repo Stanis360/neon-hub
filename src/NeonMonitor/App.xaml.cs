@@ -187,11 +187,26 @@ public partial class App : Application
         base.OnExit(e);
     }
 
+    private static bool _errorDialogOpen;
+    private static readonly HashSet<string> ShownErrors = new();
+
     private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         Log.Error("UI-Fehler", e.Exception);
-        MessageBox.Show($"Unerwarteter Fehler:\n{e.Exception.Message}\n\nDetails: {AppPaths.LogFile}",
-            "NeonMonitor", MessageBoxButton.OK, MessageBoxImage.Error);
         e.Handled = true;
+
+        // Derselbe Fehler kann sich mit jeder Messung wiederholen → nur einmal und nie mehrere Fenster gleichzeitig zeigen
+        if (_errorDialogOpen || !ShownErrors.Add(e.Exception.Message)) return;
+        _errorDialogOpen = true;
+        try
+        {
+            MessageBox.Show($"Unerwarteter Fehler:\n{e.Exception.Message}\n\nDetails: {AppPaths.LogFile}\n\n" +
+                            "Bitte die Logdatei an Claude schicken. Weitere gleiche Meldungen werden nur noch protokolliert.",
+                "NeonMonitor", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            _errorDialogOpen = false;
+        }
     }
 }
