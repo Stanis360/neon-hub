@@ -12,7 +12,7 @@ namespace NeonMonitor.ViewModels;
 public sealed class FanViewModel : ObservableObject
 {
     private readonly CoolingViewModel _owner;
-    private string _name;
+    private string? _custom;
     private double _rpm, _maxSeen = 1500;
 
     public FanViewModel(string id, string defaultName, CoolingViewModel owner)
@@ -20,7 +20,7 @@ public sealed class FanViewModel : ObservableObject
         Id = id;
         DefaultName = defaultName;
         _owner = owner;
-        _name = owner.CustomName(id) ?? defaultName;
+        _custom = owner.CustomName(id);
         SetCpuCommand = new RelayCommand(() => owner.SetRole(this, cpu: true));
         SetCaseCommand = new RelayCommand(() => owner.SetRole(this, cpu: false));
     }
@@ -31,16 +31,26 @@ public sealed class FanViewModel : ObservableObject
     public ICommand SetCpuCommand { get; }
     public ICommand SetCaseCommand { get; }
 
-    /// <summary>Anzeigename – frei änderbar (leer = Standardname).</summary>
+    /// <summary>Name nach Rolle, solange keiner vergeben wurde: „CPU-Lüfter“, „Gehäuselüfter“ oder „Fan #n“.</summary>
+    private string AutoName => IsCpu ? "CPU-Lüfter" : IsCase ? "Gehäuselüfter" : DefaultName;
+
+    /// <summary>Anzeigename – frei änderbar (leer = automatischer Name).</summary>
     public string Name
     {
-        get => _name;
+        get => _custom ?? AutoName;
         set
         {
-            var v = string.IsNullOrWhiteSpace(value) ? DefaultName : value.Trim();
-            if (SetProperty(ref _name, v)) _owner.RenameFan(Id, v == DefaultName ? null : v);
+            var v = value?.Trim();
+            var custom = string.IsNullOrEmpty(v) || v == AutoName ? null : v;
+            if (custom == _custom) return;
+            _custom = custom;
+            OnPropertyChanged();
+            _owner.RenameFan(Id, custom);
         }
     }
+
+    /// <summary>Sichtbar, wenn belegt, zugeordnet oder „alle anzeigen“ aktiv ist.</summary>
+    public bool IsVisible => IsActive || IsCpu || IsCase || _owner.ShowAll;
 
     public double Rpm => _rpm;
     public string RpmText => _rpm < 1 ? "steht / nicht belegt" : $"{_rpm:0} U/min";
@@ -58,6 +68,7 @@ public sealed class FanViewModel : ObservableObject
         OnPropertyChanged(nameof(RpmText));
         OnPropertyChanged(nameof(Fraction));
         OnPropertyChanged(nameof(IsActive));
+        OnPropertyChanged(nameof(IsVisible));
     }
 
     public void RefreshRole()
@@ -65,6 +76,8 @@ public sealed class FanViewModel : ObservableObject
         OnPropertyChanged(nameof(IsCpu));
         OnPropertyChanged(nameof(IsCase));
         OnPropertyChanged(nameof(RoleText));
+        OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(IsVisible));
     }
 }
 
@@ -96,6 +109,7 @@ public sealed class FanChannelViewModel : ObservableObject
     private readonly FanCurveConfig _config;
     private string _title;
     private string _currentText = "";
+    private bool _isVisible = true;
 
     public FanChannelViewModel(string id, string title, FanCurveConfig config, CoolingViewModel owner)
     {
@@ -111,6 +125,9 @@ public sealed class FanChannelViewModel : ObservableObject
     public FanCurveConfig Config => _config;
     public string Title { get => _title; set => SetProperty(ref _title, value); }
     public string CurrentText { get => _currentText; private set => SetProperty(ref _currentText, value); }
+
+    /// <summary>Kanäle ohne angeschlossenen Lüfter werden ausgeblendet (außer „alle anzeigen“).</summary>
+    public bool IsVisible { get => _isVisible; set => SetProperty(ref _isVisible, value); }
     public ICommand MoreCommand { get; }
     public ICommand LessCommand { get; }
 
@@ -201,6 +218,39 @@ public sealed partial class CoolingViewModel : ObservableObject
 
     public bool HasBoard { get => _hasBoard; private set => SetProperty(ref _hasBoard, value); }
 
+    private bool _showAll;
+
+    /// <summary>Auch unbelegte Anschlüsse (0 U/min) anzeigen.</summary>
+    public bool ShowAll
+    {
+        get => _showAll;
+        set
+        {
+            if (!SetProperty(ref _showAll, value)) return;
+            foreach (var f in Fans) f.RefreshRole();
+            UpdateChannelVisibility();
+        }
+    }
+
+    public string HiddenText
+    {
+        get
+        {
+            var hidden = Fans.Count(f => !f.IsActive && !f.IsCpu && !f.IsCase);
+            return hidden == 0 ? "" : $"{hidden} unbelegte Anschlüsse ausgeblendet";
+        }
+    }
+
+    private void UpdateChannelVisibility()
+    {
+        foreach (var c in Channels)
+        {
+            var fan = PairedFan(c.Id);
+            c.IsVisible = _showAll || c.Config.Mode != "bios" || fan is null || fan.IsVisible;
+        }
+        OnPropertyChanged(nameof(HiddenText));
+    }
+
     public string NoBoardHint => _settings.SafeMode
         ? "Sicherer Modus aktiv – Mainboard-Lüfter brauchen den PawnIO-Treiber und sind deshalb aus."
         : "Keine Mainboard-Sensoren gefunden. Prüfe, ob PawnIO installiert ist und NeonMonitor als Administrator läuft (Sensorbericht).";
@@ -258,6 +308,8 @@ public sealed partial class CoolingViewModel : ObservableObject
         }
         _settings.Save();
         foreach (var f in Fans) f.RefreshRole();
+        foreach (var c in Channels) c.Title = ChannelTitle(c.Id, c.Title);
+        UpdateChannelVisibility();
     }
 
     public void SaveCurves()
@@ -289,6 +341,7 @@ public sealed partial class CoolingViewModel : ObservableObject
             AutoCpuFanId = autoCpu?.Id;
             AutoCaseFanId = autoCase?.Id;
             foreach (var f in Fans) f.RefreshRole();
+            foreach (var c in Channels) c.Title = ChannelTitle(c.Id, c.Title);
         }
 
         foreach (var t in s.ExtraTemps)
@@ -314,14 +367,22 @@ public sealed partial class CoolingViewModel : ObservableObject
             }
             vm.Update(c);
         }
+        UpdateChannelVisibility();
+    }
+
+    /// <summary>Steuerkanal „…/control/1“ gehört zum Lüfter „…/fan/1“.</summary>
+    private FanViewModel? PairedFan(string controlId)
+    {
+        var number = NumberRegex().Match(controlId.Split('/').LastOrDefault() ?? "");
+        return number.Success
+            ? Fans.FirstOrDefault(f => f.Id.Contains("/fan/") && f.Id.Split('/').Last() == number.Value)
+            : null;
     }
 
     /// <summary>„Fan Control #2“ ↔ Lüfter „Fan #2“: Titel = (eigener) Name des passenden Lüfters.</summary>
     private string ChannelTitle(string controlId, string fallback)
     {
-        var number = NumberRegex().Match(controlId.Split('/').LastOrDefault() ?? "");
-        var fan = Fans.FirstOrDefault(f => f.Id.Contains("/fan/") && number.Success
-                                           && f.Id.Split('/').Last() == number.Value);
+        var fan = PairedFan(controlId);
         return fan is null ? fallback : $"{fan.Name}  ({fan.DefaultName})";
     }
 

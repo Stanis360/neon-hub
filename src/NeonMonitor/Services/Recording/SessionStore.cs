@@ -147,6 +147,7 @@ public static class RecordingColumns
     public const string GpuLoad = "GPU Last %";
     public const string GpuTemp = "GPU Temp °C";
     public const string GpuHotspot = "GPU Hotspot °C";
+    public const string GpuMemTemp = "GPU VRAM-Temp °C";
     public const string GpuClock = "GPU Takt MHz";
     public const string GpuMemClock = "GPU Speichertakt MHz";
     public const string GpuVram = "VRAM MB";
@@ -167,6 +168,6 @@ public static class RecordingColumns
         Time, Seconds, Application, Fps, Low1, FrameTime, FrameTimeMax,
         CpuLoad, CpuTemp, CpuPower, CpuClock,
         GpuLoad, GpuTemp, GpuHotspot, GpuClock, GpuMemClock, GpuVram, GpuPower, GpuFan,
-        RamUsed, RamLoad, TotalPower, CpuFan, CaseFan, NetDown, NetUp, DiskRead, DiskWrite,
+        RamUsed, RamLoad, TotalPower, CpuFan, CaseFan, NetDown, NetUp, DiskRead, DiskWrite, GpuMemTemp,
     ];
 }

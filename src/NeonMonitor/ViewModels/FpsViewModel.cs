@@ -7,8 +7,11 @@ using NeonMonitor.Services.Fps;
 namespace NeonMonitor.ViewModels;
 
 /// <summary>Auswahlknopf für eine Anwendung („Automatisch“, „cod.exe“ …).</summary>
-public sealed class FpsChoiceViewModel(string title, string? application, ICommand select) : ObservableObject
+public sealed class FpsChoiceViewModel(string title, string? application, ICommand select, ICommand? ignore = null) : ObservableObject
 {
+    /// <summary>„Nicht als Spiel werten“ (null bei „Automatisch“).</summary>
+    public ICommand? IgnoreCommand { get; } = ignore;
+    public bool CanIgnore => IgnoreCommand is not null;
     private bool _isSelected;
 
     public string Title { get; } = title;
@@ -49,6 +52,20 @@ public sealed class FpsViewModel : ObservableObject
             foreach (var c in Choices) c.IsSelected = c.Application == app;
         });
         Choices.Add(new FpsChoiceViewModel("Automatisch", null, SelectCommand) { IsSelected = true });
+
+        IgnoreCommand = new ParamCommand(app =>
+        {
+            if (app is null || _settings.FpsIgnoredApps.Contains(app, StringComparer.OrdinalIgnoreCase)) return;
+            _settings.FpsIgnoredApps.Add(app);
+            ApplyIgnored();
+            if (string.Equals(_source.PinnedApplication, app, StringComparison.OrdinalIgnoreCase)) SelectCommand.Execute(null);
+        });
+        UnignoreCommand = new ParamCommand(app =>
+        {
+            _settings.FpsIgnoredApps.RemoveAll(a => string.Equals(a, app, StringComparison.OrdinalIgnoreCase));
+            ApplyIgnored();
+        });
+        foreach (var a in _settings.FpsIgnoredApps) Ignored.Add(a);
     }
 
     public MetricViewModel Fps { get; }
@@ -63,6 +80,21 @@ public sealed class FpsViewModel : ObservableObject
     public ObservableCollection<FpsChoiceViewModel> Choices { get; } = new();
 
     public ParamCommand SelectCommand { get; }
+    public ParamCommand IgnoreCommand { get; }
+    public ParamCommand UnignoreCommand { get; }
+
+    /// <summary>Selbst ausgeschlossene Programme.</summary>
+    public ObservableCollection<string> Ignored { get; } = new();
+    public bool HasIgnored => Ignored.Count > 0;
+
+    private void ApplyIgnored()
+    {
+        _settings.Save();
+        FrameTracker.SetUserIgnored(_settings.FpsIgnoredApps);
+        Ignored.Clear();
+        foreach (var a in _settings.FpsIgnoredApps) Ignored.Add(a);
+        OnPropertyChanged(nameof(HasIgnored));
+    }
 
     /// <summary>Erfasste Anwendung, z. B. „cod.exe“.</summary>
     public string Application { get => _application; private set => SetProperty(ref _application, value); }
@@ -128,7 +160,7 @@ public sealed class FpsViewModel : ObservableObject
             if (!wanted.Contains(Choices[i].Application!, StringComparer.OrdinalIgnoreCase)) Choices.RemoveAt(i);
         foreach (var app in wanted)
             if (Choices.All(c => !string.Equals(c.Application, app, StringComparison.OrdinalIgnoreCase)))
-                Choices.Add(new FpsChoiceViewModel(app, app, SelectCommand) { IsSelected = app == pinned });
+                Choices.Add(new FpsChoiceViewModel(app, app, SelectCommand, IgnoreCommand) { IsSelected = app == pinned });
     }
 }
 

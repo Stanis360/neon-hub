@@ -18,6 +18,9 @@ public sealed class AppSettings
     /// </summary>
     public bool SafeMode { get; set; }
 
+    /// <summary>Eigene Programme, die bei der FPS-Messung nie als Spiel gelten (Exe-Namen).</summary>
+    public List<string> FpsIgnoredApps { get; set; } = new();
+
     // ---------- Overlay ----------
 
     /// <summary>Overlay beim Start anzeigen (merkt sich den letzten Zustand).</summary>

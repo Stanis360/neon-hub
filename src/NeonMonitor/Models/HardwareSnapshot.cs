@@ -36,6 +36,8 @@ public sealed class HardwareSnapshot
     public double? GpuTemp { get; set; }
     /// <summary>Hotspot-/Junction-Temperatur in °C.</summary>
     public double? GpuHotspot { get; set; }
+    /// <summary>Temperatur des Grafikspeichers (GDDR6) in °C.</summary>
+    public double? GpuMemTemp { get; set; }
     /// <summary>Kerntakt in MHz.</summary>
     public double? GpuClock { get; set; }
     /// <summary>Speichertakt in MHz.</summary>

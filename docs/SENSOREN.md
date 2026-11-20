@@ -5,8 +5,19 @@ Paket untersucht: Es bringt den **PawnIO**-Treiberzugang (statt WinRing0), das *
 sowie die Sensornamen für Zen-5-CPUs (`Core (Tctl/Tdie)`, `CCD1 (Tdie)`, `CCDs Max (Tdie)`, …)
 und für AMD-GPUs (`GPU Core`, `GPU Hot Spot`, `GPU Package`, `GPU Memory Used`, …) mit.
 
-**Wichtig:** Auf echter Hardware geprüft ist das erst, wenn du den **Sensorbericht** schickst
-(Knopf unten rechts). Die Tabelle unten ist der erwartete Stand.
+**Geprüft am 20.11.2026** per Sensorbericht auf: Ryzen 7 9800X3D, RX 9070 XT, ASUS TUF GAMING B850-PLUS WIFI
+(Nuvoton NCT6701D), 2× G.Skill DDR5-6000, Kingston KC3000 2 TB. Ergebnis: **alle Werte vorhanden**
+(CPU-Temperatur/-Leistung/-Takte, GPU inkl. Hotspot, VRAM-Temperatur, Leistung, Lüfter; Mainboard-Lüfter;
+DIMM- und SSD-Temperaturen). ADLX wird derzeit nicht benötigt.
+
+Erkenntnisse daraus (in v1.1.1 umgesetzt):
+* LHM meldet drei „Memory“-Einträge – `/ram` (echter RAM), `/vram` (virtueller Speicher inkl. Auslagerungsdatei)
+  und `/memory/dimm/n`. Für RAM wird jetzt gezielt `/ram` verwendet.
+* DIMM-Einträge enthalten neben „DIMM #n“ auch Grenzwerte (55/85 °C) – nur „DIMM #n“ ist die Temperatur.
+* Das Board hat 7 Lüfteranschlüsse; belegt sind Fan #2 (CPU-Kühler) und Fan #3 (Gehäuselüfter).
+  Unbelegte Anschlüsse werden ausgeblendet. Mainboard-Temperaturen unter 10 °C sind unbelegte Eingänge.
+* Desktop-Apps (Claude, Opera …) geben auch Bilder aus – die Ausschlussliste wurde erweitert und ist im Reiter FPS
+  um eigene Einträge ergänzbar.
 
 ## CPU – Ryzen 7 9800X3D (Zen 5, „Granite Ridge“, Familie 1Ah)
 

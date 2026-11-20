@@ -30,6 +30,7 @@ public sealed class SessionSummary
     public double? MaxCpuTemp { get; set; }
     public double? MaxGpuTemp { get; set; }
     public double? MaxGpuHotspot { get; set; }
+    public double? MaxGpuMemTemp { get; set; }
     public double? AvgCpuLoad { get; set; }
     public double? AvgGpuLoad { get; set; }
     public double? AvgCpuPower { get; set; }

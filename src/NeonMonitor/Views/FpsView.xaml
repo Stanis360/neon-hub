@@ -71,6 +71,26 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
+                    <TextBlock Text="✕ neben einem Programm = „ist kein Spiel“ (wird dann bei FPS, automatischer Aufnahme und Spielzeit ignoriert)."
+                               Style="{StaticResource SmallText}" Margin="0,2,0,0" />
+                    <StackPanel Visibility="{Binding HasIgnored, Converter={StaticResource BoolToVisibility}}" Margin="0,12,0,0">
+                        <TextBlock Text="Ausgeschlossen (Klick = wieder zulassen)" Style="{StaticResource SectionLabel}" Margin="0,0,0,6" />
+                        <ItemsControl ItemsSource="{Binding Ignored}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource FlatButton}" Margin="0,0,8,8" Padding="12,5" Opacity="0.7"
+                                            Content="{Binding}" ToolTip="Wieder als mögliches Spiel zulassen"
+                                            Command="{Binding DataContext.UnignoreCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

@@ -42,10 +42,30 @@ public sealed class FrameTracker
         "Discord.exe", "steamwebhelper.exe", "steam.exe", "EpicGamesLauncher.exe", "Battle.net.exe",
         "RadeonSoftware.exe", "AMDRSServ.exe", "AMDRSSrcExt.exe", "Overwolf.exe", "obs64.exe", "Spotify.exe",
         "Teams.exe", "ms-teams.exe", "Code.exe", "WindowsTerminal.exe",
+        // Desktop-/Electron-Apps
+        "claude.exe", "ChatGPT.exe", "slack.exe", "WhatsApp.exe", "Telegram.exe", "Signal.exe", "Notion.exe",
+        "Figma.exe", "Cursor.exe", "Obsidian.exe", "vivaldi.exe", "operagx.exe", "launcher.exe",
+        // Launcher
+        "EADesktop.exe", "UbisoftConnect.exe", "upc.exe", "GalaxyClient.exe", "RiotClientUx.exe",
+        "RiotClientServices.exe", "EpicWebHelper.exe", "XboxPcApp.exe", "GameBar.exe", "GameBarFTServer.exe",
+        // Windows & Werkzeuge
+        "Widgets.exe", "PhoneExperienceHost.exe", "SnippingTool.exe", "ScreenClippingHost.exe", "Taskmgr.exe",
+        "mstsc.exe", "msrdc.exe", "CrossDeviceResume.exe",
+        // Videoplayer, Hintergründe, Overlays
+        "vlc.exe", "mpc-hc64.exe", "PotPlayerMini64.exe", "wallpaper32.exe", "wallpaper64.exe",
+        "webwallpaper32.exe", "Lively.exe", "Rainmeter.exe", "MSIAfterburner.exe", "RTSS.exe", "HWiNFO64.exe",
     };
 
+    /// <summary>Vom Nutzer zusätzlich ausgeschlossene Programme (wird als Ganzes ersetzt → threadsicher).</summary>
+    private static volatile HashSet<string> _userIgnored = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Eigene Ausschlussliste setzen (aus den Einstellungen).</summary>
+    public static void SetUserIgnored(IEnumerable<string> apps) =>
+        _userIgnored = new HashSet<string>(apps, StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Ist die Anwendung ein Browser/Overlay/Systemprogramm (also kein Spiel)?</summary>
-    public static bool IsIgnored(string application) => IgnoredApps.Contains(application);
+    public static bool IsIgnored(string application) =>
+        IgnoredApps.Contains(application) || _userIgnored.Contains(application);
 
     private sealed class ProcessFrames(string application)
     {
@@ -128,13 +148,13 @@ public sealed class FrameTracker
             return match;
         }
 
-        bool IsCandidate(int pid) => _processes.TryGetValue(pid, out var p) && !IgnoredApps.Contains(p.Application);
+        bool IsCandidate(int pid) => _processes.TryGetValue(pid, out var p) && !IsIgnored(p.Application);
 
         if (IsCandidate(foregroundPid)) return _stickyPid = foregroundPid;
         if (IsCandidate(_stickyPid)) return _stickyPid;
 
         // Sonst: die Anwendung mit den meisten Bildern
-        var best = _processes.Where(kv => !IgnoredApps.Contains(kv.Value.Application))
+        var best = _processes.Where(kv => !IsIgnored(kv.Value.Application))
                              .OrderByDescending(kv => kv.Value.Frames.Count)
                              .Select(kv => kv.Key).FirstOrDefault();
         return _stickyPid = best;

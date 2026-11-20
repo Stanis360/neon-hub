@@ -49,7 +49,9 @@ public sealed class PlaytimeService
         _lastTick = now;
         if (dt is <= 0 or > 10) return; // nach Pausen/Standby nicht hochzählen
 
+        // Spiel = erkannte Anwendung, kein ausgeschlossenes Programm, spürbare GPU-Last
         if (s.FpsApplication is not { } app || s.Fps is not > 1 || FrameTracker.IsIgnored(app)) return;
+        if (s.GpuLoad is < 15) return;
 
         var game = GameNames.FromApplication(app);
         if (!_entries.TryGetValue(game, out var e))

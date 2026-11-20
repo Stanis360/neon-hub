@@ -76,8 +76,13 @@
 
     <!-- Auswahlknopf für die FPS-Anwendung („Automatisch“, „cod.exe“ …) -->
     <DataTemplate DataType="{x:Type vm:FpsChoiceViewModel}">
-        <Button x:Name="Btn" Style="{StaticResource FlatButton}" Margin="0,0,8,8" Padding="14,6"
-                Content="{Binding Title}" Command="{Binding SelectCommand}" CommandParameter="{Binding Application}" />
+        <StackPanel Orientation="Horizontal" Margin="0,0,10,8">
+            <Button x:Name="Btn" Style="{StaticResource FlatButton}" Padding="14,6"
+                    Content="{Binding Title}" Command="{Binding SelectCommand}" CommandParameter="{Binding Application}" />
+            <Button Style="{StaticResource FlatButton}" Padding="8,6" Margin="2,0,0,0" Content="✕"
+                    ToolTip="Kein Spiel – künftig ignorieren" Command="{Binding IgnoreCommand}" CommandParameter="{Binding Application}"
+                    Visibility="{Binding CanIgnore, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
         <DataTemplate.Triggers>
             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                 <Setter TargetName="Btn" Property="Background" Value="{StaticResource AccentBrush}" />

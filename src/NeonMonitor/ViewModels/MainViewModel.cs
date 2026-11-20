@@ -58,6 +58,8 @@ public sealed class MainViewModel : ObservableObject
         GpuLoad = new("Last", "%", "0", points);
         GpuTemp = new("Temperatur", "°C", "0", points, warnAt: 80, criticalAt: 90, showPeak: true);
         GpuHotspot = new("Hotspot", "°C", "0", points, warnAt: 95, criticalAt: 105, barMaximum: 110, showPeak: true);
+        // GDDR6 der RX 9070 XT: bis ~95 °C unkritisch, Drosselung um 105 °C
+        GpuMemTemp = new("VRAM-Temperatur", "°C", "0", points, warnAt: 90, criticalAt: 100, barMaximum: 110, showPeak: true);
         GpuClock = new("GPU-Takt", "MHz", "0", points, barMaximum: 3200);
         GpuMemClock = new("Speichertakt", "MHz", "0", points, barMaximum: 2600);
         GpuVram = new("VRAM", "GB", "0.0", points, barMaximum: 16);
@@ -110,6 +112,7 @@ public sealed class MainViewModel : ObservableObject
     public MetricViewModel GpuLoad { get; }
     public MetricViewModel GpuTemp { get; }
     public MetricViewModel GpuHotspot { get; }
+    public MetricViewModel GpuMemTemp { get; }
     public MetricViewModel GpuClock { get; }
     public MetricViewModel GpuMemClock { get; }
     public MetricViewModel GpuVram { get; }
@@ -232,6 +235,7 @@ public sealed class MainViewModel : ObservableObject
         GpuLoad.Update(s.GpuLoad);
         GpuTemp.Update(s.GpuTemp);
         GpuHotspot.Update(s.GpuHotspot);
+        GpuMemTemp.Update(s.GpuMemTemp);
         GpuClock.Update(s.GpuClock);
         GpuMemClock.Update(s.GpuMemClock);
         GpuVram.Update(s.GpuVramUsedMb / 1024.0);
@@ -347,7 +351,7 @@ public sealed class MainViewModel : ObservableObject
     private IEnumerable<MetricViewModel> AllMetrics() =>
     [
         CpuLoad, CpuTemp, CpuPower, CpuClock, CpuClockMax,
-        GpuLoad, GpuTemp, GpuHotspot, GpuClock, GpuMemClock, GpuVram, GpuPower,
+        GpuLoad, GpuTemp, GpuHotspot, GpuMemTemp, GpuClock, GpuMemClock, GpuVram, GpuPower,
         RamUsed, RamLoad, CpuFan, CaseFan, NetDown, NetUp, DiskRead, DiskWrite, TotalPower, FpsPerWatt,
     ];
 

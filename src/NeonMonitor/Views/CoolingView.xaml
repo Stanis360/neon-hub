@@ -32,7 +32,8 @@
                         <ItemsControl ItemsSource="{Binding Fans}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:FanViewModel}">
-                                    <Grid x:Name="Row" Margin="0,4">
+                                    <Grid x:Name="Row" Margin="0,4"
+                                          Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="210" />
                                             <ColumnDefinition Width="*" />
@@ -72,6 +73,11 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <DockPanel Margin="0,8,0,0">
+                            <CheckBox DockPanel.Dock="Right" Style="{StaticResource Switch}" Content="alle Anschlüsse zeigen"
+                                      IsChecked="{Binding ShowAll}" />
+                            <TextBlock Text="{Binding HiddenText}" Style="{StaticResource SmallText}" VerticalAlignment="Center" />
+                        </DockPanel>
                     </StackPanel>
                 </Border>
 
@@ -128,7 +134,8 @@
                     <ItemsControl ItemsSource="{Binding Channels}" IsEnabled="{Binding ControlEnabled}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:FanChannelViewModel}">
-                                <Border Background="#1C2124" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                <Border Background="#1C2124" CornerRadius="8" Padding="12,10" Margin="0,0,0,8"
+                                        Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}">
                                     <StackPanel>
                                         <DockPanel>
                                             <TextBlock DockPanel.Dock="Right" Text="{Binding CurrentText}" Style="{StaticResource SmallText}" VerticalAlignment="Center" />

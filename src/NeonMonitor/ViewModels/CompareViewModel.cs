@@ -126,6 +126,7 @@ public sealed class CompareViewModel : ObservableObject
             new("CPU Temp", RecordingColumns.CpuTemp, "°", select),
             new("GPU Temp", RecordingColumns.GpuTemp, "°", select),
             new("Hotspot", RecordingColumns.GpuHotspot, "°", select),
+            new("VRAM Temp", RecordingColumns.GpuMemTemp, "°", select),
             new("CPU Last", RecordingColumns.CpuLoad, "%", select),
             new("GPU Last", RecordingColumns.GpuLoad, "%", select),
             new("CPU Watt", RecordingColumns.CpuPower, "W", select),
@@ -273,6 +274,7 @@ public sealed class CompareViewModel : ObservableObject
         Add("Max. CPU-Temp", s => s.MaxCpuTemp, "0", "°C", false);
         Add("Max. GPU-Temp", s => s.MaxGpuTemp, "0", "°C", false);
         Add("Max. Hotspot", s => s.MaxGpuHotspot, "0", "°C", false);
+        Add("Max. VRAM-Temp", s => s.MaxGpuMemTemp, "0", "°C", false);
         Add("Ø CPU-Last", s => s.AvgCpuLoad, "0", "%", null);
         Add("Ø GPU-Last", s => s.AvgGpuLoad, "0", "%", null);
         Add("Ø CPU-Leistung", s => s.AvgCpuPower, "0", "W", false);

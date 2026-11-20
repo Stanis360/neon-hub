@@ -70,6 +70,7 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         _settings = AppSettings.Load();
+        Services.Fps.FrameTracker.SetUserIgnored(_settings.FpsIgnoredApps);
         _monitor = new HardwareMonitorService(_settings);
         _recorder = new RecordingService(_monitor, () => _settings.PricePerKwh);
         _playtime = new PlaytimeService();

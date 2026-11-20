@@ -37,7 +37,7 @@ public sealed class RecordingService : IDisposable
     // Laufende Summen/Maxima für die Zusammenfassung
     private readonly Accumulator _cpuLoad = new(), _gpuLoad = new(), _cpuPower = new(), _gpuPower = new(),
                                  _cpuTemp = new(), _gpuTemp = new(), _hotspot = new(), _ramLoad = new(), _fps = new(),
-                                 _totalPower = new(), _cpuFan = new(), _caseFan = new();
+                                 _totalPower = new(), _cpuFan = new(), _caseFan = new(), _memTemp = new();
     private double _energyWh;
     private TimeSpan _lastSampleAt;
 
@@ -109,7 +109,7 @@ public sealed class RecordingService : IDisposable
             _firstFrameTime = null;
             _samples = 0;
             foreach (var a in new[] { _cpuLoad, _gpuLoad, _cpuPower, _gpuPower, _cpuTemp, _gpuTemp, _hotspot, _ramLoad, _fps,
-                                      _totalPower, _cpuFan, _caseFan }) a.Reset();
+                                      _totalPower, _cpuFan, _caseFan, _memTemp }) a.Reset();
             _energyWh = 0;
             _lastSampleAt = TimeSpan.Zero;
             _clock.Restart();
@@ -139,6 +139,7 @@ public sealed class RecordingService : IDisposable
             result.AvgCpuPower = _cpuPower.Average;
             result.AvgGpuPower = _gpuPower.Average;
             result.MaxRamLoad = _ramLoad.Max;
+            result.MaxGpuMemTemp = _memTemp.Max;
             result.AvgCpuFan = _cpuFan.Average;
             result.AvgCaseFan = _caseFan.Average;
             result.AvgTotalPower = _totalPower.Average;
@@ -215,6 +216,7 @@ public sealed class RecordingService : IDisposable
                 f(s.RamUsedGb, "0.00"), f(s.RamLoad, "0.0"),
                 f(TotalPower(s), "0.0"), f(s.CpuFanRpm, "0"), f(s.CaseFanRpm, "0"),
                 f(s.NetDownMbit, "0.00"), f(s.NetUpMbit, "0.00"), f(s.DiskReadMBs, "0.0"), f(s.DiskWriteMBs, "0.0"),
+                f(s.GpuMemTemp, "0.0"),
             };
             _csv.WriteLine(string.Join(SessionStore.Separator, row));
             _csv.Flush();
@@ -225,7 +227,7 @@ public sealed class RecordingService : IDisposable
             _cpuPower.Add(s.CpuPower); _gpuPower.Add(s.GpuPower);
             _cpuTemp.Add(s.CpuTemp); _gpuTemp.Add(s.GpuTemp); _hotspot.Add(s.GpuHotspot);
             _ramLoad.Add(s.RamLoad); _fps.Add(s.Fps);
-            _cpuFan.Add(s.CpuFanRpm); _caseFan.Add(s.CaseFanRpm);
+            _cpuFan.Add(s.CpuFanRpm); _caseFan.Add(s.CaseFanRpm); _memTemp.Add(s.GpuMemTemp);
 
             // Energie: Leistung × Zeit seit der letzten Messung
             var now = _clock.Elapsed;

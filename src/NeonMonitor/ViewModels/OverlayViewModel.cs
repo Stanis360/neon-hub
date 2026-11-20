@@ -92,6 +92,7 @@ public sealed class OverlayViewModel : ObservableObject
             Item("gpuload", "GPU", "GPU", main.GpuLoad),
             Item("gputemp", "GPU", "GPU Temp", main.GpuTemp),
             Item("gpuhot", "GPU", "Hotspot", main.GpuHotspot),
+            Item("gpumemtemp", "GPU", "VRAM Temp", main.GpuMemTemp),
             Item("gpupower", "GPU", "GPU Watt", main.GpuPower),
             Item("gpuclock", "GPU", "GPU Takt", main.GpuClock),
             Item("gpuvram", "GPU", "VRAM", main.GpuVram),

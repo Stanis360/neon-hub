@@ -22,6 +22,7 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
     private IHardware? _gpu;
     private IHardware? _memory;
     private IHardware? _board;
+    private List<IHardware> _dimms = new();
     private List<IHardware> _storage = new();
     private int _storageTick;
 
@@ -55,7 +56,13 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
         foreach (var hw in _computer.Hardware) UpdateRecursive(hw);
 
         _cpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);
-        _memory = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Memory);
+        // LHM meldet mehrere „Memory“-Einträge: /ram (echter Arbeitsspeicher), /vram (virtueller Speicher
+        // inkl. Auslagerungsdatei) und /memory/dimm/n (einzelne Module mit Temperatur). Wir brauchen /ram.
+        var memories = _computer.Hardware.Where(h => h.HardwareType == HardwareType.Memory).ToList();
+        _memory = memories.FirstOrDefault(h => h.Identifier.ToString() == "/ram")
+                  ?? memories.FirstOrDefault(h => h.Name.Contains("Total", StringComparison.OrdinalIgnoreCase))
+                  ?? memories.FirstOrDefault(h => !h.Identifier.ToString().StartsWith("/vram") && !h.Identifier.ToString().Contains("/dimm/"));
+        _dimms = memories.Where(h => h.Identifier.ToString().Contains("/dimm/")).ToList();
         _gpu = SelectDiscreteGpu(_computer.Hardware);
         _board = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Motherboard);
         _storage = _computer.Hardware.Where(h => h.HardwareType == HardwareType.Storage).ToList();
@@ -135,6 +142,7 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
             s.GpuLoad ??= FindValue(_gpu, SensorType.Load, "GPU Core", "D3D 3D");
             s.GpuTemp ??= FindValue(_gpu, SensorType.Temperature, "GPU Core", "GPU Edge");
             s.GpuHotspot ??= FindValue(_gpu, SensorType.Temperature, "GPU Hot Spot", "GPU Junction");
+            s.GpuMemTemp ??= FindValue(_gpu, SensorType.Temperature, "GPU Memory", "GPU Memory Junction");
             s.GpuClock ??= FindValue(_gpu, SensorType.Clock, "GPU Core", "GPU Shader");
             s.GpuMemClock ??= FindValue(_gpu, SensorType.Clock, "GPU Memory");
             s.GpuVramUsedMb ??= FindValue(_gpu, SensorType.SmallData, "GPU Memory Used", "D3D Dedicated Memory Used");
@@ -152,9 +160,16 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
             if (used is not null && avail is not null) s.RamTotalGb ??= used + avail;
             s.RamLoad ??= FindValue(_memory, SensorType.Load, "Memory");
 
-            // DDR5-Module haben eigene Temperatursensoren
-            foreach (var t in AllSensors(_memory).Where(x => x.SensorType == SensorType.Temperature && IsPlausible(x.Value)))
-                s.ExtraTemps.Add(new TempReading("RAM", t.Hardware.Name == _memory.Name ? t.Name : t.Hardware.Name, t.Value!.Value));
+        }
+
+        // DDR5-Module: nur der eigentliche Sensor „DIMM #n“ (die übrigen Einträge sind Grenzwerte wie 55/85 °C)
+        foreach (var dimm in _dimms)
+        {
+            try { dimm.Update(); } catch { continue; }
+            var t = dimm.Sensors.FirstOrDefault(x => x.SensorType == SensorType.Temperature
+                                                     && x.Name.StartsWith("DIMM", StringComparison.OrdinalIgnoreCase)
+                                                     && IsPlausible(x.Value));
+            if (t is not null) s.ExtraTemps.Add(new TempReading("RAM", $"{t.Name} · {ShortDimmName(dimm.Name)}", t.Value!.Value));
         }
 
         FillBoard(s);
@@ -171,7 +186,8 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
         foreach (var f in sensors.Where(x => x.SensorType == SensorType.Fan && x.Value is not null))
             s.Fans.Add(new FanReading(f.Identifier.ToString(), f.Name, f.Value!.Value));
 
-        foreach (var t in sensors.Where(x => x.SensorType == SensorType.Temperature && IsPlausible(x.Value)))
+        // Unbelegte Mainboard-Eingänge zeigen oft Fantasiewerte (z. B. 3 °C, 6 °C) → erst ab 10 °C
+        foreach (var t in sensors.Where(x => x.SensorType == SensorType.Temperature && x.Value is >= 10 and < 125))
             s.ExtraTemps.Add(new TempReading("Mainboard", t.Name, t.Value!.Value));
 
         // Zuordnung CPU-/Gehäuselüfter: Einstellung, sonst automatisch
@@ -213,6 +229,14 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
             _lastStorageTemps = temps;
         }
         s.ExtraTemps.AddRange(_lastStorageTemps);
+    }
+
+    /// <summary>„G Skill Intl - F5-6000J3238F16G (#1)“ → „G Skill F5-6000J3238F16G“</summary>
+    private static string ShortDimmName(string name)
+    {
+        var n = name.Replace(" Intl", "").Replace(" - ", " ");
+        var hash = n.IndexOf(" (#", StringComparison.Ordinal);
+        return hash > 0 ? n[..hash] : n;
     }
 
     /// <summary>Unbelegte Sensoreingänge melden oft 0, -128 oder 127 °C.</summary>
