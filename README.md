@@ -57,8 +57,12 @@ Zum reinen Bauen und Starten reicht das SDK aus Schritt 1.1.
 
 ## 2. Installieren – per Doppelklick
 
-1. Die ZIP-Datei entpacken, z. B. nach `C:\Projekte` → es entsteht `C:\Projekte\NeonMonitor`.
-2. Im Ordner `NeonMonitor` **doppelt auf `Installieren.bat`** klicken und die Windows-Abfrage
+1. Code holen – eine der beiden Varianten:
+   * **ZIP:** <https://github.com/Stanis360/neon-hub> öffnen → grüner Knopf **„Code“** → **„Download ZIP“**,
+     dann entpacken, z. B. nach `C:\Projekte` (es entsteht `C:\Projekte\neon-hub-main`).
+   * **Git:** `git clone https://github.com/Stanis360/neon-hub.git C:\Projekte\neon-hub`
+     (Update später mit `git pull` im Ordner).
+2. Im entpackten Ordner **doppelt auf `Installieren.bat`** klicken und die Windows-Abfrage
    („Änderungen zulassen?“) mit **Ja** bestätigen.
    Falls Windows „Der Computer wurde durch Windows geschützt“ zeigt: **Weitere Informationen → Trotzdem ausführen**.
 3. Das Skript baut das Programm, legt das Symbol **NeonMonitor** auf dem Desktop und im Startmenü an
@@ -66,7 +70,7 @@ Zum reinen Bauen und Starten reicht das SDK aus Schritt 1.1.
 
 **Ab dann nur noch das Desktop-Symbol doppelklicken.**
 
-* **Update** (neue ZIP von mir): entpacken, alten Ordner ersetzen, wieder `Installieren.bat` – Einstellungen bleiben erhalten.
+* **Update:** neue ZIP von GitHub laden (oder `git pull`), alten Ordner ersetzen, wieder `Installieren.bat` – Einstellungen bleiben erhalten.
   Ein laufendes NeonMonitor wird dabei automatisch beendet.
 * **Entfernen:** `Deinstallieren.bat`.
 * Das Programm liegt danach in `%LOCALAPPDATA%\NeonMonitor\App`.
@@ -79,7 +83,7 @@ Zum reinen Bauen und Starten reicht das SDK aus Schritt 1.1.
 Terminal **als Administrator** öffnen (das Programm fordert Adminrechte an), dann:
 
 ```powershell
-cd C:\Projekte\NeonMonitor
+cd C:\Projekte\neon-hub-main
 dotnet run --project src\NeonMonitor -c Release
 ```
 
