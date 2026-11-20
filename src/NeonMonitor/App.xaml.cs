@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using NeonMonitor.Infrastructure;
 using NeonMonitor.Services;
 using NeonMonitor.ViewModels;
+using NeonMonitor.Views;
 
 namespace NeonMonitor;
 
@@ -14,6 +15,7 @@ namespace NeonMonitor;
 public partial class App : Application
 {
     private HardwareMonitorService? _monitor;
+    private GlobalHotkeys? _hotkeys;
     private Mutex? _singleInstance;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -44,9 +46,18 @@ public partial class App : Application
         var settings = AppSettings.Load();
         _monitor = new HardwareMonitorService(settings.PollIntervalMs, settings.SafeMode);
 
-        var window = new MainWindow { DataContext = new MainViewModel(_monitor, settings) };
+        var vm = new MainViewModel(_monitor, settings);
+        var window = new MainWindow { DataContext = vm };
         MainWindow = window;
         window.Show();
+
+        // Overlay (öffnet sich automatisch wieder, wenn es beim letzten Beenden sichtbar war)
+        vm.Overlay.AttachHost(new OverlayController(vm.Overlay));
+
+        // Systemweite Tastenkürzel – funktionieren auch mitten im Spiel
+        _hotkeys = new GlobalHotkeys(new System.Windows.Interop.WindowInteropHelper(window).Handle);
+        const uint vkO = 0x4F;
+        _hotkeys.Register(GlobalHotkeys.ModControl | GlobalHotkeys.ModAlt, vkO, () => vm.Overlay.ToggleCommand.Execute(null));
 
         // Sensoren erst nach dem Anzeigen starten – LHM braucht beim Öffnen ein paar Sekunden.
         _monitor.Start();
@@ -54,6 +65,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _hotkeys?.Dispose();
         _monitor?.Dispose(); // wichtig: gibt den PawnIO-Treiber frei
         _singleInstance?.Dispose();
         Log.Info("NeonMonitor beendet");

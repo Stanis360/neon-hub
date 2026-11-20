@@ -35,7 +35,7 @@
                         <Ellipse Width="10" Height="10" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,1,10,0" />
                         <TextBlock Text="NeonMonitor" FontFamily="{StaticResource DisplayFont}" FontSize="16"
                                    Foreground="{StaticResource TextBrush}" />
-                        <TextBlock Text="v0.4 · Schritt 2" Style="{StaticResource SmallText}" Margin="12,3,0,0" VerticalAlignment="Center" />
+                        <TextBlock Text="v0.5 · Schritt 3" Style="{StaticResource SmallText}" Margin="12,3,0,0" VerticalAlignment="Center" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Style="{StaticResource TitleBarButton}" Content="&#xE921;" ToolTip="Minimieren" Click="OnMinimize" />
@@ -90,8 +90,7 @@
                         <views:FpsView DataContext="{Binding Fps}" />
                     </TabItem>
                     <TabItem Header="◧  Overlay">
-                        <views:PlaceholderView Title="Overlay" Step="Schritt 3"
-                                               Description="Kleines, transparentes Always-on-top-Fenster mit frei wählbaren Werten." />
+                        <views:OverlayView DataContext="{Binding Overlay}" />
                     </TabItem>
                     <TabItem Header="●  Aufzeichnung">
                         <views:PlaceholderView Title="Aufzeichnung" Step="Schritt 4"

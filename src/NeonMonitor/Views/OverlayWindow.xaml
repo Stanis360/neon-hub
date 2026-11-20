@@ -1,0 +1,81 @@
+<!--
+  Overlay: kleines, immer obenliegendes Fenster mit transparentem Rand.
+  DataContext = OverlayViewModel. Mit der Maus verschiebbar (außer im fixierten Modus).
+-->
+<Window x:Class="NeonMonitor.Views.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:NeonMonitor.Controls"
+        xmlns:vm="clr-namespace:NeonMonitor.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance vm:OverlayViewModel}"
+        Title="NeonMonitor Overlay"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ShowActivated="False" ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        FontFamily="{StaticResource DisplayFont}">
+
+    <Grid>
+        <Grid.LayoutTransform>
+            <ScaleTransform ScaleX="{Binding Scale}" ScaleY="{Binding Scale}" />
+        </Grid.LayoutTransform>
+
+        <!-- Hintergrund getrennt, damit die Deckkraft nur ihn betrifft und nicht die Schrift -->
+        <Border CornerRadius="10" Background="#15181A" Opacity="{Binding BackgroundOpacity}"
+                BorderBrush="#3DDC97" BorderThickness="0,0,0,2" />
+
+        <StackPanel Margin="14,10,14,12" MinWidth="170">
+            <!-- Kopfzeile: Spielname und Uhrzeit -->
+            <DockPanel Margin="0,0,0,4">
+                <TextBlock DockPanel.Dock="Right" Text="{Binding ClockText}" FontSize="12" Foreground="#C5D0CD"
+                           Visibility="{Binding ShowClock, Converter={StaticResource BoolToVisibility}}" Margin="12,0,0,0" />
+                <TextBlock Text="{Binding Main.Fps.Application}" FontSize="12" Foreground="#3DDC97"
+                           TextTrimming="CharacterEllipsis" MaxWidth="200"
+                           Visibility="{Binding ShowGame, Converter={StaticResource BoolToVisibility}}" />
+            </DockPanel>
+
+            <!-- Messwerte: Beschriftung links, Wert rechts -->
+            <ItemsControl ItemsSource="{Binding VisibleMetrics}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:OverlayItemViewModel}">
+                        <Grid Margin="0,1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="78" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Label}" FontSize="14" Foreground="#9AA6AA" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <TextBlock x:Name="Value" Text="{Binding Metric.DisplayValue}" FontSize="18" FontWeight="SemiBold"
+                                           Foreground="#F2F6F5" />
+                                <TextBlock Text="{Binding Metric.Unit}" FontSize="12" Foreground="#9AA6AA"
+                                           Margin="4,0,0,3" VerticalAlignment="Bottom" />
+                            </StackPanel>
+                            <!-- leichter Schatten, damit die Schrift auch ohne Hintergrund lesbar bleibt -->
+                            <Grid.Effect>
+                                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.8" Color="Black" />
+                            </Grid.Effect>
+                        </Grid>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Group}" Value="FPS">
+                                <Setter TargetName="Value" Property="Foreground" Value="#3DDC97" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Metric.Severity}" Value="Warning">
+                                <Setter TargetName="Value" Property="Foreground" Value="#E8B44C" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Metric.Severity}" Value="Critical">
+                                <Setter TargetName="Value" Property="Foreground" Value="#E5626F" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Mini-Frametime-Diagramm -->
+            <controls:LineChart Height="46" Width="190" Margin="0,8,0,0" Maximum="33" Unit="ms"
+                                Series="{Binding Main.Fps.FrameTimes}" Stroke="{StaticResource AccentBrush}"
+                                Visibility="{Binding ShowChart, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -6,7 +6,7 @@ später FPS (per ETW, ohne Injection), Overlay, Aufzeichnung als CSV und Sitzung
 Gebaut mit **C# / .NET 10 / WPF**. Sensoren über **LibreHardwareMonitor**, ergänzt durch
 Windows-Leistungsindikatoren als Fallback.
 
-> Stand: **Schritt 2 von 5** – Live-Anzeige und FPS/Frametimes. Die Reiter für Overlay,
+> Stand: **Schritt 3 von 5** – Live-Anzeige, FPS/Frametimes und Overlay. Die Reiter für
 > Aufzeichnung und Vergleich sind vorbereitet und werden in den nächsten Schritten gefüllt.
 
 ---
@@ -143,7 +143,20 @@ alles andere inkl. FPS funktioniert).
 
 ---
 
-## 7. Projektstruktur
+## 7. Overlay (Reiter „Overlay“)
+
+* Kleines Fenster, das **immer im Vordergrund** bleibt – gedacht für einen **Nebenmonitor** neben dem Spiel.
+* **Ein/aus:** Schalter im Reiter oder systemweit **Strg + Alt + O** (funktioniert auch mitten im Spiel).
+* **Position:** Im Reiter für jeden Monitor eine Skizze mit vier Eckknöpfen – ein Klick setzt das Overlay
+  in diese Ecke. Oder einfach mit der Maus verschieben. Beim ersten Start landet es oben rechts auf einem Nebenmonitor.
+* **Fixieren:** Overlay lässt sich nicht mehr verschieben, Mausklicks gehen an das Fenster darunter.
+* **Größe** (60–200 %) und **Hintergrund-Deckkraft** (0–100 %) einstellbar.
+* **Werte frei wählbar:** Spielname, FPS, 1 % Low, Frametime, Frametime-Diagramm, CPU/GPU-Last, -Temperatur,
+  -Leistung, -Takt, Hotspot, VRAM, RAM, Uhrzeit. Alles wird gespeichert, auch ob das Overlay offen war.
+
+---
+
+## 8. Projektstruktur
 
 ```
 NeonMonitor/
@@ -181,8 +194,8 @@ NeonMonitor/
    │     ├─ PdhQuery.cs                   # Wrapper für pdh.dll
    │     └─ DriveSource.cs                # Laufwerksbelegung
    ├─ ViewModels/                 # MVVM: MainViewModel, MetricViewModel, ChartSeries …
-   ├─ Views/                      # LiveView (Dashboard), Platzhalter für spätere Schritte
-   └─ Infrastructure/             # Pfade, Einstellungen, Log, System-Checks
+   ├─ Views/                      # LiveView, FpsView, OverlayView/-Window/-Controller, Platzhalter
+   └─ Infrastructure/             # Pfade, Einstellungen, Log, System-Checks, Monitore, globale Hotkeys
 ```
 
 ### Architektur in einem Satz
@@ -195,11 +208,11 @@ zusätzliche Klasse, ohne den Rest anzufassen.
 
 ---
 
-## 8. Fahrplan
+## 9. Fahrplan
 
 1. ✅ Projekt-Setup, Live-Werte, Diagramme, Theme
 2. ✅ FPS & Frametimes per ETW (PresentMon, keine Injection)
-3. ⏳ Overlay (transparentes Always-on-top-Fenster, Werte wählbar)
+3. ✅ Overlay (Always-on-top-Fenster für den Nebenmonitor, Werte wählbar, Strg+Alt+O)
 4. ⏳ Aufzeichnung (Start/Stopp, Hotkey, CSV pro Sitzung)
 5. ⏳ Vergleich (Ø FPS, 1 % Lows, Höchsttemperaturen, Diagramme)
 

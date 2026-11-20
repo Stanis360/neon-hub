@@ -60,6 +60,8 @@ public sealed class MainViewModel : ObservableObject
 
         Fps = new FpsViewModel(monitor.Fps, settings, points);
 
+        Overlay = new OverlayViewModel(this, settings);
+
         IsAdmin = SystemInfo.IsAdministrator();
         IsPawnIoInstalled = SystemInfo.IsPawnIoInstalled();
         UpdateWarnings();
@@ -94,6 +96,9 @@ public sealed class MainViewModel : ObservableObject
 
     /// <summary>FPS-Seite und FPS-Zeile im Dashboard.</summary>
     public FpsViewModel Fps { get; }
+
+    /// <summary>Overlay-Einstellungen und -Inhalt.</summary>
+    public OverlayViewModel Overlay { get; }
 
     public ObservableCollection<DriveViewModel> Drives { get; } = new();
 
@@ -195,6 +200,7 @@ public sealed class MainViewModel : ObservableObject
         if (s.RamTotalGb is { } ramTotal) RamUsed.BarMaximum = Math.Round(ramTotal, 1);
 
         Fps.Apply(s);
+        Overlay.Tick();
         UpdateCoreClocks(s.CpuCoreClocks);
         UpdateDrives(s.Drives);
     }
