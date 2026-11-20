@@ -11,9 +11,10 @@ public sealed class SettingsViewModel : ObservableObject
     private readonly AppSettings _s;
     private bool _autostart;
 
-    public SettingsViewModel(AppSettings settings)
+    public SettingsViewModel(AppSettings settings, UpdateViewModel update)
     {
         _s = settings;
+        Update = update;
         _autostart = AutostartService.IsEnabled();
 
         PriceUp = new RelayCommand(() => Price += 0.01);
@@ -27,6 +28,9 @@ public sealed class SettingsViewModel : ObservableObject
         OpenDocumentsCommand = new RelayCommand(() => Shell.Open(AppPaths.DocumentsDir));
         OpenAppDataCommand = new RelayCommand(() => Shell.Open(AppPaths.AppDataDir));
     }
+
+    /// <summary>Update-Bereich (gleiches Objekt wie das Banner im Hauptfenster).</summary>
+    public UpdateViewModel Update { get; }
 
     /// <summary>Mit Windows starten (Aufgabenplanung, ohne UAC-Abfrage, minimiert im Infobereich).</summary>
     public bool Autostart

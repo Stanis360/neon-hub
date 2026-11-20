@@ -6,85 +6,58 @@ später FPS (per ETW, ohne Injection), Overlay, Aufzeichnung als CSV und Sitzung
 Gebaut mit **C# / .NET 10 / WPF**. Sensoren über **LibreHardwareMonitor**, ergänzt durch
 Windows-Leistungsindikatoren als Fallback.
 
-> Stand: **Version 1.1** – Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich,
+> Stand: **Version 1.2** – Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich,
 > dazu Kühlung mit Lüftersteuerung, Infobereich-Symbol, Autostart, automatische Aufnahme, Benchmark,
 > Warnungen, Netzwerk/Datenträger, Energie & Kosten und Spielzeit-Statistik.
 
 ---
 
-## 1. Einrichtung (einmalig)
+## 1. Installation (empfohlen: fertige Version)
 
-Alle Befehle in **PowerShell** oder im **Windows Terminal** ausführen.
+1. Auf **<https://github.com/Stanis360/neon-hub/releases>** beim neuesten Release
+   **`NeonMonitor-x.y.z-win-x64.zip`** herunterladen.
+   *(Die `…-portable.zip` enthält .NET bereits – nur nötig, wenn auf dem PC kein .NET installiert ist.)*
+2. Entpacken und **`Installieren.bat`** doppelklicken, Windows-Abfrage mit **Ja** bestätigen.
+   Falls „Der Computer wurde durch Windows geschützt“ erscheint: **Weitere Informationen → Trotzdem ausführen**.
+   Fehlt die .NET 10 Desktop Runtime, bietet das Skript an, sie per winget zu installieren.
+3. Fertig – Symbol **NeonMonitor** auf dem Desktop und im Startmenü.
 
-### 1.1 .NET 10 SDK installieren
+**Einmalig zusätzlich** (für CPU-Temperatur/-Leistung und Mainboard-Lüfter): `winget install namazso.PawnIO`
+(oder Installer von <https://pawnio.eu>). Für die GPU-Werte einen aktuellen AMD-Adrenalin-Treiber verwenden.
 
-```powershell
-winget install Microsoft.DotNet.SDK.10
-```
+### Updates
 
-Danach das Terminal **neu öffnen** und prüfen:
+NeonMonitor prüft beim Start und alle 6 Stunden, ob es auf GitHub eine neue Version gibt, und zeigt dann oben
+einen Hinweis mit **„Jetzt aktualisieren“**: Download, Prüfsummen-Kontrolle (SHA-256), sauberes Beenden,
+Installation und Neustart laufen automatisch. Abschaltbar unter *Einstellungen → Updates*.
 
-```powershell
-dotnet --version      # sollte 10.0.x anzeigen
-```
+### Entfernen
 
-> Python wird für das Projekt nicht gebraucht.
-
-### 1.2 PawnIO-Treiber installieren (für CPU-Sensoren)
-
-LibreHardwareMonitor nutzt seit Version 0.9.5 den signierten Treiber **PawnIO** statt des alten
-WinRing0 (den Windows Defender inzwischen als unsicher blockiert). Ohne PawnIO fehlen
-CPU-Temperatur, -Takt und -Leistung.
-
-```powershell
-winget install namazso.PawnIO
-```
-
-Falls winget das Paket nicht findet: Installer von <https://pawnio.eu> herunterladen.
-
-### 1.3 AMD-Grafiktreiber aktuell halten
-
-Die GPU-Werte kommen über die AMD-Schnittstelle ADL, die mit **AMD Software: Adrenalin Edition**
-installiert wird. Für die RX 9070 XT (RDNA 4) einen aktuellen Treiber verwenden.
-
-### 1.4 Optional: Editor
-
-* **Visual Studio 2026 Community** (kostenlos) mit der Workload „.NET-Desktopentwicklung“ – komfortabelster Weg, mit XAML-Vorschau.
-* oder **VS Code** mit der Erweiterung „C# Dev Kit“.
-
-Zum reinen Bauen und Starten reicht das SDK aus Schritt 1.1.
+`Deinstallieren.bat` (liegt auch in `%LOCALAPPDATA%\NeonMonitor\App`). Einstellungen und Aufnahmen bleiben erhalten.
 
 ---
 
-## 2. Installieren – per Doppelklick
+## 2. Neue Version veröffentlichen (für Entwickler)
 
-1. Code holen – eine der beiden Varianten:
-   * **ZIP:** <https://github.com/Stanis360/neon-hub> öffnen → grüner Knopf **„Code“** → **„Download ZIP“**,
-     dann entpacken, z. B. nach `C:\Projekte` (es entsteht `C:\Projekte\neon-hub-main`).
-   * **Git:** `git clone https://github.com/Stanis360/neon-hub.git C:\Projekte\neon-hub`
-     (Update später mit `git pull` im Ordner).
-2. Im entpackten Ordner **doppelt auf `Installieren.bat`** klicken und die Windows-Abfrage
-   („Änderungen zulassen?“) mit **Ja** bestätigen.
-   Falls Windows „Der Computer wurde durch Windows geschützt“ zeigt: **Weitere Informationen → Trotzdem ausführen**.
-3. Das Skript baut das Programm, legt das Symbol **NeonMonitor** auf dem Desktop und im Startmenü an
-   und startet es.
+Versionsnummer in `src/NeonMonitor/NeonMonitor.csproj` anheben, committen, dann ein Tag pushen:
 
-**Ab dann nur noch das Desktop-Symbol doppelklicken.**
+```powershell
+git tag v1.2.1
+git push origin v1.2.1
+```
 
-* **Update:** neue ZIP von GitHub laden (oder `git pull`), alten Ordner ersetzen, wieder `Installieren.bat` – Einstellungen bleiben erhalten.
-  Ein laufendes NeonMonitor wird dabei automatisch beendet.
-* **Entfernen:** `Deinstallieren.bat`.
-* Das Programm liegt danach in `%LOCALAPPDATA%\NeonMonitor\App`.
-* Startet man NeonMonitor ein zweites Mal, wird einfach das schon offene Fenster nach vorne geholt.
+GitHub Actions (`.github/workflows/release.yml`) baut auf Windows beide ZIP-Varianten, erzeugt `SHA256SUMS.txt`
+und legt das Release an. Alternativ unter *Actions → Release → Run workflow* mit Versionsnummer starten.
 
 ---
 
-## 3. Für Entwickler: direkt aus dem Quellcode starten
+## 3. Aus dem Quellcode bauen (für Entwickler)
 
-Terminal **als Administrator** öffnen (das Programm fordert Adminrechte an), dann:
+Voraussetzung: `winget install Microsoft.DotNet.SDK.10`. Danach entweder im Quellcode-Ordner
+`Installieren.bat` doppelklicken (baut und installiert) oder direkt starten – im Terminal **als Administrator**:
 
 ```powershell
-cd C:\Projekte\neon-hub-main
+cd C:\Projekte\neon-hub
 dotnet run --project src\NeonMonitor -c Release
 ```
 
@@ -220,7 +193,8 @@ Zusätzlich im Vergleich: Ø CPU-/Gehäuselüfter, **FPS pro Watt**, **Energie**
 ```
 NeonMonitor/
 ├─ NeonMonitor.sln
-├─ Installieren.bat / .ps1       # Doppelklick-Installation inkl. Desktop-Symbol
+├─ .github/workflows/release.yml # baut Releases automatisch (Tag v*)
+├─ Installieren.bat / .ps1       # Installation aus Release-ZIP oder Quellcode, inkl. Desktop-Symbol
 ├─ Deinstallieren.bat / .ps1     # Entfernen
 ├─ global.json                    # SDK-Version (.NET 10)
 ├─ docs/SENSOREN.md               # Kompatibilität Zen 5 / RDNA 4, Alternativen (ADLX …)
@@ -255,7 +229,8 @@ NeonMonitor/
    │  ├─ Comfort/
    │  │  ├─ PlaytimeService.cs            # Spielzeit pro Spiel
    │  │  ├─ AlertService.cs               # Temperatur-/Lüfter-Warnungen
-   │  │  └─ AutostartService.cs           # Autostart über die Aufgabenplanung
+   │  │  ├─ AutostartService.cs           # Autostart über die Aufgabenplanung
+   │  │  └─ UpdateService.cs              # Update-Prüfung und -Installation über GitHub Releases
    │  └─ Sensors/
    │     ├─ ISensorSource.cs              # Schnittstelle für Sensorquellen
    │     ├─ LibreHardwareSource.cs        # Hauptquelle (CPU/GPU/RAM/Mainboard/SSD)

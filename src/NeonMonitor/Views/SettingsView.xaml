@@ -118,6 +118,23 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ============ Updates ============ -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Updates" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" Margin="0,0,0,12" />
+                        <CheckBox Style="{StaticResource Option}" Content="Automatisch nach neuen Versionen suchen" IsChecked="{Binding Update.CheckForUpdates}" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Prüft beim Start und alle 6 Stunden die Releases auf GitHub. Installiert wird nur auf Knopfdruck – mit Prüfsummen-Kontrolle." />
+                        <TextBlock Text="{Binding Update.CurrentVersionText}" Style="{StaticResource SmallText}" FontSize="12" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource FlatButton}" Content="Jetzt prüfen" Margin="0,0,8,0" Command="{Binding Update.CheckCommand}" />
+                            <Button Style="{StaticResource FlatButton}" Content="Installieren" Margin="0,0,8,0" Command="{Binding Update.InstallCommand}" />
+                            <Button Style="{StaticResource FlatButton}" Content="Releases auf GitHub" Command="{Binding Update.OpenReleasesCommand}" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding Update.Status}" Style="{StaticResource SmallText}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
                 <!-- ============ Tastenkürzel & Info ============ -->
                 <Border Style="{StaticResource Card}">
                     <StackPanel>

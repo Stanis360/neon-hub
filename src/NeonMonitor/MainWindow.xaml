@@ -35,7 +35,7 @@
                         <Ellipse Width="10" Height="10" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,1,10,0" />
                         <TextBlock Text="NeonMonitor" FontFamily="{StaticResource DisplayFont}" FontSize="16"
                                    Foreground="{StaticResource TextBrush}" />
-                        <TextBlock Text="v1.1.1" Style="{StaticResource SmallText}" Margin="12,3,0,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Update.VersionShort, Mode=OneWay}" Style="{StaticResource SmallText}" Margin="12,3,0,0" VerticalAlignment="Center" />
                         <TextBlock Margin="20,1,0,0" VerticalAlignment="Center" FontFamily="{StaticResource DisplayFont}" FontSize="13"
                                    Foreground="{StaticResource CriticalBrush}"
                                    Visibility="{Binding Recording.IsRecording, Converter={StaticResource BoolToVisibility}}">
@@ -84,6 +84,30 @@
                             <TextBlock Text="{Binding SensorStatus}" Style="{StaticResource SmallText}"
                                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- ============ Update-Hinweis ============ -->
+                <Border DockPanel.Dock="Top" Background="#263DDC97" BorderBrush="{StaticResource AccentBrush}" BorderThickness="0,0,0,1"
+                        Padding="18,8" Visibility="{Binding Update.IsAvailable, Converter={StaticResource BoolToVisibility}}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="Jetzt aktualisieren" Command="{Binding Update.InstallCommand}" Margin="0,0,8,0" Padding="14,5">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource FlatButton}">
+                                        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                                        <Setter Property="Foreground" Value="#15181A" />
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Style="{StaticResource FlatButton}" Content="Was ist neu?" Command="{Binding Update.OpenReleasesCommand}" Margin="0,0,8,0" />
+                            <Button Style="{StaticResource FlatButton}" Content="Später" Command="{Binding Update.LaterCommand}" />
+                        </StackPanel>
+                        <TextBlock VerticalAlignment="Center" FontFamily="{StaticResource DisplayFont}" FontSize="13" Foreground="{StaticResource TextBrush}">
+                            <Run Text="⬆" Foreground="{StaticResource AccentBrush}" />
+                            <Run Text="{Binding Update.BannerText, Mode=OneWay}" />
+                            <Run Text="{Binding Update.Status, Mode=OneWay}" Foreground="{StaticResource TextDimBrush}" />
+                        </TextBlock>
                     </DockPanel>
                 </Border>
 

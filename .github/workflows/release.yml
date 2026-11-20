@@ -1,0 +1,69 @@
+# Baut NeonMonitor auf einem Windows-Rechner von GitHub und veröffentlicht ein Release
+# mit fertigen ZIP-Dateien. Auslöser: ein Tag wie „v1.2.0“ (oder manuell unter „Actions“).
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version ohne v, z. B. 1.2.1'
+        required: true
+
+permissions:
+  contents: write   # nötig, um das Release anzulegen
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Version bestimmen
+        id: v
+        shell: pwsh
+        run: |
+          $v = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ github.event.inputs.version }}' } else { '${{ github.ref_name }}'.TrimStart('v') }
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "Ungültige Version: $v" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Bauen – benötigt .NET 10 Desktop Runtime (klein)
+        run: dotnet publish src/NeonMonitor/NeonMonitor.csproj -c Release -r win-x64 --self-contained false -p:Version=${{ steps.v.outputs.version }} -o out/fd
+
+      - name: Bauen – portabel, enthält .NET (groß)
+        run: dotnet publish src/NeonMonitor/NeonMonitor.csproj -c Release -r win-x64 --self-contained true -p:Version=${{ steps.v.outputs.version }} -o out/sc
+
+      - name: ZIP-Pakete und Prüfsummen
+        shell: pwsh
+        run: |
+          $v = '${{ steps.v.outputs.version }}'
+          foreach ($d in 'fd', 'sc') {
+            Copy-Item Installieren.bat, Installieren.ps1, Deinstallieren.bat, Deinstallieren.ps1, README.md, THIRD-PARTY-NOTICES.md "out/$d/"
+          }
+          Compress-Archive -Path out/fd/* -DestinationPath "NeonMonitor-$v-win-x64.zip"
+          Compress-Archive -Path out/sc/* -DestinationPath "NeonMonitor-$v-win-x64-portable.zip"
+          Get-ChildItem *.zip | ForEach-Object {
+            "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)"
+          } | Set-Content -Encoding ascii SHA256SUMS.txt
+          Get-Content SHA256SUMS.txt
+
+      - name: Release veröffentlichen
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v = '${{ steps.v.outputs.version }}'
+          $notes = @"
+          ## Installation
+          1. **NeonMonitor-$v-win-x64.zip** herunterladen (für die portable Variante ohne installiertes .NET: ``-portable.zip``)
+          2. Entpacken und **Installieren.bat** doppelklicken
+          3. Fertig – Symbol „NeonMonitor“ auf dem Desktop
+
+          Bereits installiert? NeonMonitor meldet das Update selbst („Jetzt aktualisieren“).
+          "@
+          gh release create "v$v" "NeonMonitor-$v-win-x64.zip" "NeonMonitor-$v-win-x64-portable.zip" SHA256SUMS.txt --title "NeonMonitor $v" --notes $notes --generate-notes --target ${{ github.sha }}

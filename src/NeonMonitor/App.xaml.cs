@@ -19,6 +19,8 @@ public partial class App : Application
 {
     private const string MutexName = @"Local\NeonMonitor.SingleInstance";
     private const string ShowEventName = @"Local\NeonMonitor.ShowWindow";
+    /// <summary>Installations-/Deinstallationsskript bittet hierüber um sauberes Beenden.</summary>
+    private const string ExitEventName = @"Local\NeonMonitor.Exit";
 
     private HardwareMonitorService? _monitor;
     private RecordingService? _recorder;
@@ -27,6 +29,7 @@ public partial class App : Application
     private TrayIcon? _tray;
     private Mutex? _singleInstance;
     private EventWaitHandle? _showEvent;
+    private EventWaitHandle? _exitEvent;
     private AppSettings _settings = new();
     private MainWindow? _window;
     private bool _exiting;
@@ -54,6 +57,13 @@ public partial class App : Application
             }
         }) { IsBackground = true, Name = "Einzelinstanz" }.Start();
 
+        _exitEvent = new EventWaitHandle(false, EventResetMode.ManualReset, ExitEventName);
+        new Thread(() =>
+        {
+            _exitEvent.WaitOne();
+            if (!_exiting) Dispatcher.BeginInvoke(ExitApp);
+        }) { IsBackground = true, Name = "Beenden-Signal" }.Start();
+
         // Unbehandelte Fehler protokollieren statt kommentarlos abzustürzen
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
@@ -76,7 +86,7 @@ public partial class App : Application
         _playtime = new PlaytimeService();
         var alerts = new AlertService(_settings);
 
-        var vm = new MainViewModel(_monitor, _settings, _recorder, _playtime, alerts);
+        var vm = new MainViewModel(_monitor, _settings, _recorder, _playtime, alerts, requestExit: ExitApp);
         _window = new MainWindow { DataContext = vm };
         MainWindow = _window;
         _window.Closing += OnWindowClosing;
@@ -170,6 +180,8 @@ public partial class App : Application
         _playtime?.Save();
         _monitor?.Dispose();        // gibt Lüfter ans Mainboard zurück und den PawnIO-Treiber frei
         _showEvent?.Dispose();
+        _exitEvent?.Set();          // Wartethread beenden
+        _exitEvent?.Dispose();
         _singleInstance?.Dispose();
         Log.Info("NeonMonitor beendet");
         base.OnExit(e);

@@ -70,6 +70,13 @@ public sealed class AppSettings
     /// <summary>Strompreis in €/kWh für die Kostenberechnung.</summary>
     public double PricePerKwh { get; set; } = 0.35;
 
+    // ---------- Updates ----------
+
+    /// <summary>Automatisch auf GitHub nach neuen Versionen suchen.</summary>
+    public bool CheckForUpdates { get; set; } = true;
+    /// <summary>Mit „Später“ übersprungene Version (wird dann nicht erneut gemeldet).</summary>
+    public string? SkippedVersion { get; set; }
+
     // ---------- Warnungen ----------
 
     public bool AlertsEnabled { get; set; } = true;

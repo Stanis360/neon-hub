@@ -36,8 +36,9 @@ public sealed class MainViewModel : ObservableObject
     private bool _isInitializing = true;
 
     public MainViewModel(HardwareMonitorService monitor, AppSettings settings, RecordingService recorder,
-                         PlaytimeService playtime, AlertService alerts)
+                         PlaytimeService playtime, AlertService alerts, Action requestExit)
     {
+        Update = new UpdateViewModel(settings, requestExit);
         _playtime = playtime;
         _alerts = alerts;
         _monitor = monitor;
@@ -82,7 +83,7 @@ public sealed class MainViewModel : ObservableObject
         Recording = new RecordingViewModel(recorder, settings);
         Compare = new CompareViewModel();
         Cooling = new CoolingViewModel(settings, monitor.Lhm.FanControl);
-        Settings = new SettingsViewModel(settings);
+        Settings = new SettingsViewModel(settings, Update);
         Stats = new StatsViewModel(playtime);
         Recording.SessionSaved += _ => Stats.Refresh();
         Recording.SessionSaved += _ => Compare.Refresh();
@@ -132,6 +133,9 @@ public sealed class MainViewModel : ObservableObject
     public MetricViewModel DiskWrite { get; }
     public MetricViewModel TotalPower { get; }
     public MetricViewModel FpsPerWatt { get; }
+
+    /// <summary>Update-Hinweis und -Einstellungen.</summary>
+    public UpdateViewModel Update { get; }
 
     /// <summary>Reiter „Kühlung“.</summary>
     public CoolingViewModel Cooling { get; }

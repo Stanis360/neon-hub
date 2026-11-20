@@ -4,7 +4,14 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     Start-Process powershell.exe -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
     exit
 }
-Get-Process -Name NeonMonitor -ErrorAction SilentlyContinue | Stop-Process -Force
+# Erst sauber beenden lassen (Lüfter zurück ans Mainboard), notfalls hart
+$running = Get-Process -Name NeonMonitor -ErrorAction SilentlyContinue
+if ($running) {
+    try { [void][System.Threading.EventWaitHandle]::OpenExisting('Local\NeonMonitor.Exit').Set() } catch { }
+    $running | Wait-Process -Timeout 15 -ErrorAction SilentlyContinue
+    Get-Process -Name NeonMonitor -ErrorAction SilentlyContinue | Stop-Process -Force
+}
+Unregister-ScheduledTask -TaskName 'NeonMonitor' -Confirm:$false -ErrorAction SilentlyContinue  # Autostart entfernen
 Start-Sleep -Seconds 1
 Remove-Item (Join-Path $env:LOCALAPPDATA 'NeonMonitor\App') -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path ([Environment]::GetFolderPath('Desktop')) 'NeonMonitor.lnk') -ErrorAction SilentlyContinue
