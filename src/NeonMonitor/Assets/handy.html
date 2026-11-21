@@ -223,6 +223,8 @@ function renderDeck() {
 
 document.getElementById('deck').addEventListener('click', async ev => {
   const btn = ev.target.closest('.key'); if (!btn) return;
+  const def = deckButtons.find(b => b.id === btn.dataset.id);
+  if (def && def.confirm && !confirm(def.confirm)) return;
   if (navigator.vibrate) navigator.vibrate(25);
   btn.classList.add('flash'); setTimeout(() => btn.classList.remove('flash'), 180);
   try {

@@ -56,12 +56,43 @@
                 </DockPanel>
             </Border>
 
+            <!-- ============ PC per Handy einschalten ============ -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource FlatButton}" Content="Aktualisieren" Command="{Binding RefreshWolCommand}" />
+                        <TextBlock Text="PC per Handy einschalten (Wake-on-LAN)" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" />
+                    </DockPanel>
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextBrush}" FontSize="13" Margin="0,6,0,8"
+                               Text="Ausschalten geht über die Energie-Knöpfe. Zum Einschalten muss das Handy ein „Weck-Paket“ an die Netzwerkkarte schicken – das kann ein Browser nicht, dafür braucht es eine kostenlose Wake-on-LAN-App (z. B. „Wake On Lan“ im Play Store / „Mocha WOL“ im App Store) oder die Fritzbox (fritz.box → Heimnetz → Netzwerk → Gerät → „Computer starten“, auch in der MyFRITZ!App)." />
+                    <TextBox Text="{Binding WolText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="{StaticResource MonoFont}" Margin="0,0,0,8" />
+                    <Border Background="#2AE8B44C" CornerRadius="8" Padding="10,6" Margin="0,0,0,8"
+                            Visibility="{Binding WolWifiOnly, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource WarnBrush}" FontSize="12"
+                                   Text="Der PC hängt nur per WLAN im Netz. Wake-on-LAN funktioniert fast nur mit LAN-Kabel – aus dem ausgeschalteten Zustand wacht WLAN in der Regel nicht auf. Aus dem Standby kann es klappen." />
+                    </Border>
+                    <TextBlock Text="So geht's – einmalig:" Style="{StaticResource SectionLabel}" Margin="0,0,0,4" />
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextBrush}" FontSize="12" LineHeight="19">
+                        <Run Text="1. BIOS (beim Start Entf drücken) → Advanced → APM Configuration: „Power On By PCI-E“ = Enabled und „ErP Ready“ = Disabled. Speichern (F10)." /><LineBreak />
+                        <Run Text="2. Windows vorbereiten – Knopf unten (Netzwerkkarte darf wecken, Schnellstart aus)." /><LineBreak />
+                        <Run Text="3. In der WoL-App einen PC anlegen: MAC-Adresse von oben eintragen, Broadcast-Adresse meist 192.168.x.255 bzw. „automatisch“." /><LineBreak />
+                        <Run Text="4. Test: PC über das Deck ausschalten, 30 s warten, in der App „Wecken“ tippen." />
+                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Style="{StaticResource FlatButton}" Content="Windows für Wake-on-LAN vorbereiten" Command="{Binding PrepareWolCommand}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding WolResult}" Style="{StaticResource SmallText}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
             <!-- ============ Knöpfe ============ -->
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <DockPanel Margin="0,0,0,10">
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                             <Button Style="{StaticResource FlatButton}" Content="+ Knopf hinzufügen" Margin="0,0,8,0" Command="{Binding AddCommand}" />
+                            <Button Style="{StaticResource FlatButton}" Content="+ Energie-Knöpfe" Margin="0,0,8,0" Command="{Binding AddPowerCommand}"
+                                    ToolTip="Ausschalten, Neustart, Abbrechen, Standby, Sperren, Bildschirm aus" />
                             <Button Style="{StaticResource FlatButton}" Content="Standard wiederherstellen" Command="{Binding ResetCommand}" />
                         </StackPanel>
                         <TextBlock Text="Knöpfe" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" />
@@ -135,6 +166,7 @@
                                                 <RadioButton Style="{StaticResource Chip}" Content="Medien" IsChecked="{Binding IsMedia}" />
                                                 <RadioButton Style="{StaticResource Chip}" Content="Text" IsChecked="{Binding IsText}" />
                                                 <RadioButton Style="{StaticResource Chip}" Content="NeonMonitor" IsChecked="{Binding IsNeon}" />
+                                                <RadioButton Style="{StaticResource Chip}" Content="System" IsChecked="{Binding IsPower}" />
                                             </WrapPanel>
 
                                             <!-- Wert je nach Art -->
@@ -175,7 +207,20 @@
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
-                                            <TextBlock Style="{StaticResource SmallText}" Margin="0,4,0,0">
+                                            <ItemsControl ItemsSource="{x:Static vm:DeckViewModel.PowerChoices}"
+                                                          Visibility="{Binding IsPower, Converter={StaticResource BoolToVisibility}}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:DeckChoice}">
+                                                        <Button Style="{StaticResource FlatButton}" Content="{Binding Title}" Margin="0,0,6,6"
+                                                                Command="{Binding DataContext.SetValueCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding Value}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Style="{StaticResource SmallText}" Margin="0,4,0,0" TextWrapping="Wrap">
                                                 <Run Text="{Binding ValueHint, Mode=OneWay}" />
                                                 <Run Text="{Binding ValueTitle, Mode=OneWay, StringFormat='Gewählt: {0}'}" />
                                             </TextBlock>

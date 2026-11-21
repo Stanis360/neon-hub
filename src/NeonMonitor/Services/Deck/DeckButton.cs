@@ -10,7 +10,7 @@ public sealed class DeckButton
     public string Icon { get; set; } = "★";
     /// <summary>Hintergrundfarbe als Hex, z. B. „#3DDC97“.</summary>
     public string Color { get; set; } = "#4A5459";
-    /// <summary>„hotkey“, „program“, „url“, „media“, „text“ oder „neon“.</summary>
+    /// <summary>„hotkey“, „program“, „url“, „media“, „text“, „power“ oder „neon“.</summary>
     public string Type { get; set; } = "hotkey";
     /// <summary>Tastenkombination, Pfad, Adresse, Medienaktion, Text oder NeonMonitor-Aktion.</summary>
     public string Value { get; set; } = "";
@@ -32,5 +32,17 @@ public sealed class DeckButton
         new() { Icon = "🔉", Label = "Leiser", Color = "#4A5459", Type = "media", Value = "voldown" },
         new() { Icon = "🔊", Label = "Lauter", Color = "#4A5459", Type = "media", Value = "volup" },
         new() { Icon = "📊", Label = "Task-Manager", Color = "#4A5459", Type = "hotkey", Value = "Strg+Umschalt+Escape" },
+        .. PowerDefaults(),
+    ];
+
+    /// <summary>Energie-Knöpfe (auch einzeln per „Energie-Knöpfe hinzufügen“).</summary>
+    public static List<DeckButton> PowerDefaults() =>
+    [
+        new() { Icon = "⏻", Label = "Ausschalten", Color = "#E5626F", Type = "power", Value = "shutdown" },
+        new() { Icon = "🔄", Label = "Neustart", Color = "#E8B44C", Type = "power", Value = "restart" },
+        new() { Icon = "✋", Label = "Abbrechen", Color = "#3DDC97", Type = "power", Value = "abort" },
+        new() { Icon = "🌙", Label = "Standby", Color = "#5AA9E6", Type = "power", Value = "sleep" },
+        new() { Icon = "🔒", Label = "Sperren", Color = "#4A5459", Type = "power", Value = "lock" },
+        new() { Icon = "🖥", Label = "Bildschirm aus", Color = "#4A5459", Type = "power", Value = "displayoff" },
     ];
 }

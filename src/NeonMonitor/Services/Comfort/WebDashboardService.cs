@@ -136,7 +136,13 @@ public sealed class WebDashboardService : IDisposable
                     var deck = new
                     {
                         enabled = _settings.DeckEnabled,
-                        buttons = _settings.DeckButtons.Select(b => new { id = b.Id, label = b.Label, icon = b.Icon, color = b.Color, kind = b.Type, value = b.Type == "neon" ? b.Value : null }),
+                        buttons = _settings.DeckButtons.Select(b => new
+                        {
+                            id = b.Id, label = b.Label, icon = b.Icon, color = b.Color, kind = b.Type,
+                            value = b.Type == "neon" ? b.Value : null,
+                            confirm = b.Type == "power" && PowerActions.NeedsConfirmation(b.Value)
+                                ? $"{PowerActions.Titles[b.Value]}: wirklich ausführen?" : null,
+                        }),
                     };
                     Respond(ctx, 200, "application/json; charset=utf-8", JsonSerializer.Serialize(deck), noCache: true);
                     break;

@@ -86,6 +86,11 @@ public sealed class DeckService(AppSettings settings)
                     StartUnelevated(uri.AbsoluteUri);
                     break;
 
+                case "power":
+                    if (!PowerActions.Titles.ContainsKey(b.Value)) return (false, "Unbekannte Energie-Aktion.");
+                    Log.Info($"Deck: Energie-Aktion „{b.Value}“");
+                    return (true, PowerActions.Run(b.Value));
+
                 case "neon":
                     if (!NeonActions.ContainsKey(b.Value)) return (false, "Unbekannte NeonMonitor-Aktion.");
                     RunNeonAction?.Invoke(b.Value);
