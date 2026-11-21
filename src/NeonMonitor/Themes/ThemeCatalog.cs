@@ -66,7 +66,49 @@ public static class ThemeCatalog
         Glow1 = "#FF4FD8", Glow2 = "#22E4FF", GridLine = "#1822E4FF",
     };
 
-    public static IReadOnlyList<ThemeDefinition> All { get; } = [Graphit, Midnight, Carbon, Rubin, Synthwave];
+    public static readonly ThemeDefinition Mono = new()
+    {
+        Id = "mono", Name = "Graphit Mono", Description = "Nur Grautöne, schlicht und ruhig – mit weißem Meteorschauer",
+        Background = "#101113", BackgroundTop = "#101113", BackgroundBottom = "#16171A",
+        Panel = "#E01D1F22", PanelBorder = "#2A2D31", Track = "#2E3135", Chrome = "#F00E0F11", Divider = "#232629",
+        Inner = "#191B1E", Selected = "#222428", Button = "#23262A", ButtonHover = "#2D3135", ButtonPressed = "#373B40",
+        ScrollThumb = "#3A3E43", ScrollThumbHover = "#555A60",
+        Accent = "#E3E6E9", Accent2 = "#B9BEC4", Secondary = "#8D949B", Text = "#ECEEF0", TextDim = "#7E858C", OnAccent = "#101113",
+        CardRadius = 10, SmallRadius = 5, TitleLeft = true, TitleAccent = false, Gradient = true,
+        DisplayFont = "Segoe UI Variable Display, Segoe UI", BigFont = "Segoe UI Variable Display Semibold, Segoe UI Semibold, Segoe UI",
+        Glow1 = "#FFFFFF", Glow2 = "#FFFFFF", GridLine = "#08FFFFFF",
+        Effect = BackgroundEffects.Meteors, EffectColor = "#FFFFFF",
+    };
+
+    public static readonly ThemeDefinition Meteor = new()
+    {
+        Id = "meteor", Name = "Meteor", Description = "Tiefschwarz mit Orange und verglühenden Meteoren",
+        Background = "#060607", BackgroundTop = "#060607", BackgroundBottom = "#0C0C0E",
+        Panel = "#DB131315", PanelBorder = "#29FF7A1A", Track = "#29292E", Chrome = "#EB080809", Divider = "#1E1E22",
+        Inner = "#111113", Selected = "#1F1813", Button = "#1D1D21", ButtonHover = "#27272C", ButtonPressed = "#313137",
+        ScrollThumb = "#313137", ScrollThumbHover = "#4A4A52",
+        Accent = "#FF7A1A", Accent2 = "#FFC38A", Secondary = "#FFC38A", Text = "#F3F3F4", TextDim = "#8C8C96", OnAccent = "#060607",
+        CardRadius = 6, SmallRadius = 3, TitleUppercase = true, TitleLeft = true, Gradient = true, GradientEnd = "#FFB347",
+        DisplayFont = "./Fonts/#Rajdhani, ./Fonts/#Rajdhani Medium, Bahnschrift SemiCondensed, Bahnschrift", BigFont = "./Fonts/#Rajdhani, ./Fonts/#Rajdhani SemiBold, Bahnschrift",
+        Glow1 = "#FF7A1A", Glow2 = "#FF7A1A", GridLine = "#08FFFFFF",
+        Effect = BackgroundEffects.Meteors,
+    };
+
+    public static readonly ThemeDefinition KiAura = new()
+    {
+        Id = "kiaura", Name = "Ki-Aura", Description = "Anime-Stil: Orange und Blau, goldene Energie-Aura, Comic-Schrift",
+        Background = "#0A0D1C", BackgroundTop = "#0A0D1C", BackgroundBottom = "#141A3C",
+        Panel = "#D6101630", PanelBorder = "#4DFF8C1A", Track = "#232B55", Chrome = "#F0090C1A", Divider = "#1E2548",
+        Inner = "#121834", Selected = "#2A2140", Button = "#1C2346", ButtonHover = "#252E5A", ButtonPressed = "#2F3A6E",
+        ScrollThumb = "#2F3A6E", ScrollThumbHover = "#44528F",
+        Accent = "#FF8C1A", Accent2 = "#FFD23F", Secondary = "#3D8BFF", Text = "#FFF6E8", TextDim = "#98A2CC", OnAccent = "#0A0D1C",
+        CardRadius = 12, SmallRadius = 6, TitleUppercase = true, TitleLeft = true, Gradient = true, GradientEnd = "#FFD23F",
+        DisplayFont = "Segoe UI Variable Display, Segoe UI", BigFont = "./Fonts/#Bangers, Impact", TitleFont = "./Fonts/#Bangers, Impact",
+        Glow1 = "#FF8C1A", Glow2 = "#3D8BFF", GridLine = "#0AFFD23F",
+        Effect = BackgroundEffects.Aura,
+    };
+
+    public static IReadOnlyList<ThemeDefinition> All { get; } = [Graphit, Mono, Meteor, Midnight, Carbon, Rubin, Synthwave, KiAura];
 
     public static ThemeDefinition Get(string? id) => All.FirstOrDefault(t => t.Id == id) ?? Graphit;
 }

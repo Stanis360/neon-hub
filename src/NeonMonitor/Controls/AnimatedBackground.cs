@@ -8,8 +8,9 @@ using NeonMonitor.Themes;
 namespace NeonMonitor.Controls;
 
 /// <summary>
-/// Ruhiger, animierter Hintergrund: ein sehr dezentes, langsam driftendes Raster,
-/// zwei weiche Lichtflecken und wenige aufsteigende Punkte.
+/// Animierter Hintergrund: zwei weiche Lichtflecken plus wählbarer Effekt (<see cref="Mode"/>) –
+/// dezentes, langsam driftendes Raster mit aufsteigenden Punkten, Meteorschauer, Gewitter oder Ki-Aura
+/// (siehe <see cref="SkyEffects"/>), oder nur die ruhige Farbfläche.
 /// <para>
 /// Alle Bewegungen laufen als WPF-Animationen auf Transformationen (vom Render-Thread
 /// komponiert) mit reduzierter Bildrate – das hält die Last minimal.
@@ -32,11 +33,24 @@ public sealed class AnimatedBackground : Grid
         set => SetValue(IsAnimatedProperty, value);
     }
 
+    /// <summary>Effekt-Kennung aus <see cref="BackgroundEffects"/> (grid, meteor, lightning, aura, none).</summary>
+    public static readonly DependencyProperty ModeProperty = DependencyProperty.Register(
+        nameof(Mode), typeof(string), typeof(AnimatedBackground),
+        new PropertyMetadata(BackgroundEffects.Grid, (d, _) => ((AnimatedBackground)d).ApplyEffect()));
+
+    public string Mode
+    {
+        get => (string)GetValue(ModeProperty);
+        set => SetValue(ModeProperty, value);
+    }
+
     // Farben aus dem gewählten Design, hier nur sehr transparent eingesetzt
     private static Color Accent => ThemeManager.ColorOf(ThemeManager.Current.Glow1);
     private static Color Accent2 => ThemeManager.ColorOf(ThemeManager.Current.Glow2);
 
     private readonly TranslateTransform _gridShift = new();
+    private readonly UIElement _gridLayer;
+    private readonly EffectLayer _effectLayer = new();
     private readonly Canvas _orbLayer = new() { IsHitTestVisible = false };
     private readonly Canvas _particleLayer = new() { IsHitTestVisible = false };
     private readonly List<(Ellipse Shape, TranslateTransform Move, double XFrac, double Seconds, double Delay)> _particles = new();
@@ -51,12 +65,15 @@ public sealed class AnimatedBackground : Grid
         Background = new LinearGradientBrush(ThemeManager.ColorOf(ThemeManager.Current.BackgroundTop),
                                              ThemeManager.ColorOf(ThemeManager.Current.BackgroundBottom), 90);
 
-        Children.Add(CreateGridLayer());
+        _gridLayer = CreateGridLayer();
+        Children.Add(_gridLayer);
         Children.Add(_orbLayer);
         Children.Add(_particleLayer);
+        Children.Add(_effectLayer);
 
         CreateOrbs();
         CreateParticles();
+        ApplyEffect();
 
         SizeChanged += (_, _) => Restart();
         IsVisibleChanged += (_, _) => Restart();
@@ -140,6 +157,15 @@ public sealed class AnimatedBackground : Grid
         }
     }
 
+    /// <summary>Raster nur im Raster-Modus; Meteore/Blitze/Aura zeichnet die Effektebene.</summary>
+    private void ApplyEffect()
+    {
+        var isGrid = Mode == BackgroundEffects.Grid;
+        _gridLayer.Visibility = isGrid ? Visibility.Visible : Visibility.Collapsed;
+        _effectLayer.Sky = SkyEffect.Create(Mode, ThemeManager.Current);
+        Restart();
+    }
+
     // ---------------- Animationen ----------------
 
     /// <summary>Startet alle Animationen passend zur aktuellen Größe neu (oder stoppt sie).</summary>
@@ -157,11 +183,20 @@ public sealed class AnimatedBackground : Grid
             Canvas.SetTop(orb, start.Y * h - orb.Height / 2);
         }
 
-        _particleLayer.Visibility = run ? Visibility.Visible : Visibility.Collapsed;
+        var isGrid = Mode == BackgroundEffects.Grid;
+        _particleLayer.Visibility = run && isGrid ? Visibility.Visible : Visibility.Collapsed;
 
         if (!run)
         {
             StopAll();
+            return;
+        }
+
+        // Meteore/Blitze/Aura laufen Bild für Bild; das Raster als WPF-Animation
+        _effectLayer.Start();
+        if (!isGrid)
+        {
+            StopGrid();
             return;
         }
 
@@ -200,13 +235,19 @@ public sealed class AnimatedBackground : Grid
 
     private void StopAll()
     {
-        _gridShift.BeginAnimation(TranslateTransform.XProperty, null);
-        _gridShift.BeginAnimation(TranslateTransform.YProperty, null);
+        _effectLayer.Stop();
+        StopGrid();
         foreach (var o in _orbs)
         {
             o.Move.BeginAnimation(TranslateTransform.XProperty, null);
             o.Move.BeginAnimation(TranslateTransform.YProperty, null);
         }
+    }
+
+    private void StopGrid()
+    {
+        _gridShift.BeginAnimation(TranslateTransform.XProperty, null);
+        _gridShift.BeginAnimation(TranslateTransform.YProperty, null);
         foreach (var p in _particles) p.Move.BeginAnimation(TranslateTransform.YProperty, null);
     }
 }

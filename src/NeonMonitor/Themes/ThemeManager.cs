@@ -70,7 +70,7 @@ public static class ThemeManager
 
         // Balken und Ringe: Akzentfarbe oder Verlauf Akzent → Secondary
         Brush fill = t.Gradient
-            ? new LinearGradientBrush(accent, ColorOf(t.Secondary), 0)
+            ? new LinearGradientBrush(accent, ColorOf(t.GradientEnd ?? t.Secondary), 0)
             : new SolidColorBrush(accent);
         d["BarBrush"] = Frozen(fill);
         d["RingBrush"] = d["BarBrush"];
@@ -80,6 +80,7 @@ public static class ThemeManager
         d["DisplayFont"] = new FontFamily(baseUri, t.DisplayFont);
         d["UiFont"] = new FontFamily(baseUri, t.UiFont);
         d["BigFont"] = new FontFamily(baseUri, t.BigFont);
+        d["TitleFont"] = new FontFamily(baseUri, t.TitleFont ?? t.DisplayFont);
         d["MonoFont"] = new FontFamily("Cascadia Mono, Consolas");
         d["IconFont"] = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets");
 

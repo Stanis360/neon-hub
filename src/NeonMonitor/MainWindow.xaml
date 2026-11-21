@@ -26,7 +26,8 @@
     <Border x:Name="RootBorder" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1">
         <Grid>
             <!-- Animierter Hintergrund liegt hinter allem -->
-            <controls:AnimatedBackground x:Name="BackgroundLayer" IsAnimated="{Binding BackgroundAnimation}" />
+            <controls:AnimatedBackground x:Name="BackgroundLayer" IsAnimated="{Binding BackgroundAnimation}"
+                                         Mode="{Binding Settings.ActiveEffect}" />
 
             <DockPanel>
                 <!-- ============ Titelleiste ============ -->

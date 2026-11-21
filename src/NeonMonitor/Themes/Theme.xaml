@@ -14,11 +14,11 @@
 
     <!-- ===================== Farben & Schriften ===================== -->
     <!-- Kommen aus dem gewählten Design (Themes/ThemeCatalog.cs), siehe ThemeManager:
-         AccentBrush, SecondaryBrush, PanelBrush, TrackBrush, BarBrush, DisplayFont, BigFont, CardCornerRadius … -->
+         AccentBrush, SecondaryBrush, PanelBrush, TrackBrush, BarBrush, DisplayFont, BigFont, TitleFont, CardCornerRadius … -->
 
     <!-- ===================== Text ===================== -->
     <Style x:Key="CardTitle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontFamily" Value="{StaticResource TitleFont}" />
         <Setter Property="FontSize" Value="17" />
         <Setter Property="Foreground" Value="{StaticResource TitleBrush}" />
         <Setter Property="HorizontalAlignment" Value="{StaticResource TitleAlignment}" />

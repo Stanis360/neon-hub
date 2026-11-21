@@ -12,6 +12,9 @@ public sealed class AppSettings
     /// <summary>Gewähltes Design (Kennung aus ThemeCatalog).</summary>
     public string Theme { get; set; } = "graphit";
 
+    /// <summary>Hintergrund-Effekt: design (wie Design), grid, meteor, lightning, aura, none.</summary>
+    public string BackgroundEffect { get; set; } = "design";
+
     /// <summary>Hintergrundanimation an/aus (aus = weniger CPU/GPU-Last beim Spielen).</summary>
     public bool BackgroundAnimation { get; set; } = true;
 

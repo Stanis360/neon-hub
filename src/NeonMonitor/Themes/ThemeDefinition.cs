@@ -49,16 +49,42 @@ public sealed record ThemeDefinition
     public string UiFont { get; init; } = "Segoe UI Variable Text, Segoe UI";
     /// <summary>Schrift für große Zahlen (Ringe, FPS).</summary>
     public string BigFont { get; init; } = "Bahnschrift, Segoe UI";
+    /// <summary>Schrift der Kartenüberschriften (null = wie <see cref="DisplayFont"/>).</summary>
+    public string? TitleFont { get; init; }
     public bool TitleUppercase { get; init; }
     public bool TitleLeft { get; init; }
     /// <summary>Kartenüberschriften in Akzentfarbe (sonst Textfarbe).</summary>
     public bool TitleAccent { get; init; } = true;
-    /// <summary>Balken/Ringe als Verlauf von Akzent zu Secondary.</summary>
+    /// <summary>Balken/Ringe als Verlauf von Akzent zu <see cref="GradientEnd"/>.</summary>
     public bool Gradient { get; init; }
+    /// <summary>Endfarbe des Verlaufs (null = Secondary).</summary>
+    public string? GradientEnd { get; init; }
 
     // ---- Hintergrund-Animation ----
     public required string Glow1 { get; init; }
     public required string Glow2 { get; init; }
     /// <summary>Farbe der Rasterlinien inkl. Deckkraft.</summary>
     public string GridLine { get; init; } = "#0CFFFFFF";
+    /// <summary>Hintergrund-Effekt, wenn unter Einstellungen „Wie Design“ gewählt ist (siehe <see cref="BackgroundEffects"/>).</summary>
+    public string Effect { get; init; } = BackgroundEffects.Grid;
+    /// <summary>Farbe von Meteoren/Blitzen (null = Akzentfarbe; grau/weiß = weiße Meteore).</summary>
+    public string? EffectColor { get; init; }
+}
+
+/// <summary>Die wählbaren Hintergrund-Effekte (Kennungen wie in den Einstellungen gespeichert).</summary>
+public static class BackgroundEffects
+{
+    /// <summary>Nur in den Einstellungen: den Effekt des Designs verwenden.</summary>
+    public const string FromTheme = "design";
+    public const string Grid = "grid";
+    public const string Meteors = "meteor";
+    public const string Lightning = "lightning";
+    public const string Aura = "aura";
+    public const string None = "none";
+
+    /// <summary>Ist ein konkreter Effekt gewählt (nicht „Wie Design“ oder ein unbekannter Wert)?</summary>
+    public static bool IsExplicit(string? setting) => setting is Grid or Meteors or Lightning or Aura or None;
+
+    /// <summary>Löst „Wie Design“ und unbekannte Werte zu einem konkreten Effekt auf.</summary>
+    public static string Resolve(string? setting, ThemeDefinition theme) => IsExplicit(setting) ? setting! : theme.Effect;
 }

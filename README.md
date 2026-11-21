@@ -6,7 +6,7 @@ später FPS (per ETW, ohne Injection), Overlay, Aufzeichnung als CSV und Sitzung
 Gebaut mit **C# / .NET 10 / WPF**. Sensoren über **LibreHardwareMonitor**, ergänzt durch
 Windows-Leistungsindikatoren als Fallback.
 
-> Stand: **Version 1.5** – 5 umschaltbare Designs neu; Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich, Kühlung mit
+> Stand: **Version 1.6** – 8 Designs und animierte Hintergründe (Meteorschauer, Blitze, Ki-Aura) neu; Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich, Kühlung mit
 > Lüftersteuerung, Engpass-Analyse, Latenz, Ruckler-Analyse, Ping/Paketverlust, Handy-Ansicht, Bericht als Bild,
 > Langzeitverlauf, Infobereich, Autostart, automatische Updates.
 
@@ -192,9 +192,15 @@ Diagramm inkl. Hardware, z. B. zum Einfügen in Discord.
 
 ## 11. Komfort
 
-* **Designs** (Einstellungen → Design, wirksam nach Neustart per Knopf): *Graphit & Mint*, *Midnight Blue*,
-  *Carbon & Orange*, *Rubin* (Adrenalin-Stil) und *Synthwave*. Gilt auch für Overlay, Hintergrund-Animation und
-  die Handy-Seite. Neue Designs: einen Eintrag in `src/NeonMonitor/Themes/ThemeCatalog.cs` ergänzen.
+* **Designs** (Einstellungen → Design, wirksam nach Neustart per Knopf): *Graphit & Mint*, *Graphit Mono*,
+  *Meteor*, *Midnight Blue*, *Carbon & Orange*, *Rubin* (Adrenalin-Stil), *Synthwave* und *Ki-Aura* (Anime-Stil).
+  Gilt auch für Overlay, Hintergrund-Animation und die Handy-Seite. Neue Designs: einen Eintrag in
+  `src/NeonMonitor/Themes/ThemeCatalog.cs` ergänzen.
+* **Hintergrund** (Einstellungen → Design, wirkt sofort, mit jedem Design kombinierbar): *Wie Design*, *Raster*,
+  *Meteorschauer* (verglühende Meteore mit Funken), *Blitze* (verästelte Blitze mit Nachblitz und Wetterleuchten),
+  *Ki-Aura* (pulsierende Aura, aufsteigende Funken) oder *Nur Farbe*. Die Farben kommen aus dem Design
+  (graue Designs bekommen weiße Meteore). Gezeichnet mit höchstens 60 Bildern/s, pausiert, wenn das Fenster
+  minimiert oder versteckt ist; ganz aus über den Schalter „Animation“ in der Statusleiste.
 * **Infobereich-Symbol** (unten rechts): Temperaturen und FPS beim Darüberfahren, Doppelklick öffnet,
   Rechtsklick: Overlay, Aufnahme, Benchmark, Beenden. Schließen (✕) versteckt das Fenster nur (abschaltbar).
 * **Autostart** (Einstellungen): über die Windows-Aufgabenplanung – startet bei der Anmeldung **ohne

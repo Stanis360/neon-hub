@@ -48,6 +48,31 @@ public sealed class SettingsViewModel : ObservableObject
     /// <summary>Wurde ein anderes Design gewählt als das geladene? → Neustart nötig.</summary>
     public bool ThemeChangePending => _s.Theme != NeonMonitor.Themes.ThemeManager.Current.Id;
 
+    // ---------------- Hintergrund-Effekt ----------------
+
+    /// <summary>Tatsächlich angezeigter Effekt (für den Hintergrund im Hauptfenster); wirkt sofort.</summary>
+    public string ActiveEffect => NeonMonitor.Themes.BackgroundEffects.Resolve(_s.BackgroundEffect, NeonMonitor.Themes.ThemeManager.Current);
+
+    public bool EffectDesign { get => IsEffect(NeonMonitor.Themes.BackgroundEffects.FromTheme); set { if (value) SetEffect(NeonMonitor.Themes.BackgroundEffects.FromTheme); } }
+    public bool EffectGrid { get => IsEffect(NeonMonitor.Themes.BackgroundEffects.Grid); set { if (value) SetEffect(NeonMonitor.Themes.BackgroundEffects.Grid); } }
+    public bool EffectMeteors { get => IsEffect(NeonMonitor.Themes.BackgroundEffects.Meteors); set { if (value) SetEffect(NeonMonitor.Themes.BackgroundEffects.Meteors); } }
+    public bool EffectLightning { get => IsEffect(NeonMonitor.Themes.BackgroundEffects.Lightning); set { if (value) SetEffect(NeonMonitor.Themes.BackgroundEffects.Lightning); } }
+    public bool EffectAura { get => IsEffect(NeonMonitor.Themes.BackgroundEffects.Aura); set { if (value) SetEffect(NeonMonitor.Themes.BackgroundEffects.Aura); } }
+    public bool EffectNone { get => IsEffect(NeonMonitor.Themes.BackgroundEffects.None); set { if (value) SetEffect(NeonMonitor.Themes.BackgroundEffects.None); } }
+
+    private bool IsEffect(string id) => id == NeonMonitor.Themes.BackgroundEffects.FromTheme
+        ? !NeonMonitor.Themes.BackgroundEffects.IsExplicit(_s.BackgroundEffect)
+        : _s.BackgroundEffect == id;
+
+    private void SetEffect(string id)
+    {
+        _s.BackgroundEffect = id;
+        Save();
+        foreach (var n in new[] { nameof(EffectDesign), nameof(EffectGrid), nameof(EffectMeteors), nameof(EffectLightning),
+                                  nameof(EffectAura), nameof(EffectNone), nameof(ActiveEffect) })
+            OnPropertyChanged(n);
+    }
+
     private void SelectTheme(ThemeChoiceViewModel choice)
     {
         _s.Theme = choice.Id;
