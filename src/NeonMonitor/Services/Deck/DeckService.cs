@@ -86,6 +86,13 @@ public sealed class DeckService(AppSettings settings)
                     StartUnelevated(uri.AbsoluteUri);
                     break;
 
+                case "game":
+                    if (!AppLauncher.Titles.TryGetValue(b.Value, out var title)) return (false, "Unbekanntes Spiel/Launcher.");
+                    var target = AppLauncher.Resolve(b.Value);
+                    if (target is null) return (false, $"{title} wurde auf diesem PC nicht gefunden.");
+                    StartUnelevated(target);
+                    break;
+
                 case "power":
                     if (!PowerActions.Titles.ContainsKey(b.Value)) return (false, "Unbekannte Energie-Aktion.");
                     Log.Info($"Deck: Energie-Aktion „{b.Value}“");

@@ -98,6 +98,13 @@ public partial class App : Application
         _playtime = new PlaytimeService();
         var alerts = new AlertService(_settings);
 
+        // Gespeichertes Deck einmalig umbauen (Benchmark/Adrenalin → Launcher und Spiele)
+        var layoutVersion = _settings.DeckLayoutVersion;
+        if (Services.Deck.DeckButton.MigrateLayout(_settings.DeckButtons, ref layoutVersion))
+        {
+            _settings.DeckLayoutVersion = layoutVersion;
+            _settings.Save();
+        }
         var deck = new Services.Deck.DeckService(_settings);
         _web = new WebDashboardService(_monitor, _recorder, deck, _settings);
         _history = new HistoryService();

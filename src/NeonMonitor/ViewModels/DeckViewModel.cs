@@ -37,7 +37,7 @@ public sealed class DeckButtonViewModel : ObservableObject
     public string Value
     {
         get => _b.Value;
-        set { _b.Value = value; Changed(); OnPropertyChanged(nameof(ValueTitle)); }
+        set { _b.Value = value; Changed(); OnPropertyChanged(nameof(ValueTitle)); OnPropertyChanged(nameof(ValueHint)); }
     }
 
     public string Type
@@ -47,10 +47,10 @@ public sealed class DeckButtonViewModel : ObservableObject
         {
             if (_b.Type == value) return;
             _b.Type = value;
-            _b.Value = value switch { "media" => "playpause", "neon" => "record", "power" => "lock", _ => "" };
+            _b.Value = value switch { "media" => "playpause", "neon" => "record", "power" => "lock", "game" => "steam", _ => "" };
             Changed();
             foreach (var n in new[] { nameof(Value), nameof(ValueTitle), nameof(IsHotkey), nameof(IsProgram), nameof(IsUrl),
-                                      nameof(IsMedia), nameof(IsText), nameof(IsNeon), nameof(IsPower), nameof(ValueHint) })
+                                      nameof(IsMedia), nameof(IsText), nameof(IsNeon), nameof(IsPower), nameof(IsGame), nameof(ValueHint) })
                 OnPropertyChanged(n);
         }
     }
@@ -63,6 +63,7 @@ public sealed class DeckButtonViewModel : ObservableObject
     public bool IsText { get => Type == "text"; set { if (value) Type = "text"; } }
     public bool IsNeon { get => Type == "neon"; set { if (value) Type = "neon"; } }
     public bool IsPower { get => Type == "power"; set { if (value) Type = "power"; } }
+    public bool IsGame { get => Type == "game"; set { if (value) Type = "game"; } }
 
     /// <summary>Lesbarer Name des Werts bei Medien-/NeonMonitor-Aktionen.</summary>
     public string ValueTitle => Type switch
@@ -70,6 +71,7 @@ public sealed class DeckButtonViewModel : ObservableObject
         "media" => DeckService.MediaActions.TryGetValue(Value, out var m) ? m.Title : Value,
         "neon" => DeckService.NeonActions.TryGetValue(Value, out var n) ? n : Value,
         "power" => PowerActions.Titles.TryGetValue(Value, out var pw) ? pw : Value,
+        "game" => AppLauncher.Titles.TryGetValue(Value, out var g) ? g : Value,
         _ => Value,
     };
 
@@ -79,6 +81,9 @@ public sealed class DeckButtonViewModel : ObservableObject
         "program" => "Programm, Datei oder Ordner – wird mit normalen Rechten gestartet.",
         "url" => "z. B. https://www.twitch.tv",
         "text" => "Wird dort eingetippt, wo gerade der Cursor ist.",
+        "game" => AppLauncher.Resolve(Value) is { } target
+            ? $"Gefunden: {target}."
+            : "Auf diesem PC nicht gefunden (Steam, Epic, Battle.net und Opera GX werden automatisch gesucht).",
         "power" => $"Herunterfahren/Neustart mit {PowerActions.DelaySeconds} s Vorwarnung; Herunterfahren, Neustart und Standby fragen auf dem Handy nach.",
         _ => "",
     };
@@ -130,6 +135,8 @@ public sealed class DeckViewModel : ObservableObject
         DeckService.MediaActions.Select(kv => new DeckChoice(kv.Value.Title, kv.Key)).ToList();
     public static IReadOnlyList<DeckChoice> PowerChoices { get; } =
         PowerActions.Titles.Select(kv => new DeckChoice(kv.Value, kv.Key)).ToList();
+    public static IReadOnlyList<DeckChoice> GameChoices { get; } =
+        AppLauncher.Titles.Select(kv => new DeckChoice(kv.Value, kv.Key)).ToList();
     public static IReadOnlyList<DeckChoice> NeonChoices { get; } =
         DeckService.NeonActions.Select(kv => new DeckChoice(kv.Value, kv.Key)).ToList();
 

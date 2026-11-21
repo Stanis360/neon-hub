@@ -91,6 +91,9 @@ public sealed class AppSettings
     /// <summary>Knöpfe des Decks in Anzeigereihenfolge.</summary>
     public List<NeonMonitor.Services.Deck.DeckButton> DeckButtons { get; set; } = NeonMonitor.Services.Deck.DeckButton.Defaults();
 
+    /// <summary>Stand der einmaligen Deck-Umbauten (siehe DeckButton.MigrateLayout).</summary>
+    public int DeckLayoutVersion { get; set; }
+
     // ---------- Updates ----------
 
     /// <summary>Automatisch auf GitHub nach neuen Versionen suchen.</summary>

@@ -163,6 +163,7 @@
                                                 <RadioButton Style="{StaticResource Chip}" Content="Tastenkürzel" IsChecked="{Binding IsHotkey}" />
                                                 <RadioButton Style="{StaticResource Chip}" Content="Programm" IsChecked="{Binding IsProgram}" />
                                                 <RadioButton Style="{StaticResource Chip}" Content="Webseite" IsChecked="{Binding IsUrl}" />
+                                                <RadioButton Style="{StaticResource Chip}" Content="Spiele &amp; Launcher" IsChecked="{Binding IsGame}" />
                                                 <RadioButton Style="{StaticResource Chip}" Content="Medien" IsChecked="{Binding IsMedia}" />
                                                 <RadioButton Style="{StaticResource Chip}" Content="Text" IsChecked="{Binding IsText}" />
                                                 <RadioButton Style="{StaticResource Chip}" Content="NeonMonitor" IsChecked="{Binding IsNeon}" />
@@ -183,6 +184,19 @@
                                                      Visibility="{Binding IsText, Converter={StaticResource BoolToVisibility}}" />
                                             <ItemsControl ItemsSource="{x:Static vm:DeckViewModel.MediaChoices}"
                                                           Visibility="{Binding IsMedia, Converter={StaticResource BoolToVisibility}}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:DeckChoice}">
+                                                        <Button Style="{StaticResource FlatButton}" Content="{Binding Title}" Margin="0,0,6,6"
+                                                                Command="{Binding DataContext.SetValueCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding Value}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <ItemsControl ItemsSource="{x:Static vm:DeckViewModel.GameChoices}"
+                                                          Visibility="{Binding IsGame, Converter={StaticResource BoolToVisibility}}">
                                                 <ItemsControl.ItemsPanel>
                                                     <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
                                                 </ItemsControl.ItemsPanel>
