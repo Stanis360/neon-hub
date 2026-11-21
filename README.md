@@ -6,7 +6,7 @@ später FPS (per ETW, ohne Injection), Overlay, Aufzeichnung als CSV und Sitzung
 Gebaut mit **C# / .NET 10 / WPF**. Sensoren über **LibreHardwareMonitor**, ergänzt durch
 Windows-Leistungsindikatoren als Fallback.
 
-> Stand: **Version 1.3** – Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich, Kühlung mit
+> Stand: **Version 1.4** – Handy-Deck (Stream-Deck-Ersatz) neu; Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich, Kühlung mit
 > Lüftersteuerung, Engpass-Analyse, Latenz, Ruckler-Analyse, Ping/Paketverlust, Handy-Ansicht, Bericht als Bild,
 > Langzeitverlauf, Infobereich, Autostart, automatische Updates.
 
@@ -205,8 +205,17 @@ Diagramm inkl. Hardware, z. B. zum Einfügen in Discord.
 * **Statistik & Langzeitverlauf:** Spielzeit pro Spiel, dazu pro Tag max. CPU/GPU/Hotspot und **Ø CPU-Temperatur
   beim Spielen** (7/30/90 Tage, mit Wochenvergleich – ideal, um die Kühlung über Wochen zu beobachten) sowie der
   **SSD-Zustand** (Lebensdauer, geschriebene Daten, Betriebsstunden).
-* **Handy-Ansicht** (Einstellungen): Werte live im Browser von Handy/Tablet, per QR-Code. Nur lesend, nur aus dem
+* **Handy-Ansicht** (Einstellungen): Werte live im Browser von Handy/Tablet, per QR-Code. Nur aus dem
   Heimnetz, nur mit zufälligem Schlüssel in der Adresse; Firewall-Regel nur für „Private“ Netzwerke.
+* **Handy-Deck** (Reiter „Deck“, auf dem Handy oben „Deck“): große Knöpfe wie bei einem Stream Deck.
+  Aktionen: **Tastenkürzel** (z. B. Discord stumm, Screenshot, Adrenalin – Kombination einfach im Feld drücken),
+  **Programm/Datei** starten (mit normalen Rechten, nicht als Admin), **Webseite** öffnen, **Medien** (Play/Pause,
+  Weiter, Lautstärke, Stumm), **Text** eintippen, **NeonMonitor** (Aufnahme, Benchmark, Overlay, Fenster).
+  Symbol (Emoji, Windows-Taste + .), Name, Farbe und Reihenfolge frei wählbar, „▶“ testet am PC.
+  Sicherheit: Steuerung standardmäßig **aus**; das Handy kann nur die angelegten Knöpfe auslösen (es schickt nur
+  deren Kennung, Pfade/Tasten bleiben am PC), max. 8 Auslösungen pro Sekunde.
+  Hinweis: Tastenkürzel gehen an das Fenster im Vordergrund bzw. an Programme mit globalen Kürzeln; manche
+  Spiele mit Anti-Cheat ignorieren künstliche Tastendrücke.
 
 ---
 
@@ -248,6 +257,7 @@ NeonMonitor/
    │  │  ├─ SessionStore.cs               # Sitzungen auflisten, einlesen, umbenennen, löschen
    │  │  ├─ SessionSummary.cs             # Inhalt der .json-Zusammenfassung
    │  │  └─ GameNames.cs                  # Exe-Name → Spielname
+   │  ├─ Deck/                          # Handy-Deck: Knöpfe, Tastenkürzel, SendInput, Ausführung
    │  ├─ Comfort/
    │  │  ├─ PlaytimeService.cs            # Spielzeit pro Spiel
    │  │  ├─ AlertService.cs               # Temperatur-/Lüfter-Warnungen
@@ -285,6 +295,7 @@ zusätzliche Klasse, ohne den Rest anzufassen.
 
 6. ✅ Kühlung (Lüfter, Mainboard/SSD/RAM-Temperaturen, Lüftersteuerung mit Sicherheitsnetz)
 8. ✅ Analyse (Engpass, Latenz, Ruckler, Ping/Paketverlust), Handy-Ansicht, Bericht als Bild, Langzeitverlauf
+9. ✅ Handy-Deck mit frei belegbaren Knöpfen
 7. ✅ Komfort (Infobereich, Autostart, Auto-Aufnahme, Benchmark, Warnungen, Netzwerk/Datenträger, Energie, Statistik)
 
 Mögliche Erweiterungen: ADLX als zusätzliche GPU-Quelle (falls Sensoren fehlen), eigene Lüfterkurven mit

@@ -30,6 +30,32 @@
   canvas { width:100%; height:70px; display:block; margin-top:6px; }
   .sub { font-size:12px; color:var(--dim); }
   .wide { grid-column:1/-1; }
+
+  /* Reiter */
+  .tabs { display:flex; gap:6px; margin:0 0 12px; }
+  .tabs button { flex:1; background:var(--panel); color:var(--dim); border:0; border-radius:10px; padding:10px;
+                 font:inherit; font-size:15px; }
+  .tabs button.on { background:var(--accent); color:#15181A; font-weight:600; }
+  .hidden { display:none !important; }
+
+  /* Deck */
+  #deck { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media (min-width:600px) { #deck { grid-template-columns:repeat(4,1fr); } }
+  .key { aspect-ratio:1; border:0; border-radius:16px; color:#fff; font:inherit; display:flex; flex-direction:column;
+         align-items:center; justify-content:center; gap:6px; padding:6px; -webkit-tap-highlight-color:transparent;
+         box-shadow:inset 0 -3px 0 rgba(0,0,0,.25); transition:transform .08s, filter .15s; user-select:none; }
+  .key:active { transform:scale(.94); filter:brightness(1.25); }
+  .key .ic { font-size:34px; line-height:1; }
+  .key .lb { font-size:13px; text-align:center; line-height:1.15; text-shadow:0 1px 2px rgba(0,0,0,.5);
+             overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .key.flash { filter:brightness(1.6); }
+  .key.rec { animation:pulse 1.2s infinite; }
+  @keyframes pulse { 50% { filter:brightness(1.5); } }
+  .deckinfo { background:var(--panel); border-radius:14px; padding:14px; color:var(--dim); font-size:14px; margin-bottom:10px; }
+  #toast { position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translateX(-50%);
+           background:#2A3034; color:var(--text); padding:10px 16px; border-radius:10px; font-size:14px; opacity:0;
+           transition:opacity .2s; pointer-events:none; max-width:90vw; text-align:center; }
+  #toast.show { opacity:1; } #toast.err { background:#5A2A30; }
 </style>
 </head>
 <body>
@@ -38,7 +64,20 @@
   <div id="status">verbinde …</div>
 </header>
 
-<div class="grid">
+<div class="tabs">
+  <button id="tabValues" class="on" onclick="showTab('values')">Werte</button>
+  <button id="tabDeck" onclick="showTab('deck')">Deck</button>
+</div>
+
+<!-- ============ Deck ============ -->
+<div id="pageDeck" class="hidden">
+  <div class="deckinfo hidden" id="deckOff">Die Steuerung ist am PC ausgeschaltet.<br>NeonMonitor → Reiter „Deck“ → „Steuerung vom Handy erlauben“.</div>
+  <div id="deck"></div>
+</div>
+<div id="toast"></div>
+
+<!-- ============ Werte ============ -->
+<div class="grid" id="pageValues">
   <div class="card wide">
     <h2 id="game">FPS</h2>
     <div class="big"><span id="fps">—</span> <small>FPS</small></div>
@@ -117,6 +156,10 @@ async function tick() {
     const rec = document.getElementById('rec');
     rec.style.display = d.recording ? 'inline' : 'none'; rec.textContent = d.recording ? ' ● REC ' + d.recording : '';
 
+    // Aufnahme-Status auch im Deck; Knöpfe alle 15 s neu laden (falls am PC geändert)
+    if ((d.recording || null) !== recording) { recording = d.recording || null; renderDeck(); }
+    if (!document.getElementById('pageDeck').classList.contains('hidden') && Date.now() - deckLoaded > 15000) loadDeck();
+
     document.getElementById('game').textContent = d.game ? d.game : 'FPS – kein Spiel erkannt';
     document.getElementById('fps').textContent = fmt(d.fps);
     const bn = { GPU: 'GPU-Limit', CPU: 'CPU-Limit', Limit: 'FPS-Grenze', Ausgeglichen: 'ausgeglichen' }[d.bottleneck] || '';
@@ -144,6 +187,62 @@ async function tick() {
     document.getElementById('status').textContent = 'keine Verbindung zum PC …';
   }
 }
+// ---------------- Reiter ----------------
+function showTab(t) {
+  document.getElementById('pageValues').classList.toggle('hidden', t !== 'values');
+  document.getElementById('pageDeck').classList.toggle('hidden', t !== 'deck');
+  document.getElementById('tabValues').classList.toggle('on', t === 'values');
+  document.getElementById('tabDeck').classList.toggle('on', t === 'deck');
+  try { localStorage.setItem('tab', t); } catch (e) { }
+  if (t === 'deck') loadDeck();
+}
+
+// ---------------- Deck ----------------
+let deckButtons = [], recording = null, deckLoaded = 0;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+async function loadDeck() {
+  try {
+    const r = await fetch('api/deck?k=' + encodeURIComponent(key), { cache: 'no-store' });
+    const d = await r.json();
+    deckButtons = d.buttons || [];
+    deckLoaded = Date.now();
+    document.getElementById('deckOff').classList.toggle('hidden', d.enabled);
+    renderDeck();
+  } catch (e) { toast('Deck konnte nicht geladen werden', true); }
+}
+
+function renderDeck() {
+  document.getElementById('deck').innerHTML = deckButtons.map(b => {
+    const isRec = b.kind === 'neon' && b.value === 'record' && recording;
+    const label = isRec ? '■ Stopp ' + recording : b.label;
+    return `<button class="key${isRec ? ' rec' : ''}" style="background:${/^#[0-9a-fA-F]{6}$/.test(b.color) ? b.color : '#4A5459'}" data-id="${esc(b.id)}">` +
+           `<span class="ic">${esc(b.icon)}</span><span class="lb">${esc(label)}</span></button>`;
+  }).join('');
+}
+
+document.getElementById('deck').addEventListener('click', async ev => {
+  const btn = ev.target.closest('.key'); if (!btn) return;
+  if (navigator.vibrate) navigator.vibrate(25);
+  btn.classList.add('flash'); setTimeout(() => btn.classList.remove('flash'), 180);
+  try {
+    const r = await fetch('api/action?k=' + encodeURIComponent(key) + '&id=' + encodeURIComponent(btn.dataset.id), { method: 'POST' });
+    const d = await r.json();
+    toast(d.ok ? '✓ ' + d.message : d.message, !d.ok);
+  } catch (e) { toast('Keine Verbindung zum PC', true); }
+});
+
+let toastTimer;
+function toast(text, err) {
+  const t = document.getElementById('toast');
+  t.textContent = text; t.classList.toggle('err', !!err); t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+
+let startTab = 'values';
+try { startTab = localStorage.getItem('tab') || 'values'; } catch (e) { }
+showTab(startTab);
 tick();
 setInterval(tick, 1000);
 </script>

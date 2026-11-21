@@ -78,6 +78,13 @@ public sealed class AppSettings
     /// <summary>Zufälliger Schlüssel in der Adresse – ohne ihn gibt es keine Daten.</summary>
     public string? WebToken { get; set; }
 
+    // ---------- Handy-Deck ----------
+
+    /// <summary>Darf das Handy Deck-Knöpfe am PC auslösen? Standard: aus.</summary>
+    public bool DeckEnabled { get; set; }
+    /// <summary>Knöpfe des Decks in Anzeigereihenfolge.</summary>
+    public List<NeonMonitor.Services.Deck.DeckButton> DeckButtons { get; set; } = NeonMonitor.Services.Deck.DeckButton.Defaults();
+
     // ---------- Updates ----------
 
     /// <summary>Automatisch auf GitHub nach neuen Versionen suchen.</summary>

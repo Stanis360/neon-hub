@@ -1,0 +1,192 @@
+<UserControl x:Class="NeonMonitor.Views.DeckView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:NeonMonitor.ViewModels"
+             xmlns:infra="clr-namespace:NeonMonitor.Infrastructure"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:DeckViewModel}"
+             d:DesignWidth="1100" d:DesignHeight="900">
+
+    <UserControl.Resources>
+        <Style x:Key="SmallIconButton" TargetType="Button" BasedOn="{StaticResource FlatButton}">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Padding" Value="0,5" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <!-- Farbkreis zum Auswählen -->
+        <Style x:Key="ColorDot" TargetType="Button">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Ellipse Fill="{TemplateBinding Background}" Stroke="#30FFFFFF" StrokeThickness="1" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock" BasedOn="{StaticResource SmallText}">
+            <Setter Property="Margin" Value="0,0,0,3" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+
+            <!-- ============ Ein/Aus + QR ============ -->
+            <Border Style="{StaticResource Card}">
+                <DockPanel>
+                    <Image DockPanel.Dock="Right" Source="{Binding Web.QrCode}" Width="130" Height="130" Margin="16,0,0,0"
+                           RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                    <StackPanel>
+                        <TextBlock Text="Handy-Deck" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" />
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextBrush}" FontSize="13" Margin="0,6,0,10"
+                                   Text="Große Knöpfe auf dem Handy, die am PC Tastenkürzel drücken, Programme starten, Musik steuern oder NeonMonitor bedienen. Auf dem Handy die Handy-Ansicht öffnen (QR-Code) und oben auf „Deck“ tippen." />
+                        <CheckBox Style="{StaticResource Switch}" Content="Steuerung vom Handy erlauben" IsChecked="{Binding Enabled}"
+                                  FontSize="13" Foreground="{StaticResource TextBrush}" />
+                        <TextBlock Style="{StaticResource SmallText}" FontSize="12" TextWrapping="Wrap" Margin="44,2,0,0"
+                                   Text="Das Handy kann nur die Knöpfe unten auslösen – keine beliebigen Befehle. Erreichbar nur im Heimnetz und nur mit dem Schlüssel aus dem QR-Code." />
+                        <TextBlock Style="{StaticResource SmallText}" FontSize="12" TextWrapping="Wrap" Margin="44,6,0,0" Foreground="{StaticResource WarnBrush}"
+                                   Text="Tastenkürzel gehen an das Fenster im Vordergrund bzw. an Programme mit globalen Kürzeln (Discord, Adrenalin). Manche Spiele mit Anti-Cheat ignorieren künstliche Tastendrücke." />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- ============ Knöpfe ============ -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Style="{StaticResource FlatButton}" Content="+ Knopf hinzufügen" Margin="0,0,8,0" Command="{Binding AddCommand}" />
+                            <Button Style="{StaticResource FlatButton}" Content="Standard wiederherstellen" Command="{Binding ResetCommand}" />
+                        </StackPanel>
+                        <TextBlock Text="Knöpfe" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding Status}" Style="{StaticResource SmallText}" FontSize="12" Margin="0,0,0,8" />
+
+                    <ItemsControl ItemsSource="{Binding Buttons}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:DeckButtonViewModel}">
+                                <Border Background="#1C2124" CornerRadius="10" Padding="12" Margin="0,0,0,8">
+                                    <DockPanel>
+                                        <!-- Vorschau wie auf dem Handy -->
+                                        <Border DockPanel.Dock="Left" Width="88" Height="88" CornerRadius="14" Margin="0,0,14,0"
+                                                Background="{Binding Color}" VerticalAlignment="Top">
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Icon}" FontSize="30" HorizontalAlignment="Center" Foreground="White"
+                                                           FontFamily="Segoe UI Emoji" />
+                                                <TextBlock Text="{Binding Label}" FontSize="11" HorizontalAlignment="Center" Foreground="White"
+                                                           TextTrimming="CharacterEllipsis" Margin="4,2,4,0" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Sortieren / Testen / Löschen -->
+                                        <StackPanel DockPanel.Dock="Right" Margin="12,0,0,0">
+                                            <Button Style="{StaticResource SmallIconButton}" Content="↑" ToolTip="nach vorne" Command="{Binding UpCommand}" />
+                                            <Button Style="{StaticResource SmallIconButton}" Content="↓" ToolTip="nach hinten" Command="{Binding DownCommand}" />
+                                            <Button Style="{StaticResource SmallIconButton}" Content="▶" ToolTip="am PC testen (nach 2 s)" Command="{Binding TestCommand}" />
+                                            <Button Style="{StaticResource SmallIconButton}" Content="✕" ToolTip="löschen" Command="{Binding DeleteCommand}" />
+                                        </StackPanel>
+
+                                        <StackPanel>
+                                            <!-- Name, Symbol, Farbe -->
+                                            <Grid Margin="0,0,0,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="80" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Margin="0,0,10,0">
+                                                    <TextBlock Text="Name" Style="{StaticResource FieldLabel}" />
+                                                    <TextBox Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                                    <TextBlock Text="Symbol" Style="{StaticResource FieldLabel}" />
+                                                    <TextBox Text="{Binding Icon, UpdateSourceTrigger=PropertyChanged}" FontFamily="Segoe UI Emoji"
+                                                             ToolTip="Emoji oder Zeichen – Windows-Taste + . öffnet die Emoji-Auswahl" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2">
+                                                    <TextBlock Text="Farbe" Style="{StaticResource FieldLabel}" />
+                                                    <ItemsControl ItemsSource="{x:Static vm:DeckViewModel.Colors}" Margin="0,4,0,0">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate DataType="{x:Type vm:DeckChoice}">
+                                                                <Button Style="{StaticResource ColorDot}" Background="{Binding Value}" ToolTip="{Binding Title}"
+                                                                        Command="{Binding DataContext.SetColorCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                        CommandParameter="{Binding Value}" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Art der Aktion -->
+                                            <TextBlock Text="Aktion" Style="{StaticResource FieldLabel}" />
+                                            <WrapPanel Margin="0,0,0,4">
+                                                <RadioButton Style="{StaticResource Chip}" Content="Tastenkürzel" IsChecked="{Binding IsHotkey}" />
+                                                <RadioButton Style="{StaticResource Chip}" Content="Programm" IsChecked="{Binding IsProgram}" />
+                                                <RadioButton Style="{StaticResource Chip}" Content="Webseite" IsChecked="{Binding IsUrl}" />
+                                                <RadioButton Style="{StaticResource Chip}" Content="Medien" IsChecked="{Binding IsMedia}" />
+                                                <RadioButton Style="{StaticResource Chip}" Content="Text" IsChecked="{Binding IsText}" />
+                                                <RadioButton Style="{StaticResource Chip}" Content="NeonMonitor" IsChecked="{Binding IsNeon}" />
+                                            </WrapPanel>
+
+                                            <!-- Wert je nach Art -->
+                                            <TextBox Text="{Binding Value}" infra:HotkeyCapture.IsEnabled="True"
+                                                     Visibility="{Binding IsHotkey, Converter={StaticResource BoolToVisibility}}" />
+                                            <DockPanel Visibility="{Binding IsProgram, Converter={StaticResource BoolToVisibility}}">
+                                                <Button DockPanel.Dock="Right" Style="{StaticResource FlatButton}" Content="Durchsuchen …" Margin="8,0,0,0"
+                                                        Command="{Binding BrowseCommand}" />
+                                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
+                                            </DockPanel>
+                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                     Visibility="{Binding IsUrl, Converter={StaticResource BoolToVisibility}}" />
+                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="44"
+                                                     Visibility="{Binding IsText, Converter={StaticResource BoolToVisibility}}" />
+                                            <ItemsControl ItemsSource="{x:Static vm:DeckViewModel.MediaChoices}"
+                                                          Visibility="{Binding IsMedia, Converter={StaticResource BoolToVisibility}}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:DeckChoice}">
+                                                        <Button Style="{StaticResource FlatButton}" Content="{Binding Title}" Margin="0,0,6,6"
+                                                                Command="{Binding DataContext.SetValueCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding Value}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <ItemsControl ItemsSource="{x:Static vm:DeckViewModel.NeonChoices}"
+                                                          Visibility="{Binding IsNeon, Converter={StaticResource BoolToVisibility}}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:DeckChoice}">
+                                                        <Button Style="{StaticResource FlatButton}" Content="{Binding Title}" Margin="0,0,6,6"
+                                                                Command="{Binding DataContext.SetValueCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding Value}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Style="{StaticResource SmallText}" Margin="0,4,0,0">
+                                                <Run Text="{Binding ValueHint, Mode=OneWay}" />
+                                                <Run Text="{Binding ValueTitle, Mode=OneWay, StringFormat='Gewählt: {0}'}" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

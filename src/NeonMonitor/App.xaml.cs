@@ -91,9 +91,22 @@ public partial class App : Application
         _playtime = new PlaytimeService();
         var alerts = new AlertService(_settings);
 
-        _web = new WebDashboardService(_monitor, _recorder, _settings);
+        var deck = new Services.Deck.DeckService(_settings);
+        _web = new WebDashboardService(_monitor, _recorder, deck, _settings);
         _history = new HistoryService();
-        var vm = new MainViewModel(_monitor, _settings, _recorder, _playtime, alerts, _web, _history, requestExit: ExitApp);
+        var vm = new MainViewModel(_monitor, _settings, _recorder, _playtime, alerts, _web, _history, deck, requestExit: ExitApp);
+
+        // NeonMonitor-Aktionen des Decks laufen auf dem UI-Thread
+        deck.RunNeonAction = action => Dispatcher.BeginInvoke(() =>
+        {
+            switch (action)
+            {
+                case "record": vm.Recording.ToggleCommand.Execute(null); break;
+                case "benchmark": vm.Recording.StartBenchmark(); break;
+                case "overlay": vm.Overlay.ToggleCommand.Execute(null); break;
+                case "window": ShowMainWindow(); break;
+            }
+        });
         _window = new MainWindow { DataContext = vm };
         MainWindow = _window;
         _window.Closing += OnWindowClosing;

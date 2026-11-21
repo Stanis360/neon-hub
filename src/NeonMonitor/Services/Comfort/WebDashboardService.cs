@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using NeonMonitor.Infrastructure;
 using NeonMonitor.Models;
+using NeonMonitor.Services.Deck;
 using NeonMonitor.Services.Recording;
 
 namespace NeonMonitor.Services.Comfort;
@@ -14,7 +15,7 @@ namespace NeonMonitor.Services.Comfort;
 /// <summary>
 /// Kleine Webseite im Heimnetz: Werte live auf dem Handy/Tablet ansehen – ohne App, einfach im Browser.
 /// <list type="bullet">
-/// <item>nur lesend (keine Steuerung über das Netz),</item>
+/// <item>Werte nur lesend; Deck-Knöpfe nur, wenn am PC erlaubt – und nur die dort angelegten,</item>
 /// <item>nur aus privaten Netzen (192.168.x.x usw.), Anfragen aus dem Internet werden abgewiesen,</item>
 /// <item>nur mit zufälligem Schlüssel in der Adresse (<c>?k=…</c>),</item>
 /// <item>Windows-Firewall-Regel nur für das Profil „Privat“.</item>
@@ -26,15 +27,17 @@ public sealed class WebDashboardService : IDisposable
 
     private readonly AppSettings _settings;
     private readonly RecordingService _recorder;
+    private readonly DeckService _deck;
     private HttpListener? _listener;
     private CancellationTokenSource? _cts;
     private volatile string _json = "{}";
     private static readonly string Html = LoadHtml();
 
-    public WebDashboardService(HardwareMonitorService monitor, RecordingService recorder, AppSettings settings)
+    public WebDashboardService(HardwareMonitorService monitor, RecordingService recorder, DeckService deck, AppSettings settings)
     {
         _settings = settings;
         _recorder = recorder;
+        _deck = deck;
         monitor.SnapshotReady += (_, s) => _json = BuildJson(s);
         if (string.IsNullOrEmpty(_settings.WebToken)) NewToken();
     }
@@ -126,6 +129,27 @@ public sealed class WebDashboardService : IDisposable
             {
                 case "/api":
                     Respond(ctx, 200, "application/json; charset=utf-8", _json, noCache: true);
+                    break;
+
+                case "/api/deck":
+                    // Nur Anzeige-Infos der Knöpfe – was sie tun (Pfade, Tasten) bleibt am PC
+                    var deck = new
+                    {
+                        enabled = _settings.DeckEnabled,
+                        buttons = _settings.DeckButtons.Select(b => new { id = b.Id, label = b.Label, icon = b.Icon, color = b.Color, kind = b.Type, value = b.Type == "neon" ? b.Value : null }),
+                    };
+                    Respond(ctx, 200, "application/json; charset=utf-8", JsonSerializer.Serialize(deck), noCache: true);
+                    break;
+
+                case "/api/action":
+                    if (req.HttpMethod != "POST")
+                    {
+                        Respond(ctx, 405, "text/plain", "POST erforderlich");
+                        break;
+                    }
+                    var (ok, message) = _deck.Execute(req.QueryString["id"] ?? "");
+                    Respond(ctx, ok ? 200 : 403, "application/json; charset=utf-8",
+                        JsonSerializer.Serialize(new { ok, message }), noCache: true);
                     break;
                 default:
                     Respond(ctx, 200, "text/html; charset=utf-8", Html);

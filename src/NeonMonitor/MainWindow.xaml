@@ -131,6 +131,9 @@
                     <TabItem Header="⇄  Vergleich">
                         <views:CompareView DataContext="{Binding Compare}" />
                     </TabItem>
+                    <TabItem Header="▦  Deck">
+                        <views:DeckView DataContext="{Binding Deck}" />
+                    </TabItem>
                     <TabItem Header="▤  Statistik">
                         <views:StatsView DataContext="{Binding Stats}" />
                     </TabItem>

@@ -38,10 +38,11 @@ public sealed class MainViewModel : ObservableObject
 
     public MainViewModel(HardwareMonitorService monitor, AppSettings settings, RecordingService recorder,
                          PlaytimeService playtime, AlertService alerts, WebDashboardService web, HistoryService history,
-                         Action requestExit)
+                         Services.Deck.DeckService deck, Action requestExit)
     {
         _history = history;
         Web = new WebViewModel(web, settings);
+        Deck = new DeckViewModel(settings, deck, Web);
         Update = new UpdateViewModel(settings, requestExit);
         _playtime = playtime;
         _alerts = alerts;
@@ -140,6 +141,9 @@ public sealed class MainViewModel : ObservableObject
 
     /// <summary>Handy-Ansicht.</summary>
     public WebViewModel Web { get; }
+
+    /// <summary>Handy-Deck (Knöpfe).</summary>
+    public DeckViewModel Deck { get; }
 
     /// <summary>Update-Hinweis und -Einstellungen.</summary>
     public UpdateViewModel Update { get; }
