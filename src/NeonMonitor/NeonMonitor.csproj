@@ -17,7 +17,7 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>NeonMonitor</RootNamespace>
     <AssemblyName>NeonMonitor</AssemblyName>
-    <Version>1.4.1</Version>
+    <Version>1.4.2</Version>
     <!-- Sensorzugriff (PawnIO-Treiber, MSRs) braucht Adminrechte → siehe app.manifest -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Programmsymbol (Taskleiste, Desktop-Verknüpfung) -->

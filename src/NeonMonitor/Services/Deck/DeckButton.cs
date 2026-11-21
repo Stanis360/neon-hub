@@ -35,14 +35,13 @@ public sealed class DeckButton
         .. PowerDefaults(),
     ];
 
-    /// <summary>Energie-Knöpfe (auch einzeln per „Energie-Knöpfe hinzufügen“).</summary>
+    /// <summary>
+    /// Energie-Knöpfe für „+ Energie-Knöpfe“: Ausschalten und Abbrechen (stoppt die 15-s-Vorwarnung).
+    /// Neustart, Standby usw. lassen sich bei Bedarf über die Aktionsart „System“ anlegen.
+    /// </summary>
     public static List<DeckButton> PowerDefaults() =>
     [
         new() { Icon = "⏻", Label = "Ausschalten", Color = "#E5626F", Type = "power", Value = "shutdown" },
-        new() { Icon = "🔄", Label = "Neustart", Color = "#E8B44C", Type = "power", Value = "restart" },
         new() { Icon = "✋", Label = "Abbrechen", Color = "#3DDC97", Type = "power", Value = "abort" },
-        new() { Icon = "🌙", Label = "Standby", Color = "#5AA9E6", Type = "power", Value = "sleep" },
-        new() { Icon = "🔒", Label = "Sperren", Color = "#4A5459", Type = "power", Value = "lock" },
-        new() { Icon = "🖥", Label = "Bildschirm aus", Color = "#4A5459", Type = "power", Value = "displayoff" },
     ];
 }

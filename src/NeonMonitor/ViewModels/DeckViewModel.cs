@@ -151,7 +151,7 @@ public sealed class DeckViewModel : ObservableObject
         {
             foreach (var b in DeckButton.PowerDefaults()) Buttons.Add(new DeckButtonViewModel(b, this));
             Save();
-            Status = "Energie-Knöpfe hinzugefügt (unten in der Liste – mit ↑ nach vorne holen).";
+            Status = "„Ausschalten“ und „Abbrechen“ hinzugefügt (unten in der Liste – mit ↑ nach vorne holen).";
         });
         PrepareWolCommand = new RelayCommand(PrepareWol);
         RefreshWolCommand = new RelayCommand(RefreshWol);

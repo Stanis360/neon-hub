@@ -212,7 +212,7 @@ Diagramm inkl. Hardware, z. B. zum Einfügen in Discord.
   **Programm/Datei** starten (mit normalen Rechten, nicht als Admin), **Webseite** öffnen, **Medien** (Play/Pause,
   Weiter, Lautstärke, Stumm), **Text** eintippen, **NeonMonitor** (Aufnahme, Benchmark, Overlay, Fenster),
   **System** (Ausschalten/Neustart mit 15 s Vorwarnung und Rückfrage auf dem Handy, Abbrechen, Standby,
-  Ruhezustand, Sperren, Bildschirme aus – „+ Energie-Knöpfe“ legt alle auf einmal an).
+  Ruhezustand, Sperren, Bildschirme aus – „+ Energie-Knöpfe“ legt „Ausschalten“ und „Abbrechen“ an).
 * **PC per Handy einschalten (Wake-on-LAN):** geht nicht über den Browser, sondern per WoL-App oder Fritzbox
   („Computer starten“). Der Reiter „Deck“ zeigt MAC-Adresse/IP, prüft den Windows-Schnellstart, richtet Windows mit einem
   Klick ein (Netzwerkkarte darf wecken, Schnellstart aus) und erklärt die BIOS-Einstellung

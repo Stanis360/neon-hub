@@ -92,7 +92,7 @@
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                             <Button Style="{StaticResource FlatButton}" Content="+ Knopf hinzufügen" Margin="0,0,8,0" Command="{Binding AddCommand}" />
                             <Button Style="{StaticResource FlatButton}" Content="+ Energie-Knöpfe" Margin="0,0,8,0" Command="{Binding AddPowerCommand}"
-                                    ToolTip="Ausschalten, Neustart, Abbrechen, Standby, Sperren, Bildschirm aus" />
+                                    ToolTip="Ausschalten und Abbrechen" />
                             <Button Style="{StaticResource FlatButton}" Content="Standard wiederherstellen" Command="{Binding ResetCommand}" />
                         </StackPanel>
                         <TextBlock Text="Knöpfe" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" />
