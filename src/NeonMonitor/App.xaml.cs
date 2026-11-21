@@ -25,6 +25,8 @@ public partial class App : Application
     private HardwareMonitorService? _monitor;
     private RecordingService? _recorder;
     private PlaytimeService? _playtime;
+    private WebDashboardService? _web;
+    private HistoryService? _history;
     private GlobalHotkeys? _hotkeys;
     private TrayIcon? _tray;
     private Mutex? _singleInstance;
@@ -64,6 +66,9 @@ public partial class App : Application
             if (!_exiting) Dispatcher.BeginInvoke(ExitApp);
         }) { IsBackground = true, Name = "Beenden-Signal" }.Start();
 
+        // Konsolen-Codepages (z. B. 850 für netsh) verfügbar machen
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
         // Unbehandelte Fehler protokollieren statt kommentarlos abzustürzen
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
@@ -86,7 +91,9 @@ public partial class App : Application
         _playtime = new PlaytimeService();
         var alerts = new AlertService(_settings);
 
-        var vm = new MainViewModel(_monitor, _settings, _recorder, _playtime, alerts, requestExit: ExitApp);
+        _web = new WebDashboardService(_monitor, _recorder, _settings);
+        _history = new HistoryService();
+        var vm = new MainViewModel(_monitor, _settings, _recorder, _playtime, alerts, _web, _history, requestExit: ExitApp);
         _window = new MainWindow { DataContext = vm };
         MainWindow = _window;
         _window.Closing += OnWindowClosing;
@@ -176,8 +183,10 @@ public partial class App : Application
         _showEvent?.Set();          // Wartethread beenden
         _hotkeys?.Dispose();
         _tray?.Dispose();
+        _web?.Dispose();
         _recorder?.Dispose();       // laufende Aufnahme sauber abschließen
         _playtime?.Save();
+        _history?.Save();
         _monitor?.Dispose();        // gibt Lüfter ans Mainboard zurück und den PawnIO-Treiber frei
         _showEvent?.Dispose();
         _exitEvent?.Set();          // Wartethread beenden

@@ -4,12 +4,68 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:NeonMonitor.ViewModels"
+             xmlns:controls="clr-namespace:NeonMonitor.Controls"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:StatsViewModel}"
              d:DesignWidth="1100" d:DesignHeight="700">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
+            <!-- ============ Langzeitverlauf Temperaturen ============ -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <RadioButton Style="{StaticResource Chip}" Content="7 Tage" IsChecked="{Binding Range7}" />
+                            <RadioButton Style="{StaticResource Chip}" Content="30 Tage" IsChecked="{Binding Range30}" />
+                            <RadioButton Style="{StaticResource Chip}" Content="90 Tage" IsChecked="{Binding Range90}" />
+                        </StackPanel>
+                        <TextBlock Text="Langzeitverlauf" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding TrendText}" Foreground="{StaticResource TextBrush}" FontSize="13" Margin="0,8,0,8" TextWrapping="Wrap" />
+                    <WrapPanel Margin="0,0,0,6">
+                        <TextBlock Style="{StaticResource SmallText}" Margin="0,0,14,0"><Run Text="■" Foreground="#3DDC97" /><Run Text=" max. CPU" /></TextBlock>
+                        <TextBlock Style="{StaticResource SmallText}" Margin="0,0,14,0"><Run Text="■" Foreground="#2BA59A" /><Run Text=" Ø CPU beim Spielen" /></TextBlock>
+                        <TextBlock Style="{StaticResource SmallText}" Margin="0,0,14,0"><Run Text="■" Foreground="#C5D0CD" /><Run Text=" max. GPU-Hotspot" /></TextBlock>
+                        <TextBlock Style="{StaticResource SmallText}"><Run Text="■" Foreground="#5AA9E6" /><Run Text=" max. GPU" /></TextBlock>
+                    </WrapPanel>
+                    <controls:MultiLineChart Height="220" Lines="{Binding TempLines}" Unit="°" StartDate="{Binding ChartStart}" XMax="{Binding ChartDays}" />
+                    <TextBlock Style="{StaticResource SmallText}" Margin="0,6,0,0" TextWrapping="Wrap"
+                               Text="Ein Punkt pro Tag. Die Ø-CPU-Temperatur beim Spielen ist der beste Wert, um die Kühlung über Wochen zu vergleichen (z. B. nach dem Neu-Montieren des Kühlers oder wenn sich Staub ansammelt)." />
+                </StackPanel>
+            </Border>
+
+            <!-- ============ SSD-Zustand ============ -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="SSD-Zustand" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" Margin="0,0,0,8" />
+                    <ItemsControl ItemsSource="{Binding Drives}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:DriveHealthRow}">
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="260" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource DisplayFont}" FontSize="14" Foreground="{StaticResource TextBrush}" />
+                                        <TextBlock Style="{StaticResource SmallText}">
+                                            <Run Text="{Binding WrittenText, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding HoursText, Mode=OneWay}" />
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding RecentText}" Style="{StaticResource SmallText}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                                        <TextBlock Text="{Binding LifeText}" FontFamily="{StaticResource DisplayFont}" FontSize="14"
+                                                   Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Right" />
+                                        <ProgressBar Style="{StaticResource Bar}" Margin="0,4,0,0" Maximum="1" Value="{Binding LifeFraction, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <DockPanel>

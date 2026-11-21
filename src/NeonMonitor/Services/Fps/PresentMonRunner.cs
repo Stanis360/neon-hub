@@ -75,9 +75,9 @@ public sealed class PresentMonRunner : IDisposable
         {
             "--output_stdout",          // CSV an uns statt in eine Datei
             "--no_console_stats",
-            "--v1_metrics",             // stabiles, weit verbreitetes Spaltenformat
+            // Standardformat (inkl. Eingabe-zu-Bild-Latenz). Eingaben werden dabei nur als
+            // Zeitstempel aus Windows-Ereignissen ausgewertet – es wird nichts mitgelesen oder gespeichert.
             "--no_track_gpu",           // brauchen wir nicht → weniger Last
-            "--no_track_input",
             "--stop_existing_session",  // Reste einer abgestürzten Sitzung aufräumen
             "--session_name", SessionName,
             "--exclude", "dwm.exe",

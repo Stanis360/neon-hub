@@ -6,9 +6,9 @@ später FPS (per ETW, ohne Injection), Overlay, Aufzeichnung als CSV und Sitzung
 Gebaut mit **C# / .NET 10 / WPF**. Sensoren über **LibreHardwareMonitor**, ergänzt durch
 Windows-Leistungsindikatoren als Fallback.
 
-> Stand: **Version 1.2** – Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich,
-> dazu Kühlung mit Lüftersteuerung, Infobereich-Symbol, Autostart, automatische Aufnahme, Benchmark,
-> Warnungen, Netzwerk/Datenträger, Energie & Kosten und Spielzeit-Statistik.
+> Stand: **Version 1.3** – Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich, Kühlung mit
+> Lüftersteuerung, Engpass-Analyse, Latenz, Ruckler-Analyse, Ping/Paketverlust, Handy-Ansicht, Bericht als Bild,
+> Langzeitverlauf, Infobereich, Autostart, automatische Updates.
 
 ---
 
@@ -108,6 +108,20 @@ Einstellungen: `%AppData%\NeonMonitor\settings.json` · Log: `%AppData%\NeonMoni
   Frametime Ø und Frametime max (Ruckler), FPS-Verlauf und die letzten 300 Einzel-Frametimes.
 * Die FPS stehen zusätzlich im Live-Dashboard unter dem GPU-Ring.
 
+### Engpass, Latenz, Ruckler, Verbindung (ebenfalls im Reiter „FPS“)
+
+* **Engpass:** *GPU-Limit* (Grafikkarte ≥ 94 %), *CPU-Limit* (GPU darunter, aber ein CPU-Thread ≥ 85 %),
+  *FPS-Grenze* (beides darunter – FPS-Limit, V-Sync oder Engine) oder *ausgeglichen*. Mit passendem Tipp.
+  Die CPU-Gesamtlast taugt dafür nicht – entscheidend ist der am stärksten belastete Thread.
+* **Latenz** (von PresentMon gemessen): *Eingabe → Bild* und *Klick → Bild* = Zeit von Maus/Tastatur bis das Bild
+  auf dem Monitor ist, gemittelt über 5 s – ohne die Elektronik von Maus und Monitor.
+* **Ruckler:** Bild dauert mind. doppelt so lange wie üblich *und* ≥ 8 ms länger. Anzeige als Ruckler pro Minute,
+  dazu die **Frametime-Verteilung** der letzten 30 s (hoher, schmaler Balken = gleichmäßig).
+* **Verbindung & Paketverlust:** jede Sekunde ein Ping zum **Router** und ins **Internet** (1.1.1.1), Auswertung über
+  60 s: Verlust, Ø Ping, Jitter, bei WLAN die Signalstärke. Daraus die Einschätzung, *wo* Verlust entsteht:
+  schon zum Router → Heimnetz/WLAN (LAN-Kabel hilft meist); erst danach → Anschluss/Anbieter; beides sauber → eher
+  der Spielserver. Ab 3 % Verlust kommt eine Windows-Benachrichtigung.
+
 ### Anti-Cheat (z. B. Call of Duty / Ricochet)
 
 Die FPS-Messung ist passiv. Für CPU-Temperatur/-Leistung braucht NeonMonitor aber den signierten
@@ -151,7 +165,11 @@ alles andere inkl. FPS funktioniert).
   Ø Last und Leistung von CPU/GPU, max. RAM – der jeweils beste Wert ist grün hervorgehoben.
 * **Diagramm:** Verlauf über die Zeit für FPS, Ruckler (längste Frametime), Temperaturen, Last oder Leistung.
 
-Zusätzlich im Vergleich: Ø CPU-/Gehäuselüfter, **FPS pro Watt**, **Energie** (Wh) und **Stromkosten** (€) je Sitzung.
+Zusätzlich im Vergleich: Ruckler pro Minute, Ø Eingabe-/Klick-Latenz, Anteil GPU-/CPU-Limit, Ø Ping und
+Paketverlust, Ø CPU-/Gehäuselüfter, **FPS pro Watt**, **Energie** (Wh) und **Stromkosten** (€) je Sitzung.
+
+**Als Bild:** „Als Bild speichern“ (PNG in `Dokumente\NeonMonitor\Berichte`) oder „Bild kopieren“ – Tabelle und
+Diagramm inkl. Hardware, z. B. zum Einfügen in Discord.
 
 **Definitionen:** 1 % Low = 1000 / 99. Perzentil der Frametimes (99 % aller Bilder waren mindestens so schnell),
 0,1 % Low entsprechend mit dem 99,9. Perzentil. Ø FPS = 1000 / mittlere Frametime.
@@ -184,7 +202,11 @@ Zusätzlich im Vergleich: Ø CPU-/Gehäuselüfter, **FPS pro Watt**, **Energie**
   CPU-Lüfter steht, obwohl die CPU warm ist.
 * **Netzwerk & Datenträger:** Empfang/Senden in Mbit/s, Lesen/Schreiben in MB/s (Live-Ansicht, Overlay, Aufnahme).
 * **Energie:** CPU + GPU zusammen und FPS pro Watt live; Energie und Kosten je Sitzung (Strompreis einstellbar).
-* **Statistik:** Spielzeit pro Spiel (läuft automatisch mit, auch ohne Aufnahme), Ø FPS, Summe aller Aufnahmen.
+* **Statistik & Langzeitverlauf:** Spielzeit pro Spiel, dazu pro Tag max. CPU/GPU/Hotspot und **Ø CPU-Temperatur
+  beim Spielen** (7/30/90 Tage, mit Wochenvergleich – ideal, um die Kühlung über Wochen zu beobachten) sowie der
+  **SSD-Zustand** (Lebensdauer, geschriebene Daten, Betriebsstunden).
+* **Handy-Ansicht** (Einstellungen): Werte live im Browser von Handy/Tablet, per QR-Code. Nur lesend, nur aus dem
+  Heimnetz, nur mit zufälligem Schlüssel in der Adresse; Firewall-Regel nur für „Private“ Netzwerke.
 
 ---
 
@@ -262,6 +284,7 @@ zusätzliche Klasse, ohne den Rest anzufassen.
 5. ✅ Vergleich (Ø FPS, 1 % / 0,1 % Lows, Höchsttemperaturen, Verlaufsdiagramme)
 
 6. ✅ Kühlung (Lüfter, Mainboard/SSD/RAM-Temperaturen, Lüftersteuerung mit Sicherheitsnetz)
+8. ✅ Analyse (Engpass, Latenz, Ruckler, Ping/Paketverlust), Handy-Ansicht, Bericht als Bild, Langzeitverlauf
 7. ✅ Komfort (Infobereich, Autostart, Auto-Aufnahme, Benchmark, Warnungen, Netzwerk/Datenträger, Energie, Statistik)
 
 Mögliche Erweiterungen: ADLX als zusätzliche GPU-Quelle (falls Sensoren fehlen), eigene Lüfterkurven mit

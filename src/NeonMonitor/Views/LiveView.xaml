@@ -278,6 +278,9 @@
                                             Series2="{Binding NetUp.History}" Stroke2="{StaticResource SecondaryBrush}" />
                         <ContentControl Content="{Binding NetDown}" />
                         <ContentControl Content="{Binding NetUp}" />
+                        <ContentControl Content="{Binding Fps.PingInternet}" />
+                        <ContentControl Content="{Binding Fps.LossInternet}" />
+                        <TextBlock Text="{Binding Fps.ConnectionText}" Style="{StaticResource SmallText}" HorizontalAlignment="Right" />
                     </StackPanel>
                 </Border>
 

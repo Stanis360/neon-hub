@@ -43,6 +43,13 @@
                            Visibility="{Binding ShowGame, Converter={StaticResource BoolToVisibility}}" />
             </DockPanel>
 
+            <!-- Engpass als Text -->
+            <Grid Margin="0,0,0,2" Visibility="{Binding ShowBottleneck, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Engpass" FontSize="14" Foreground="#9AA6AA" />
+                <TextBlock Text="{Binding Main.Fps.BottleneckShort}" FontSize="16" FontWeight="SemiBold" Foreground="#F2F6F5"
+                           HorizontalAlignment="Right" />
+            </Grid>
+
             <!-- Messwerte: Beschriftung links, Wert rechts -->
             <ItemsControl ItemsSource="{Binding VisibleMetrics}">
                 <ItemsControl.ItemTemplate>

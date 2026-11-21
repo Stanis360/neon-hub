@@ -66,6 +66,11 @@ public sealed class FpsSource : ISensorSource
         s.FrameTimeMaxMs ??= stats.FrameTimeMaxMs;
         s.Fps1PercentLow ??= stats.OnePercentLow;
         s.RecentFrameTimes = stats.RecentFrameTimes;
+        s.InputLatencyMs ??= stats.InputLatencyMs;
+        s.ClickLatencyMs ??= stats.ClickLatencyMs;
+        s.DisplayDelayMs ??= stats.DisplayDelayMs;
+        s.StuttersPerMin ??= stats.StuttersPerMinute;
+        s.FrameHistogram = stats.Histogram;
     }
 
     public void AppendReport(StringBuilder r)

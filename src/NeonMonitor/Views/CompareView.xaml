@@ -82,10 +82,20 @@
 
         <!-- ============ Vergleich ============ -->
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel>
+            <!-- ReportPanel wird für „Als Bild“ komplett gerendert -->
+            <StackPanel x:Name="ReportPanel">
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
+                        <!-- Export-Knöpfe (werden beim Rendern ausgeblendet) -->
+                        <StackPanel x:Name="ExportButtons" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,-24"
+                                    Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+                            <Button Style="{StaticResource FlatButton}" Content="Als Bild speichern" Margin="0,0,6,0" Click="OnSaveImage"
+                                    ToolTip="Tabelle und Diagramm als PNG in Dokumente\NeonMonitor\Berichte" />
+                            <Button Style="{StaticResource FlatButton}" Content="Bild kopieren" Click="OnCopyImage"
+                                    ToolTip="In die Zwischenablage – z. B. direkt in Discord einfügen (Strg+V)" />
+                        </StackPanel>
                         <TextBlock Text="Vergleich" Style="{StaticResource CardTitle}" />
+                        <TextBlock Text="{Binding HardwareText}" Style="{StaticResource SmallText}" HorizontalAlignment="Center" Margin="0,2,0,0" />
                         <TextBlock Text="{Binding SelectionHint}" Style="{StaticResource SmallText}" FontSize="12"
                                    HorizontalAlignment="Center" Margin="0,2,0,12" />
 

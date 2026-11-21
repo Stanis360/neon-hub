@@ -46,6 +46,19 @@ public sealed class FpsViewModel : ObservableObject
         FrameTimeMax = new MetricViewModel("Frametime max", "ms", "0.0", historyPoints, barMaximum: 50,
                                            warnAt: 33.4, criticalAt: 50);
 
+        // Latenz: unter ~30 ms sehr gut, über 50 ms spürbar träge (Shooter)
+        InputLatency = new MetricViewModel("Eingabe → Bild", "ms", "0.0", historyPoints, warnAt: 40, criticalAt: 60, barMaximum: 60);
+        ClickLatency = new MetricViewModel("Klick → Bild", "ms", "0.0", historyPoints, warnAt: 40, criticalAt: 60, barMaximum: 60);
+        DisplayDelay = new MetricViewModel("Bild → Anzeige", "ms", "0.0", historyPoints, barMaximum: 20);
+        Stutters = new MetricViewModel("Ruckler / Minute", "", "0.0", historyPoints, warnAt: 3, criticalAt: 10, barMaximum: 10);
+
+        // Verbindung
+        PingRouter = new MetricViewModel("Ping Router", "ms", "0", historyPoints, warnAt: 10, criticalAt: 30, barMaximum: 20);
+        PingInternet = new MetricViewModel("Ping Internet", "ms", "0", historyPoints, warnAt: 60, criticalAt: 100, barMaximum: 100);
+        LossRouter = new MetricViewModel("Verlust Router", "%", "0.0", historyPoints, warnAt: 1, criticalAt: 3, barMaximum: 10);
+        LossInternet = new MetricViewModel("Verlust Internet", "%", "0.0", historyPoints, warnAt: 1, criticalAt: 3, barMaximum: 10);
+        Jitter = new MetricViewModel("Jitter", "ms", "0.0", historyPoints, warnAt: 10, criticalAt: 30, barMaximum: 30);
+
         SelectCommand = new ParamCommand(app =>
         {
             _source.PinnedApplication = app;
@@ -67,6 +80,53 @@ public sealed class FpsViewModel : ObservableObject
         });
         foreach (var a in _settings.FpsIgnoredApps) Ignored.Add(a);
     }
+
+    public MetricViewModel InputLatency { get; }
+    public MetricViewModel ClickLatency { get; }
+    public MetricViewModel DisplayDelay { get; }
+    public MetricViewModel Stutters { get; }
+    public MetricViewModel PingRouter { get; }
+    public MetricViewModel PingInternet { get; }
+    public MetricViewModel LossRouter { get; }
+    public MetricViewModel LossInternet { get; }
+    public MetricViewModel Jitter { get; }
+
+    /// <summary>Frametime-Verteilung der letzten 30 s (Anteile je Klasse).</summary>
+    public double[] Histogram { get => _histogram; private set => SetProperty(ref _histogram, value); }
+    private double[] _histogram = [];
+
+    // ---- Engpass (über 5 Messungen geglättet, damit die Anzeige nicht flackert) ----
+    private readonly Queue<string?> _bottlenecks = new();
+    private string? _bottleneck;
+    public string? Bottleneck
+    {
+        get => _bottleneck;
+        private set
+        {
+            if (!SetProperty(ref _bottleneck, value)) return;
+            OnPropertyChanged(nameof(BottleneckText));
+            OnPropertyChanged(nameof(BottleneckTip));
+            OnPropertyChanged(nameof(BottleneckShort));
+        }
+    }
+    public string BottleneckText => Services.Fps.BottleneckAnalyzer.Describe(_bottleneck);
+    public string BottleneckTip => Services.Fps.BottleneckAnalyzer.Tip(_bottleneck);
+    /// <summary>Kurzform fürs Overlay, z. B. „GPU-Limit“.</summary>
+    public string BottleneckShort => _bottleneck switch
+    {
+        null => "—",
+        "Limit" => "FPS-Grenze",
+        "Ausgeglichen" => "ausgeglichen",
+        var b => $"{b}-Limit",
+    };
+
+    private string _connectionText = "";
+    /// <summary>z. B. „WLAN · Signal 78 %“ oder „LAN“.</summary>
+    public string ConnectionText { get => _connectionText; private set => SetProperty(ref _connectionText, value); }
+
+    private string _connectionVerdict = "";
+    /// <summary>Einschätzung, wo Paketverlust entsteht.</summary>
+    public string ConnectionVerdict { get => _connectionVerdict; private set => SetProperty(ref _connectionVerdict, value); }
 
     public MetricViewModel Fps { get; }
     public MetricViewModel Low1 { get; }
@@ -120,14 +180,18 @@ public sealed class FpsViewModel : ObservableObject
 
     public string SafeModeHint => "Änderung wirkt nach einem Neustart von NeonMonitor.";
 
+    private IEnumerable<MetricViewModel> All =>
+        [Fps, Low1, FrameTime, FrameTimeMax, InputLatency, ClickLatency, DisplayDelay, Stutters,
+         PingRouter, PingInternet, LossRouter, LossInternet, Jitter];
+
     public void Resize(int points)
     {
-        foreach (var m in new[] { Fps, Low1, FrameTime, FrameTimeMax }) m.History.Resize(points);
+        foreach (var m in All) m.History.Resize(points);
     }
 
     public void ResetPeaks()
     {
-        foreach (var m in new[] { Fps, Low1, FrameTime, FrameTimeMax }) m.ResetPeak();
+        foreach (var m in All) m.ResetPeak();
     }
 
     /// <summary>Neuen Snapshot übernehmen (UI-Thread).</summary>
@@ -138,9 +202,38 @@ public sealed class FpsViewModel : ObservableObject
         FrameTime.Update(s.FrameTimeMs);
         FrameTimeMax.Update(s.FrameTimeMaxMs);
         FrameTimes.ReplaceAll(s.RecentFrameTimes);
+        InputLatency.Update(s.InputLatencyMs);
+        ClickLatency.Update(s.ClickLatencyMs);
+        DisplayDelay.Update(s.DisplayDelayMs);
+        Stutters.Update(s.StuttersPerMin);
+        if (s.FrameHistogram.Length > 0 || s.Fps is null) Histogram = s.FrameHistogram;
+
+        _bottlenecks.Enqueue(s.Bottleneck);
+        while (_bottlenecks.Count > 5) _bottlenecks.Dequeue();
+        Bottleneck = _bottlenecks.Where(b => b is not null).GroupBy(b => b)
+                                 .OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+
+        PingRouter.Update(s.PingRouterMs);
+        PingInternet.Update(s.PingInternetMs);
+        LossRouter.Update(s.LossRouterPct);
+        LossInternet.Update(s.LossInternetPct);
+        Jitter.Update(s.JitterMs);
+        ConnectionText = s.ConnectionType switch
+        {
+            null => "",
+            "WLAN" => s.WifiSignalPct is { } sig ? $"WLAN · Signal {sig:0} %" : "WLAN",
+            var c => c,
+        };
+        ConnectionVerdict = (s.LossRouterPct, s.LossInternetPct) switch
+        {
+            ( >= 1, _) => "Verlust schon im Heimnetz (PC ↔ Router)" + (s.ConnectionType == "WLAN" ? " – typisch für WLAN. Ein LAN-Kabel behebt das meist." : " – Kabel/Router prüfen."),
+            (_, >= 1) => "Heimnetz sauber, Verlust ab dem Router → Internetanschluss oder Anbieter.",
+            (not null, not null) => "Heimnetz und Internet ohne Verlust. Zeigt das Spiel trotzdem Paketverlust, liegt es eher am Spielserver.",
+            _ => "Messung läuft …",
+        };
 
         Application = s.FpsApplication ?? "";
-        Summary = s.Fps is { } fps ? $"{fps:0} FPS · {s.FpsApplication}" : "";
+        Summary = s.Fps is { } fps ? $"{fps:0} FPS · {s.FpsApplication}" + (s.Bottleneck is null ? "" : $" · {BottleneckShort}") : "";
         Status = !_source.IsAvailable
             ? "PresentMon fehlt – bitte Installieren.bat erneut ausführen."
             : s.Fps is null

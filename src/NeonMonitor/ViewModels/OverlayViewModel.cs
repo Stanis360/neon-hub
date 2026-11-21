@@ -101,6 +101,9 @@ public sealed class OverlayViewModel : ObservableObject
             Item("ramused", "RAM", "RAM belegt", main.RamUsed),
 
             Item("fpsw", "FPS", "FPS/Watt", main.FpsPerWatt),
+            Item("bottleneck", "FPS", "Engpass", null),
+            Item("stutters", "FPS", "Ruckler/min", main.Fps.Stutters),
+            Item("latency", "FPS", "Latenz", main.Fps.InputLatency),
 
             Item("cpufan", "Kühlung", "CPU-Lüfter", main.CpuFan),
             Item("casefan", "Kühlung", "Gehäuse", main.CaseFan),
@@ -108,6 +111,8 @@ public sealed class OverlayViewModel : ObservableObject
             Item("totalpower", "Sonstiges", "CPU+GPU W", main.TotalPower),
             Item("netdown", "Sonstiges", "Netz ↓", main.NetDown),
             Item("netup", "Sonstiges", "Netz ↑", main.NetUp),
+            Item("ping", "Sonstiges", "Ping", main.Fps.PingInternet),
+            Item("loss", "Sonstiges", "Verlust", main.Fps.LossInternet),
             Item("clock", "Sonstiges", "Uhrzeit", null),
         };
         foreach (var i in all) i.Init(settings.OverlayItems.Contains(i.Key));
@@ -139,6 +144,7 @@ public sealed class OverlayViewModel : ObservableObject
     public bool ShowGame => IsOn("game");
     public bool ShowChart => IsOn("chart");
     public bool ShowClock => IsOn("clock");
+    public bool ShowBottleneck => IsOn("bottleneck");
 
     public ICommand ToggleCommand { get; }
     public ICommand BiggerCommand { get; }
@@ -270,5 +276,6 @@ public sealed class OverlayViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowGame));
         OnPropertyChanged(nameof(ShowChart));
         OnPropertyChanged(nameof(ShowClock));
+        OnPropertyChanged(nameof(ShowBottleneck));
     }
 }

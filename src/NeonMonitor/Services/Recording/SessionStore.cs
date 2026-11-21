@@ -148,6 +148,16 @@ public static class RecordingColumns
     public const string GpuTemp = "GPU Temp °C";
     public const string GpuHotspot = "GPU Hotspot °C";
     public const string GpuMemTemp = "GPU VRAM-Temp °C";
+    public const string CpuCoreMax = "CPU stärkster Thread %";
+    public const string Bottleneck = "Engpass";
+    public const string InputLatency = "Eingabe-Latenz ms";
+    public const string ClickLatency = "Klick-Latenz ms";
+    public const string Stutters = "Ruckler/min";
+    public const string PingRouter = "Ping Router ms";
+    public const string PingInternet = "Ping Internet ms";
+    public const string LossRouter = "Verlust Router %";
+    public const string LossInternet = "Verlust Internet %";
+    public const string Jitter = "Jitter ms";
     public const string GpuClock = "GPU Takt MHz";
     public const string GpuMemClock = "GPU Speichertakt MHz";
     public const string GpuVram = "VRAM MB";
@@ -169,5 +179,6 @@ public static class RecordingColumns
         CpuLoad, CpuTemp, CpuPower, CpuClock,
         GpuLoad, GpuTemp, GpuHotspot, GpuClock, GpuMemClock, GpuVram, GpuPower, GpuFan,
         RamUsed, RamLoad, TotalPower, CpuFan, CaseFan, NetDown, NetUp, DiskRead, DiskWrite, GpuMemTemp,
+        CpuCoreMax, Bottleneck, InputLatency, ClickLatency, Stutters, PingRouter, PingInternet, LossRouter, LossInternet, Jitter,
     ];
 }

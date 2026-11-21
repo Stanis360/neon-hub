@@ -22,6 +22,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly HardwareMonitorService _monitor;
     private readonly PlaytimeService _playtime;
     private readonly AlertService _alerts;
+    private readonly HistoryService _history;
     private string _trayText = "NeonMonitor";
     private readonly AppSettings _settings;
     private readonly Dispatcher _dispatcher;
@@ -36,8 +37,11 @@ public sealed class MainViewModel : ObservableObject
     private bool _isInitializing = true;
 
     public MainViewModel(HardwareMonitorService monitor, AppSettings settings, RecordingService recorder,
-                         PlaytimeService playtime, AlertService alerts, Action requestExit)
+                         PlaytimeService playtime, AlertService alerts, WebDashboardService web, HistoryService history,
+                         Action requestExit)
     {
+        _history = history;
+        Web = new WebViewModel(web, settings);
         Update = new UpdateViewModel(settings, requestExit);
         _playtime = playtime;
         _alerts = alerts;
@@ -83,8 +87,8 @@ public sealed class MainViewModel : ObservableObject
         Recording = new RecordingViewModel(recorder, settings);
         Compare = new CompareViewModel();
         Cooling = new CoolingViewModel(settings, monitor.Lhm.FanControl);
-        Settings = new SettingsViewModel(settings, Update);
-        Stats = new StatsViewModel(playtime);
+        Settings = new SettingsViewModel(settings, Update, Web);
+        Stats = new StatsViewModel(playtime, history);
         Recording.SessionSaved += _ => Stats.Refresh();
         Recording.SessionSaved += _ => Compare.Refresh();
         Overlay = new OverlayViewModel(this, settings);
@@ -133,6 +137,9 @@ public sealed class MainViewModel : ObservableObject
     public MetricViewModel DiskWrite { get; }
     public MetricViewModel TotalPower { get; }
     public MetricViewModel FpsPerWatt { get; }
+
+    /// <summary>Handy-Ansicht.</summary>
+    public WebViewModel Web { get; }
 
     /// <summary>Update-Hinweis und -Einstellungen.</summary>
     public UpdateViewModel Update { get; }
@@ -273,6 +280,7 @@ public sealed class MainViewModel : ObservableObject
         Overlay.Tick();
         Recording.Tick(s);
         _playtime.Track(s);
+        _history.Track(s);
         _alerts.Check(s);
         TrayText = BuildTrayText(s);
         UpdateCoreClocks(s.CpuCoreClocks);

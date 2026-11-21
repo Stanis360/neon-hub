@@ -17,6 +17,8 @@ public sealed class HardwareSnapshot
     public string? CpuName { get; set; }
     /// <summary>Gesamtlast in %.</summary>
     public double? CpuLoad { get; set; }
+    /// <summary>Last des am stärksten ausgelasteten Threads in % (zeigt CPU-Limits, die die Gesamtlast verschleiert).</summary>
+    public double? CpuCoreMaxLoad { get; set; }
     /// <summary>Temperatur in °C (bei Ryzen: Tctl/Tdie).</summary>
     public double? CpuTemp { get; set; }
     /// <summary>Durchschnittlicher Kerntakt in MHz.</summary>
@@ -93,12 +95,40 @@ public sealed class HardwareSnapshot
     public double? Fps1PercentLow { get; set; }
     /// <summary>Name der erfassten Anwendung, z. B. „cod.exe“.</summary>
     public string? FpsApplication { get; set; }
+    /// <summary>Eingabe (Maus/Tastatur) bis Bild auf dem Monitor in ms, Mittel der letzten 5 s.</summary>
+    public double? InputLatencyMs { get; set; }
+    /// <summary>Mausklick bis Bild auf dem Monitor in ms, Mittel der letzten 5 s.</summary>
+    public double? ClickLatencyMs { get; set; }
+    /// <summary>Vom Abschicken eines Bildes bis zur Anzeige in ms.</summary>
+    public double? DisplayDelayMs { get; set; }
+    /// <summary>Spürbare Ruckler pro Minute (Bild ≥ 2× so lang wie üblich und ≥ 8 ms länger).</summary>
+    public double? StuttersPerMin { get; set; }
+    /// <summary>Was bremst gerade: „GPU“, „CPU“, „Limit“ (FPS-Grenze/V-Sync/Engine) oder „Ausgeglichen“.</summary>
+    public string? Bottleneck { get; set; }
+
+    // ---------- Verbindung (Ping/Paketverlust) ----------
+    public double? PingRouterMs { get; set; }
+    public double? PingInternetMs { get; set; }
+    /// <summary>Paketverlust zum Router in % (letzte 60 Pings) – hoch = WLAN/Heimnetz-Problem.</summary>
+    public double? LossRouterPct { get; set; }
+    /// <summary>Paketverlust ins Internet in % (letzte 60 Pings) – hoch, aber Router ok = Anbieter/Leitung.</summary>
+    public double? LossInternetPct { get; set; }
+    /// <summary>Schwankung der Pingzeit ins Internet in ms.</summary>
+    public double? JitterMs { get; set; }
+    /// <summary>„LAN“ oder „WLAN“.</summary>
+    public string? ConnectionType { get; set; }
+    /// <summary>WLAN-Signalstärke in % (nur bei WLAN).</summary>
+    public double? WifiSignalPct { get; set; }
 
     // Nur für die Anzeige (nicht für die CSV-Aufzeichnung):
     /// <summary>Die letzten Einzel-Frametimes (ms) für das Frametime-Diagramm.</summary>
     public double[] RecentFrameTimes { get; set; } = [];
     /// <summary>Alle Anwendungen, die gerade Bilder ausgeben (zur Auswahl).</summary>
     public string[] FpsCandidates { get; set; } = [];
+    /// <summary>Frametime-Verteilung der letzten 30 s (Anteile je Klasse, siehe FrameAnalysis).</summary>
+    public double[] FrameHistogram { get; set; } = [];
+    /// <summary>SSD-Zustand (nur alle paar Sekunden aktualisiert).</summary>
+    public List<DriveHealth> DriveHealth { get; set; } = new();
 }
 
 /// <summary>Ein Lüfteranschluss. <paramref name="Id"/> ist die feste LHM-Kennung (für Namen/Zuordnung).</summary>
@@ -109,6 +139,12 @@ public sealed record FanControlReading(string Id, string Name, double? Percent, 
 
 /// <summary>Eine zusätzliche Temperatur, z. B. Gruppe „SSD“, Name „Samsung 990 Pro“.</summary>
 public sealed record TempReading(string Group, string Name, double Celsius);
+
+/// <summary>Zustand einer SSD laut SMART.</summary>
+/// <param name="LifePct">Restlebensdauer in %.</param>
+/// <param name="WrittenGb">Insgesamt geschrieben in GB.</param>
+/// <param name="PowerOnHours">Betriebsstunden.</param>
+public sealed record DriveHealth(string Name, double? LifePct, double? WrittenGb, double? PowerOnHours, double? TempC);
 
 /// <summary>Takt eines CPU-Kerns.</summary>
 public sealed record CoreClock(string Name, double Mhz);

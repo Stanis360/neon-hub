@@ -21,6 +21,20 @@ public sealed class MultiLineChart : FrameworkElement
         nameof(Unit), typeof(string), typeof(MultiLineChart),
         new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty StartDateProperty = DependencyProperty.Register(
+        nameof(StartDate), typeof(DateTime?), typeof(MultiLineChart),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty XMaxProperty = DependencyProperty.Register(
+        nameof(XMax), typeof(double), typeof(MultiLineChart),
+        new FrameworkPropertyMetadata(double.NaN, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    /// <summary>Gesetzt → X-Werte sind Tage ab diesem Datum, Beschriftung „dd.MM.“ statt mm:ss.</summary>
+    public DateTime? StartDate { get => (DateTime?)GetValue(StartDateProperty); set => SetValue(StartDateProperty, value); }
+
+    /// <summary>Feste Breite der X-Achse (z. B. 30 Tage); NaN = aus den Daten.</summary>
+    public double XMax { get => (double)GetValue(XMaxProperty); set => SetValue(XMaxProperty, value); }
+
     public IReadOnlyList<ChartLine>? Lines { get => (IReadOnlyList<ChartLine>?)GetValue(LinesProperty); set => SetValue(LinesProperty, value); }
     public string Unit { get => (string)GetValue(UnitProperty); set => SetValue(UnitProperty, value); }
 
@@ -39,7 +53,7 @@ public sealed class MultiLineChart : FrameworkElement
         if (w < 20 || h < 20) return;
 
         var lines = Lines ?? [];
-        var xMax = lines.SelectMany(l => l.X).DefaultIfEmpty(1).Max();
+        var xMax = double.IsNaN(XMax) ? lines.SelectMany(l => l.X).DefaultIfEmpty(1).Max() : XMax;
         var yMax = lines.SelectMany(l => l.Y).Where(double.IsFinite).DefaultIfEmpty(1).Max();
         yMax = NiceCeiling(Math.Max(yMax * 1.05, 1));
         if (xMax <= 0) xMax = 1;
@@ -57,7 +71,10 @@ public sealed class MultiLineChart : FrameworkElement
         // X-Beschriftung: Start, Mitte, Ende als mm:ss
         foreach (var f in new[] { 0.0, 0.5, 1.0 })
         {
-            var t = Text(TimeSpan.FromSeconds(xMax * f).ToString(xMax >= 3600 ? @"h\:mm\:ss" : @"mm\:ss"), dpi);
+            var label = StartDate is { } start
+                ? start.AddDays(Math.Round(xMax * f)).ToString("dd.MM.")
+                : TimeSpan.FromSeconds(xMax * f).ToString(xMax >= 3600 ? @"h\:mm\:ss" : @"mm\:ss");
+            var t = Text(label, dpi);
             var x = left + f * w - (f switch { 0 => 0, 1 => t.Width, _ => t.Width / 2 });
             dc.DrawText(t, new Point(x, h + 3));
         }
@@ -78,7 +95,12 @@ public sealed class MultiLineChart : FrameworkElement
                 }
             }
             geo.Freeze();
-            dc.DrawGeometry(null, Freeze(new Pen(new SolidColorBrush(line.Color), 1.6) { LineJoin = PenLineJoin.Round }), geo);
+            var brush = Freeze(new SolidColorBrush(line.Color));
+            dc.DrawGeometry(null, Freeze(new Pen(brush, 1.6) { LineJoin = PenLineJoin.Round }), geo);
+            if (StartDate is not null) // Tageswerte zusätzlich als Punkte
+                for (var i = 0; i < Math.Min(line.X.Length, line.Y.Length); i++)
+                    if (double.IsFinite(line.Y[i]))
+                        dc.DrawEllipse(brush, null, new Point(left + line.X[i] / xMax * w, h - Math.Clamp(line.Y[i] / yMax, 0, 1) * (h - 2) - 1), 2.5, 2.5);
         }
         dc.Pop();
     }

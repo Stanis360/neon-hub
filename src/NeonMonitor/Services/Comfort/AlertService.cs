@@ -27,6 +27,14 @@ public sealed class AlertService(AppSettings settings)
         if (s.GpuHotspot >= settings.AlertHotspot)
             Raise("hot", "GPU-Hotspot sehr heiß", $"Hotspot {s.GpuHotspot:0} °C (Grenze {settings.AlertHotspot:0} °C).");
 
+        // Paketverlust (über die letzten 60 Pings) – mit Hinweis, wo er entsteht
+        if (s.LossRouterPct >= 3)
+            Raise("lossrouter", "Paketverlust im Heimnetz",
+                $"{s.LossRouterPct:0} % Verlust schon zum Router" + (s.ConnectionType == "WLAN" ? $" (WLAN, Signal {s.WifiSignalPct:0} %). LAN-Kabel würde helfen." : "."));
+        else if (s.LossInternetPct >= 3)
+            Raise("lossinet", "Paketverlust im Internet",
+                $"{s.LossInternetPct:0} % Verlust ins Internet, Heimnetz ist sauber → Anschluss/Anbieter.");
+
         // CPU-Lüfter steht, obwohl die CPU warm ist → wahrscheinlich Defekt oder Kabel ab
         _cpuFanStoppedTicks = s.CpuFanRpm is 0 && s.CpuTemp > 60 ? _cpuFanStoppedTicks + 1 : 0;
         if (_cpuFanStoppedTicks >= 5)

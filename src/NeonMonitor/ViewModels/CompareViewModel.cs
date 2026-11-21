@@ -131,6 +131,10 @@ public sealed class CompareViewModel : ObservableObject
             new("GPU Last", RecordingColumns.GpuLoad, "%", select),
             new("CPU Watt", RecordingColumns.CpuPower, "W", select),
             new("GPU Watt", RecordingColumns.GpuPower, "W", select),
+            new("Latenz", RecordingColumns.InputLatency, "ms", select),
+            new("Ruckler/min", RecordingColumns.Stutters, "", select),
+            new("Ping", RecordingColumns.PingInternet, "ms", select),
+            new("Paketverlust", RecordingColumns.LossInternet, "%", select),
             new("CPU-Lüfter", RecordingColumns.CpuFan, "", select),
             new("Gehäuselüfter", RecordingColumns.CaseFan, "", select),
         ];
@@ -154,6 +158,11 @@ public sealed class CompareViewModel : ObservableObject
         : $"Verlauf: {_metric.Title}";
 
     public bool HasSelection => _selected.Count > 0;
+
+    /// <summary>Hardware der ersten ausgewählten Sitzung (für den Bericht).</summary>
+    public string HardwareText => _selected.FirstOrDefault()?.Summary is { } s
+        ? string.Join(" · ", new[] { s.CpuName, s.GpuName }.Where(x => !string.IsNullOrEmpty(x)))
+        : "";
     public bool HasSessions => Sessions.Count > 0;
     public string SelectionHint => _selected.Count switch
     {
@@ -239,6 +248,7 @@ public sealed class CompareViewModel : ObservableObject
         UpdateChart();
         OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(SelectionHint));
+        OnPropertyChanged(nameof(HardwareText));
     }
 
     private void BuildRows()
@@ -271,6 +281,13 @@ public sealed class CompareViewModel : ObservableObject
         Add("1 % Low", s => s.Low1, "0.0", "", true);
         Add("0,1 % Low", s => s.Low01, "0.0", "", true);
         Add("Ø Frametime", s => s.AvgFrameTimeMs, "0.00", "ms", false);
+        Add("Ruckler pro Minute", s => s.StuttersPerMin, "0.0", "", false);
+        Add("Ruckler gesamt", s => s.StutterCount, "0", "", false);
+        Add("Ø Eingabe-Latenz", s => s.AvgInputLatencyMs, "0.0", "ms", false);
+        Add("Ø Klick-Latenz", s => s.AvgClickLatencyMs, "0.0", "ms", false);
+        Add("GPU-Limit", s => s.GpuBoundPct, "0", "%", null);
+        Add("CPU-Limit", s => s.CpuBoundPct, "0", "%", null);
+        Add("FPS-Grenze/Limit", s => s.LimitPct, "0", "%", null);
         Add("Max. CPU-Temp", s => s.MaxCpuTemp, "0", "°C", false);
         Add("Max. GPU-Temp", s => s.MaxGpuTemp, "0", "°C", false);
         Add("Max. Hotspot", s => s.MaxGpuHotspot, "0", "°C", false);
@@ -282,6 +299,8 @@ public sealed class CompareViewModel : ObservableObject
         Add("Max. RAM", s => s.MaxRamLoad, "0", "%", null);
         Add("Ø CPU-Lüfter", s => s.AvgCpuFan, "0", "U/min", false);
         Add("Ø Gehäuselüfter", s => s.AvgCaseFan, "0", "U/min", false);
+        Add("Ø Ping Internet", s => s.AvgPingInternetMs, "0", "ms", false);
+        Add("Ø Paketverlust", s => s.AvgLossInternetPct, "0.0", "%", false);
         Add("FPS pro Watt", s => s.FpsPerWatt, "0.00", "", true);
         Add("Energie CPU+GPU", s => s.EnergyWh, "0", "Wh", false);
         Add("Stromkosten", s => s.CostEuro, "0.00", "€", false);

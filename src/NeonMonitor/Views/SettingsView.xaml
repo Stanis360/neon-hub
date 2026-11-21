@@ -57,6 +57,32 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ============ Handy-Ansicht ============ -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Handy-Ansicht" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" Margin="0,0,0,12" />
+                        <CheckBox Style="{StaticResource Option}" Content="Werte im Heimnetz auf Handy/Tablet anzeigen" IsChecked="{Binding Web.Enabled}" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Einfach im Browser, keine App nötig. Nur lesend, nur im Heimnetz und nur mit dem Schlüssel in der Adresse. Handy muss im selben WLAN sein; das Netzwerk in Windows sollte als „Privat“ eingestellt sein." />
+                        <StackPanel Visibility="{Binding Web.Enabled, Converter={StaticResource BoolToVisibility}}">
+                            <DockPanel>
+                                <Image DockPanel.Dock="Left" Source="{Binding Web.QrCode}" Width="150" Height="150" Margin="0,0,16,0"
+                                       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBox Text="{Binding Web.UrlsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,0,0,8" />
+                                    <WrapPanel>
+                                        <Button Style="{StaticResource FlatButton}" Content="Adresse kopieren" Margin="0,0,8,8" Command="{Binding Web.CopyCommand}" />
+                                        <Button Style="{StaticResource FlatButton}" Content="Am PC öffnen" Margin="0,0,8,8" Command="{Binding Web.OpenCommand}" />
+                                        <Button Style="{StaticResource FlatButton}" Content="Neuer Schlüssel" Margin="0,0,8,8" Command="{Binding Web.NewKeyCommand}"
+                                                ToolTip="Alte Adresse/QR-Code werden ungültig" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Web.Status}" Style="{StaticResource SmallText}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
                 <!-- ============ Aufnahme ============ -->
                 <Border Style="{StaticResource Card}">
                     <StackPanel>

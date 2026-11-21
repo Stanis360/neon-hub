@@ -70,6 +70,14 @@ public sealed class AppSettings
     /// <summary>Strompreis in €/kWh für die Kostenberechnung.</summary>
     public double PricePerKwh { get; set; } = 0.35;
 
+    // ---------- Handy-Ansicht ----------
+
+    /// <summary>Webseite im Heimnetz für Handy/Tablet einschalten.</summary>
+    public bool WebEnabled { get; set; }
+    public int WebPort { get; set; } = 8085;
+    /// <summary>Zufälliger Schlüssel in der Adresse – ohne ihn gibt es keine Daten.</summary>
+    public string? WebToken { get; set; }
+
     // ---------- Updates ----------
 
     /// <summary>Automatisch auf GitHub nach neuen Versionen suchen.</summary>

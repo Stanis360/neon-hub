@@ -37,7 +37,10 @@ public sealed class RecordingService : IDisposable
     // Laufende Summen/Maxima für die Zusammenfassung
     private readonly Accumulator _cpuLoad = new(), _gpuLoad = new(), _cpuPower = new(), _gpuPower = new(),
                                  _cpuTemp = new(), _gpuTemp = new(), _hotspot = new(), _ramLoad = new(), _fps = new(),
-                                 _totalPower = new(), _cpuFan = new(), _caseFan = new(), _memTemp = new();
+                                 _totalPower = new(), _cpuFan = new(), _caseFan = new(), _memTemp = new(),
+                                 _input = new(), _click = new(), _ping = new(), _lossInet = new(), _lossRouter = new();
+    private int _gpuBound, _cpuBound, _limited, _classified;
+    private string? _connection;
     private double _energyWh;
     private TimeSpan _lastSampleAt;
 
@@ -109,7 +112,9 @@ public sealed class RecordingService : IDisposable
             _firstFrameTime = null;
             _samples = 0;
             foreach (var a in new[] { _cpuLoad, _gpuLoad, _cpuPower, _gpuPower, _cpuTemp, _gpuTemp, _hotspot, _ramLoad, _fps,
-                                      _totalPower, _cpuFan, _caseFan, _memTemp }) a.Reset();
+                                      _totalPower, _cpuFan, _caseFan, _memTemp, _input, _click, _ping, _lossInet, _lossRouter }) a.Reset();
+            _gpuBound = _cpuBound = _limited = _classified = 0;
+            _connection = null;
             _energyWh = 0;
             _lastSampleAt = TimeSpan.Zero;
             _clock.Restart();
@@ -140,6 +145,19 @@ public sealed class RecordingService : IDisposable
             result.AvgGpuPower = _gpuPower.Average;
             result.MaxRamLoad = _ramLoad.Max;
             result.MaxGpuMemTemp = _memTemp.Max;
+            result.AvgInputLatencyMs = _input.Average;
+            result.AvgClickLatencyMs = _click.Average;
+            result.AvgPingInternetMs = _ping.Average;
+            result.AvgLossInternetPct = _lossInet.Average;
+            result.MaxLossInternetPct = _lossInet.Max;
+            result.AvgLossRouterPct = _lossRouter.Average;
+            result.ConnectionType = _connection;
+            if (_classified > 0)
+            {
+                result.GpuBoundPct = _gpuBound * 100.0 / _classified;
+                result.CpuBoundPct = _cpuBound * 100.0 / _classified;
+                result.LimitPct = _limited * 100.0 / _classified;
+            }
             result.AvgCpuFan = _cpuFan.Average;
             result.AvgCaseFan = _caseFan.Average;
             result.AvgTotalPower = _totalPower.Average;
@@ -186,6 +204,14 @@ public sealed class RecordingService : IDisposable
         {
             s.AvgFps = fps; // Fallback: nur Sekundenwerte vorhanden
         }
+
+        if (_frameTimes.Count >= 100)
+        {
+            s.StutterCount = FrameAnalysis.CountStutters(_frameTimes);
+            var minutes = _frameTimes.Sum(f => (double)f) / 60_000.0;
+            if (minutes > 0) s.StuttersPerMin = s.StutterCount / minutes;
+            s.FrameHistogram = FrameAnalysis.Histogram(_frameTimes.Select(f => (double)f));
+        }
     }
 
     // ---------------- Datenquellen ----------------
@@ -217,6 +243,9 @@ public sealed class RecordingService : IDisposable
                 f(TotalPower(s), "0.0"), f(s.CpuFanRpm, "0"), f(s.CaseFanRpm, "0"),
                 f(s.NetDownMbit, "0.00"), f(s.NetUpMbit, "0.00"), f(s.DiskReadMBs, "0.0"), f(s.DiskWriteMBs, "0.0"),
                 f(s.GpuMemTemp, "0.0"),
+                f(s.CpuCoreMaxLoad, "0.0"), s.Bottleneck ?? "", f(s.InputLatencyMs, "0.0"), f(s.ClickLatencyMs, "0.0"),
+                f(s.StuttersPerMin, "0.0"), f(s.PingRouterMs, "0.0"), f(s.PingInternetMs, "0.0"),
+                f(s.LossRouterPct, "0.0"), f(s.LossInternetPct, "0.0"), f(s.JitterMs, "0.0"),
             };
             _csv.WriteLine(string.Join(SessionStore.Separator, row));
             _csv.Flush();
@@ -228,6 +257,16 @@ public sealed class RecordingService : IDisposable
             _cpuTemp.Add(s.CpuTemp); _gpuTemp.Add(s.GpuTemp); _hotspot.Add(s.GpuHotspot);
             _ramLoad.Add(s.RamLoad); _fps.Add(s.Fps);
             _cpuFan.Add(s.CpuFanRpm); _caseFan.Add(s.CaseFanRpm); _memTemp.Add(s.GpuMemTemp);
+            _input.Add(s.InputLatencyMs); _click.Add(s.ClickLatencyMs);
+            _ping.Add(s.PingInternetMs); _lossInet.Add(s.LossInternetPct); _lossRouter.Add(s.LossRouterPct);
+            _connection ??= s.ConnectionType;
+            if (s.Bottleneck is { } b)
+            {
+                _classified++;
+                if (b == BottleneckAnalyzer.Gpu) _gpuBound++;
+                else if (b == BottleneckAnalyzer.Cpu) _cpuBound++;
+                else if (b == BottleneckAnalyzer.Limit) _limited++;
+            }
 
             // Energie: Leistung × Zeit seit der letzten Messung
             var now = _clock.Elapsed;

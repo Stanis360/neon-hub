@@ -43,6 +43,7 @@ public sealed class HardwareMonitorService : IDisposable
             Lhm,
             new WindowsCounterSource(),
             new DriveSource(),
+            new NetworkQualitySource(),
             Fps,
         };
     }
@@ -120,6 +121,7 @@ public sealed class HardwareMonitorService : IDisposable
                 catch (Exception ex) { Log.Error($"Quelle '{source.Name}' Messfehler", ex); }
             }
         }
+        snapshot.Bottleneck = BottleneckAnalyzer.Classify(snapshot);
         return snapshot;
     }
 

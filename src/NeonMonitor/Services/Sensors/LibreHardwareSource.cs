@@ -107,6 +107,8 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
             UpdateRecursive(_cpu);
             s.CpuName ??= _cpu.Name;
             s.CpuLoad ??= FindValue(_cpu, SensorType.Load, "CPU Total");
+            s.CpuCoreMaxLoad ??= FindValue(_cpu, SensorType.Load, "CPU Core Max")
+                                 ?? MaxValue(_cpu, SensorType.Load, n => n.StartsWith("CPU Core #", StringComparison.OrdinalIgnoreCase));
             s.CpuTemp ??= FindValue(_cpu, SensorType.Temperature,
                               "Core (Tctl/Tdie)", "Core (Tdie)", "Core (Tctl)", "CCDs Max (Tdie)",
                               "CCD1 (Tdie)", "CPU Package", "Package", "Core Max")
@@ -213,22 +215,34 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
 
     /// <summary>SSD/HDD-Temperaturen (SMART). Nur alle 10 Messungen – SMART-Abfragen sind vergleichsweise langsam.</summary>
     private List<TempReading> _lastStorageTemps = new();
+    private List<DriveHealth> _lastHealth = new();
     private void FillStorage(HardwareSnapshot s)
     {
         if (_storage.Count == 0) return;
         if (_storageTick++ % 10 == 0)
         {
             var temps = new List<TempReading>();
+            var health = new List<DriveHealth>();
             foreach (var d in _storage)
             {
                 try { d.Update(); } catch { continue; }
                 var t = d.Sensors.Where(x => x.SensorType == SensorType.Temperature && IsPlausible(x.Value))
                                  .OrderBy(x => x.Index).FirstOrDefault();
                 if (t is not null) temps.Add(new TempReading("SSD", d.Name, t.Value!.Value));
+
+                // SMART: Lebensdauer, geschriebene Daten (LHM meldet GB), Betriebsstunden
+                double? life = FindValue(d, SensorType.Level, "Life", "Remaining Life");
+                if (life is null && FindValue(d, SensorType.Level, "Percentage Used") is { } used) life = 100 - used;
+                health.Add(new DriveHealth(d.Name, life,
+                    FindValue(d, SensorType.Data, "Data Written", "Total Bytes Written"),
+                    FindValue(d, SensorType.Factor, "Power On Hours"),
+                    t?.Value));
             }
             _lastStorageTemps = temps;
+            _lastHealth = health;
         }
         s.ExtraTemps.AddRange(_lastStorageTemps);
+        s.DriveHealth = _lastHealth;
     }
 
     /// <summary>„G Skill Intl - F5-6000J3238F16G (#1)“ → „G Skill F5-6000J3238F16G“</summary>

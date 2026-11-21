@@ -28,6 +28,78 @@
                 </StackPanel>
             </Border>
 
+            <!-- ============ Engpass | Latenz ============ -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Engpass" Style="{StaticResource CardTitle}" />
+                        <TextBlock Text="{Binding BottleneckShort}" FontFamily="{StaticResource DisplayFont}" FontSize="34"
+                                   Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" Margin="0,10,0,2" />
+                        <TextBlock Text="{Binding BottleneckText}" Style="{StaticResource SmallText}" FontSize="13"
+                                   HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+                        <TextBlock Text="{Binding BottleneckTip}" Foreground="{StaticResource TextBrush}" FontSize="12"
+                                   TextWrapping="Wrap" TextAlignment="Center" Margin="0,10,0,0" />
+                        <TextBlock Style="{StaticResource SmallText}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,10,0,0"
+                                   Text="Regel: GPU ≥ 94 % = GPU-Limit · sonst ein CPU-Thread ≥ 85 % = CPU-Limit · beides darunter = FPS-Grenze/V-Sync/Engine." />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Latenz" Style="{StaticResource CardTitle}" />
+                        <TextBlock Style="{StaticResource SmallText}" HorizontalAlignment="Center" Margin="0,2,0,8" TextWrapping="Wrap" TextAlignment="Center"
+                                   Text="Zeit von deiner Eingabe bis das Bild auf dem Monitor ist (Mittel der letzten 5 s). Ohne Maus-/Monitor-Elektronik." />
+                        <ContentControl Content="{Binding InputLatency}" />
+                        <ContentControl Content="{Binding ClickLatency}" />
+                        <ContentControl Content="{Binding DisplayDelay}" />
+                        <controls:LineChart Height="70" Maximum="40" Unit="ms" Margin="0,6,0,0"
+                                            Series="{Binding InputLatency.History}" Stroke="{StaticResource AccentBrush}"
+                                            Series2="{Binding ClickLatency.History}" Stroke2="{StaticResource SecondaryBrush}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ============ Ruckler | Verbindung ============ -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Ruckler &amp; Gleichmäßigkeit" Style="{StaticResource CardTitle}" />
+                        <ContentControl Content="{Binding Stutters}" Margin="0,8,0,0" />
+                        <TextBlock Style="{StaticResource SmallText}" Margin="0,0,0,8" TextWrapping="Wrap"
+                                   Text="Ruckler = ein Bild dauert mind. doppelt so lange wie üblich (und ≥ 8 ms länger). Darunter: Verteilung der Bilddauer der letzten 30 s – ein hoher, schmaler Balken = gleichmäßig." />
+                        <controls:HistogramChart Height="150" Values="{Binding Histogram}" Fill="{StaticResource AccentBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding ConnectionText}" Style="{StaticResource SmallText}" VerticalAlignment="Center" />
+                            <TextBlock Text="Verbindung &amp; Paketverlust" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" />
+                        </DockPanel>
+                        <ContentControl Content="{Binding LossRouter}" Margin="0,8,0,0" />
+                        <ContentControl Content="{Binding LossInternet}" />
+                        <ContentControl Content="{Binding PingRouter}" />
+                        <ContentControl Content="{Binding PingInternet}" />
+                        <ContentControl Content="{Binding Jitter}" />
+                        <TextBlock Text="{Binding ConnectionVerdict}" Foreground="{StaticResource TextBrush}" FontSize="12"
+                                   TextWrapping="Wrap" Margin="0,6,0,0" />
+                        <TextBlock Style="{StaticResource SmallText}" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Text="Jede Sekunde ein Ping zum Router und ins Internet (1.1.1.1), ausgewertet über die letzte Minute. Den Ping zum CoD-Server kennt nur das Spiel – diese Messung zeigt, ob der Verlust bei dir zu Hause oder beim Anbieter entsteht." />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />

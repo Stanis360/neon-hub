@@ -39,6 +39,26 @@ public sealed class SessionSummary
     public double? AvgCpuFan { get; set; }
     public double? AvgCaseFan { get; set; }
 
+    // ---- Ruckler & Frametime-Verteilung ----
+    public int? StutterCount { get; set; }
+    public double? StuttersPerMin { get; set; }
+    /// <summary>Anteil der Bilder je Frametime-Klasse (siehe FrameAnalysis.BinEdges).</summary>
+    public double[]? FrameHistogram { get; set; }
+
+    // ---- Engpass (Anteil der Messungen mit Spiel) ----
+    public double? GpuBoundPct { get; set; }
+    public double? CpuBoundPct { get; set; }
+    public double? LimitPct { get; set; }
+
+    // ---- Latenz & Verbindung ----
+    public double? AvgInputLatencyMs { get; set; }
+    public double? AvgClickLatencyMs { get; set; }
+    public double? AvgPingInternetMs { get; set; }
+    public double? AvgLossInternetPct { get; set; }
+    public double? MaxLossInternetPct { get; set; }
+    public double? AvgLossRouterPct { get; set; }
+    public string? ConnectionType { get; set; }
+
     // ---- Energie (nur CPU-Package + Grafikkarte, ohne Rest des PCs) ----
     /// <summary>Ø Leistung CPU + GPU in Watt.</summary>
     public double? AvgTotalPower { get; set; }
