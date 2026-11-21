@@ -233,7 +233,7 @@ public sealed class FpsViewModel : ObservableObject
         };
 
         Application = s.FpsApplication ?? "";
-        Summary = s.Fps is { } fps ? $"{fps:0} FPS · {s.FpsApplication}" + (s.Bottleneck is null ? "" : $" · {BottleneckShort}") : "";
+        Summary = s.Fps is { } fps ? $"{fps:0} FPS · {Services.Recording.GameNames.FromApplication(s.FpsApplication)}" + (s.Bottleneck is null ? "" : $" · {BottleneckShort}") : "";
         Status = !_source.IsAvailable
             ? "PresentMon fehlt – bitte Installieren.bat erneut ausführen."
             : s.Fps is null

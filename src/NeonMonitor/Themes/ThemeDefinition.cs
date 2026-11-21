@@ -51,6 +51,12 @@ public sealed record ThemeDefinition
     public string BigFont { get; init; } = "Bahnschrift, Segoe UI";
     /// <summary>Schrift der Kartenüberschriften (null = wie <see cref="DisplayFont"/>).</summary>
     public string? TitleFont { get; init; }
+    /// <summary>Vergrößerung der großen Zahlen (Pixelschriften wirken bei gleicher Größe kleiner).</summary>
+    public double BigScale { get; init; } = 1.0;
+    /// <summary>Text vor jeder Kartenüberschrift (z. B. „&gt; “ im Terminal-Design).</summary>
+    public string TitlePrefix { get; init; } = "";
+    /// <summary>Bildröhren-Look: feine Zeilen und abgedunkelte Ränder über dem ganzen Fenster.</summary>
+    public bool Crt { get; init; }
     public bool TitleUppercase { get; init; }
     public bool TitleLeft { get; init; }
     /// <summary>Kartenüberschriften in Akzentfarbe (sonst Textfarbe).</summary>
@@ -80,10 +86,24 @@ public static class BackgroundEffects
     public const string Meteors = "meteor";
     public const string Lightning = "lightning";
     public const string Aura = "aura";
+    public const string Aurora = "aurora";
+    public const string Petals = "petals";
+    public const string Ocean = "ocean";
+    public const string Warp = "warp";
+    public const string Rain = "rain";
+    public const string Terminal = "terminal";
     public const string None = "none";
 
+    /// <summary>Alle konkreten Effekte mit Anzeigenamen, in der Reihenfolge der Auswahl.</summary>
+    public static IReadOnlyList<(string Id, string Name)> All { get; } =
+    [
+        (Grid, "Raster"), (Meteors, "Meteorschauer"), (Lightning, "Blitze"), (Aura, "Ki-Aura"), (Aurora, "Polarlicht"),
+        (Petals, "Blütenregen"), (Ocean, "Tiefsee"), (Warp, "Sternenflug"), (Rain, "Neon-Regen"), (Terminal, "Datenstrom"),
+        (None, "Nur Farbe"),
+    ];
+
     /// <summary>Ist ein konkreter Effekt gewählt (nicht „Wie Design“ oder ein unbekannter Wert)?</summary>
-    public static bool IsExplicit(string? setting) => setting is Grid or Meteors or Lightning or Aura or None;
+    public static bool IsExplicit(string? setting) => setting != null && All.Any(e => e.Id == setting);
 
     /// <summary>Löst „Wie Design“ und unbekannte Werte zu einem konkreten Effekt auf.</summary>
     public static string Resolve(string? setting, ThemeDefinition theme) => IsExplicit(setting) ? setting! : theme.Effect;

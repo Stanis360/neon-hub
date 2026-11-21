@@ -43,6 +43,7 @@ public sealed class EffectLayer : FrameworkElement
         if (_running || _effect == null) return;
         _running = true;
         _last = _clock.Elapsed.TotalSeconds;
+        SkyEffect.PixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         _effect.Reset(_last, new Size(ActualWidth, ActualHeight));
         CompositionTarget.Rendering += OnFrame;
     }
@@ -87,6 +88,9 @@ public abstract class SkyEffect
 
     protected double R() => Rng.NextDouble();
 
+    /// <summary>Bildschirmskalierung für Text (setzt die Effektebene beim Start).</summary>
+    public static double PixelsPerDip { get; set; } = 1.0;
+
     /// <summary>Startzustand herstellen (beim Einschalten der Animation).</summary>
     public abstract void Reset(double t, Size size);
 
@@ -98,15 +102,19 @@ public abstract class SkyEffect
     /// <summary>Erzeugt den Effekt zur Kennung (siehe <see cref="Themes.BackgroundEffects"/>) oder null.</summary>
     public static SkyEffect? Create(string effect, Themes.ThemeDefinition theme)
     {
-        var color = Themes.ThemeManager.ColorOf(theme.EffectColor ?? theme.Accent);
+        static Color C(string hex) => Themes.ThemeManager.ColorOf(hex);
+        var color = C(theme.EffectColor ?? theme.Accent);
         return effect switch
         {
             Themes.BackgroundEffects.Meteors => new MeteorShower(color),
             Themes.BackgroundEffects.Lightning => new Thunderstorm(color),
-            Themes.BackgroundEffects.Aura => new KiAura(
-                Themes.ThemeManager.ColorOf(theme.Accent2),
-                Themes.ThemeManager.ColorOf(theme.Accent),
-                Themes.ThemeManager.ColorOf(theme.Secondary)),
+            Themes.BackgroundEffects.Aura => new KiAura(C(theme.Accent2), C(theme.Accent), C(theme.Secondary)),
+            Themes.BackgroundEffects.Aurora => new Aurora(C(theme.Accent), C(theme.Accent2), C(theme.Secondary)),
+            Themes.BackgroundEffects.Petals => new PetalFall(color),
+            Themes.BackgroundEffects.Ocean => new DeepSea(C(theme.Accent), C(theme.Accent2)),
+            Themes.BackgroundEffects.Warp => new Starfield(color),
+            Themes.BackgroundEffects.Rain => new NeonRain(C(theme.Accent), C(theme.Secondary)),
+            Themes.BackgroundEffects.Terminal => new DataStream(color),
             _ => null,
         };
     }
@@ -624,4 +632,548 @@ public sealed class KiAura : SkyEffect
                                  new Point(_burstAt.X + Math.Cos(ang) * r2, _burstAt.Y + Math.Sin(ang) * r2));
             }
     }
+}
+
+// ============================================================================================
+//  Polarlicht: wehende Lichtvorhänge
+// ============================================================================================
+
+/// <summary>
+/// Drei Nordlicht-Bänder, deren Unterkante sich als Welle bewegt. Jedes Band besteht aus schmalen Streifen,
+/// die nach oben ausblenden; ihre Helligkeit schwankt („Strahlen“). Dazu funkelnde Sterne.
+/// Für weniger Zeichenaufwand gibt es je Band acht vorbereitete Verlaufspinsel (Helligkeitsstufen).
+/// </summary>
+public sealed class Aurora : SkyEffect
+{
+    private const double Slice = 13; // Streifenbreite in Pixeln
+    private sealed record Band(Brush[] Levels, double Base, double H, double Amp, double K, double Speed, double Phase);
+    private sealed record Star(double X, double Y, double S, double P);
+
+    private readonly Band[] _bands;
+    private readonly List<Star> _stars = new();
+
+    public Aurora(Color a, Color b, Color c)
+    {
+        _bands =
+        [
+            new Band(Levels(a, 0.55), 0.55, 360, 70, 0.0042, 0.22, 0),
+            new Band(Levels(b, 0.42), 0.42, 280, 55, 0.0058, -0.17, 2),
+            new Band(Levels(c, 0.40), 0.31, 240, 50, 0.0050, 0.12, 4),
+        ];
+    }
+
+    /// <summary>Senkrechter Verlauf (unten hell, nach oben transparent) in 8 Helligkeitsstufen.</summary>
+    private static Brush[] Levels(Color c, double max)
+    {
+        var levels = new Brush[8];
+        for (var i = 0; i < levels.Length; i++)
+        {
+            var a = max * (i + 1) / levels.Length;
+            var brush = new LinearGradientBrush { StartPoint = new Point(0.5, 1), EndPoint = new Point(0.5, 0) };
+            brush.GradientStops.Add(new GradientStop(Fx.A(c, 0), 0));
+            brush.GradientStops.Add(new GradientStop(Fx.A(c, a), 0.05));
+            brush.GradientStops.Add(new GradientStop(Fx.A(c, a * 0.5), 0.25));
+            brush.GradientStops.Add(new GradientStop(Fx.A(c, 0), 1));
+            brush.Freeze();
+            levels[i] = brush;
+        }
+        return levels;
+    }
+
+    public override void Reset(double t, Size size)
+    {
+        _stars.Clear();
+        for (var i = 0; i < 100; i++) _stars.Add(new Star(R(), R(), R() * 1.3 + 0.4, R() * 6));
+    }
+
+    public override void Update(double t, double dt, Size size) { }
+
+    public override void Draw(DrawingContext dc, double t, Size size)
+    {
+        foreach (var s in _stars)
+            dc.DrawRectangle(Fx.Solid(Fx.White, 0.2 + 0.25 * Math.Sin(t * 1.3 + s.P)), null, new Rect(s.X * size.Width, s.Y * size.Height, s.S, s.S));
+
+        var sy = size.Height / 860;
+        var edge = Math.Min(220, size.Width / 5);
+        foreach (var b in _bands)
+            for (var x = 0.0; x < size.Width; x += Slice)
+            {
+                var y = size.Height * b.Base + sy * (b.Amp * Math.Sin(x * b.K + t * b.Speed + b.Phase) + b.Amp * 0.5 * Math.Sin(x * b.K * 2.3 - t * b.Speed * 1.7));
+                var ray = 0.3 + 0.7 * Math.Pow(0.5 + 0.5 * Math.Sin(x * 0.045 + t * 0.9 + b.Phase) * Math.Sin(x * 0.013 - t * 0.4), 2);
+                var fade = Math.Clamp(Math.Min(x, size.Width - x) / edge, 0, 1);
+                var level = (int)Math.Round(ray * fade * 7);
+                if (level <= 0) continue;
+                var h = b.H * sy * (0.65 + 0.35 * ray);
+                dc.DrawRectangle(b.Levels[level], null, new Rect(x, y - h, Slice + 0.5, h));
+            }
+    }
+}
+
+// ============================================================================================
+//  Blütenregen: taumelnde Blütenblätter mit Windböen
+// ============================================================================================
+
+/// <summary>
+/// Blütenblätter fallen, pendeln seitlich, drehen sich und kippen (Breite schwankt wie beim Umdrehen).
+/// Regelmäßig schiebt eine Windböe alle zur Seite. Im Hintergrund weiche, unscharfe Lichtflecken.
+/// Farbe aus dem Design – bei grauen Designs werden es weiße Flocken.
+/// </summary>
+public sealed class PetalFall : SkyEffect
+{
+    private sealed class Petal { public double X, Y, S, Vy, Vx, Rot, Vr, Flip, Vf, Sway; public int Color, Level; }
+    private sealed record Bokeh(double X, double Y, double R, double P);
+
+    private static readonly StreamGeometry Shape = CreateShape();
+    private readonly Brush[,] _fills = new Brush[4, 4]; // Farbe × Deckkraft
+    private readonly Color _glow;
+    private readonly List<Petal> _petals = new();
+    private readonly List<Bokeh> _bokeh = new();
+
+    public PetalFall(Color accent)
+    {
+        Color[] colors = [Fx.Mix(accent, Fx.White, 0.35), Fx.Mix(accent, Fx.White, 0.15), Fx.Mix(accent, Fx.White, 0.6), accent];
+        for (var c = 0; c < 4; c++)
+            for (var a = 0; a < 4; a++)
+            {
+                var alpha = 0.6 + a * 0.12;
+                var brush = new LinearGradientBrush { StartPoint = new Point(0.5, 0), EndPoint = new Point(0.5, 1) };
+                brush.GradientStops.Add(new GradientStop(Fx.A(Fx.Mix(colors[c], Fx.White, 0.7), alpha), 0));
+                brush.GradientStops.Add(new GradientStop(Fx.A(colors[c], alpha), 1));
+                brush.Freeze();
+                _fills[c, a] = brush;
+            }
+        _glow = colors[0];
+    }
+
+    /// <summary>Ein Blütenblatt (Einheitsgröße, Spitze unten, Kerbe oben).</summary>
+    private static StreamGeometry CreateShape()
+    {
+        var g = new StreamGeometry();
+        using (var ctx = g.Open())
+        {
+            ctx.BeginFigure(new Point(0, 1), true, true);
+            ctx.BezierTo(new Point(0.95, 0.3), new Point(0.8, -0.8), new Point(0.25, -1), true, true);
+            ctx.QuadraticBezierTo(new Point(0, -0.72), new Point(-0.25, -1), true, true);
+            ctx.BezierTo(new Point(-0.8, -0.8), new Point(-0.95, 0.3), new Point(0, 1), true, true);
+        }
+        g.Freeze();
+        return g;
+    }
+
+    private Petal NewPetal(Size size, bool anywhere) => new()
+    {
+        X = R() * (size.Width + 180) - 120, Y = anywhere ? R() * size.Height : -30 - R() * 120,
+        S = 7 + R() * 9, Vy = 32 + R() * 40, Vx = -12 + R() * 26, Rot = R() * 6.3, Vr = (R() - 0.5) * 2.4,
+        Flip = R() * 6.3, Vf = 1.4 + R() * 2.4, Sway = R() * 6.3, Color = Rng.Next(4), Level = Rng.Next(4),
+    };
+
+    public override void Reset(double t, Size size)
+    {
+        _petals.Clear();
+        _bokeh.Clear();
+        var count = (int)(60 * Math.Clamp(size.Width * size.Height / (1320.0 * 860), 0.6, 1.6));
+        for (var i = 0; i < count; i++) _petals.Add(NewPetal(size, true));
+        for (var i = 0; i < 14; i++) _bokeh.Add(new Bokeh(R(), R(), 40 + R() * 80, R() * 6));
+    }
+
+    public override void Update(double t, double dt, Size size)
+    {
+        var gust = Math.Pow(Math.Max(0, Math.Sin(t * 0.45)), 6) * 140; // regelmäßige Windböe
+        for (var i = 0; i < _petals.Count; i++)
+        {
+            var p = _petals[i];
+            p.Sway += dt * 1.3;
+            p.X += (p.Vx + Math.Sin(p.Sway) * 26 + gust) * dt;
+            p.Y += p.Vy * dt;
+            p.Rot += p.Vr * dt;
+            p.Flip += p.Vf * dt;
+            if (p.Y > size.Height + 30 || p.X > size.Width + 120) _petals[i] = NewPetal(size, false);
+        }
+    }
+
+    public override void Draw(DrawingContext dc, double t, Size size)
+    {
+        foreach (var b in _bokeh)
+        {
+            var a = 0.05 + 0.03 * Math.Sin(t * 0.6 + b.P);
+            dc.DrawEllipse(Fx.Glow((0, Fx.A(_glow, a)), (1, Fx.A(_glow, 0))), null, new Point(b.X * size.Width, b.Y * size.Height), b.R, b.R);
+        }
+        foreach (var p in _petals)
+        {
+            // Größe, Kippen (Breite) und Drehung als eine Matrix
+            var m = Matrix.Identity;
+            var flip = Math.Cos(p.Flip);
+            m.Scale(p.S, p.S * (Math.Abs(flip) < 0.05 ? 0.05 : flip)); // nie ganz flach (singuläre Matrix)
+            m.Rotate(p.Rot * 180 / Math.PI);
+            m.Translate(p.X, p.Y);
+            dc.PushTransform(new MatrixTransform(m));
+            dc.DrawGeometry(_fills[p.Color, p.Level], null, Shape);
+            dc.Pop();
+        }
+    }
+}
+
+// ============================================================================================
+//  Tiefsee: Lichtstrahlen, Wasseroberfläche, Plankton und Luftblasen
+// ============================================================================================
+
+/// <summary>
+/// Schräg einfallende Lichtstrahlen, eine flimmernde Wasseroberfläche oben, leuchtendes Plankton
+/// (pulsiert im Wechsel) und aufsteigende Luftblasen mit Glanzpunkt.
+/// </summary>
+public sealed class DeepSea : SkyEffect
+{
+    private sealed class Bubble { public double X, Y, R, V, W; }
+    private sealed class Plankton { public double X, Y, S, P, Vx, Vy; public bool Second; }
+    private sealed record Ray(double X, double W, double P);
+
+    private readonly Color _a, _b;
+    private readonly Pen _bubblePen;
+    private readonly List<Bubble> _bubbles = new();
+    private readonly List<Plankton> _plankton = new();
+    private readonly List<Ray> _rays = new();
+
+    public DeepSea(Color a, Color b)
+    {
+        (_a, _b) = (a, b);
+        _bubblePen = new Pen(Fx.Solid(Fx.Mix(a, Fx.White, 0.7), 0.35), 1);
+        _bubblePen.Freeze();
+    }
+
+    private Bubble NewBubble(Size size, bool anywhere) => new()
+    {
+        X = R() * size.Width, Y = anywhere ? R() * (size.Height + 40) : size.Height + 20 + R() * 60, R = 1.5 + R() * 5, V = 30 + R() * 60, W = R() * 6,
+    };
+
+    public override void Reset(double t, Size size)
+    {
+        _bubbles.Clear();
+        _plankton.Clear();
+        _rays.Clear();
+        for (var i = 0; i < 45; i++) _bubbles.Add(NewBubble(size, true));
+        for (var i = 0; i < 80; i++)
+            _plankton.Add(new Plankton { X = R() * size.Width, Y = R() * size.Height, S = 1 + R() * 2.2, P = R() * 6, Vx = (R() - 0.5) * 10, Vy = (R() - 0.5) * 8, Second = R() >= 0.6 });
+        var rays = Math.Max(4, (int)(size.Width / 190));
+        for (var i = 0; i < rays; i++) _rays.Add(new Ray(100 + i * 200 + R() * 80, 50 + R() * 120, R() * 6));
+    }
+
+    public override void Update(double t, double dt, Size size)
+    {
+        for (var i = 0; i < _bubbles.Count; i++)
+        {
+            _bubbles[i].Y -= _bubbles[i].V * dt;
+            if (_bubbles[i].Y < -10) _bubbles[i] = NewBubble(size, false);
+        }
+        foreach (var p in _plankton)
+        {
+            p.X = (p.X + p.Vx * dt + size.Width) % size.Width;
+            p.Y = (p.Y + p.Vy * dt + size.Height) % size.Height;
+        }
+    }
+
+    public override void Draw(DrawingContext dc, double t, Size size)
+    {
+        // Lichtstrahlen: oben hell, nach unten auslaufend (Verlauf relativ zur Fläche)
+        foreach (var r in _rays)
+        {
+            var a = 0.05 + 0.045 * Math.Sin(t * 0.5 + r.P);
+            var x = r.X + Math.Sin(t * 0.2 + r.P) * 40;
+            var brush = new LinearGradientBrush { StartPoint = new Point(0.5, 0), EndPoint = new Point(0.5, 1) };
+            brush.GradientStops.Add(new GradientStop(Fx.A(_a, a * 1.7), 0));
+            brush.GradientStops.Add(new GradientStop(Fx.A(_a, 0), 1));
+            brush.Freeze();
+            var g = new StreamGeometry();
+            using (var ctx = g.Open())
+            {
+                ctx.BeginFigure(new Point(x, 0), true, true);
+                ctx.LineTo(new Point(x + r.W, 0), false, false);
+                ctx.LineTo(new Point(x + r.W * 2.2 - 280, size.Height), false, false);
+                ctx.LineTo(new Point(x - 280, size.Height), false, false);
+            }
+            g.Freeze();
+            dc.DrawGeometry(brush, null, g);
+        }
+
+        // Flimmernde Wasseroberfläche
+        for (var k = 0; k < 3; k++)
+        {
+            var pts = new List<Point>();
+            for (var x = 0.0; x <= size.Width + 10; x += 12)
+                pts.Add(new Point(x, 16 + k * 15 + 6 * Math.Sin(x * 0.02 + t * 1.4 + k) + 4 * Math.Sin(x * 0.047 - t * 1.1)));
+            var g = new StreamGeometry();
+            using (var ctx = g.Open())
+            {
+                ctx.BeginFigure(pts[0], false, false);
+                ctx.PolyLineTo(pts.Skip(1).ToList(), true, true);
+            }
+            g.Freeze();
+            dc.DrawGeometry(null, Fx.RoundPen(Fx.Solid(_a, 0.12 - k * 0.03), 3), g);
+        }
+
+        // Plankton: pulsiert im Wechsel, hell mit Lichthof
+        foreach (var p in _plankton)
+        {
+            var a = Math.Pow(Math.Max(0, Math.Sin(t * 1.2 + p.P)), 3);
+            var c = p.Second ? _b : _a;
+            var at = new Point(p.X, p.Y);
+            if (a > 0.15) dc.DrawEllipse(Fx.Solid(c, 0.18 * a), null, at, p.S * 4, p.S * 4);
+            dc.DrawEllipse(Fx.Solid(c, 0.12 + 0.8 * a), null, at, p.S, p.S);
+        }
+
+        // Luftblasen mit Glanzpunkt
+        foreach (var b in _bubbles)
+        {
+            var x = b.X + Math.Sin(t * 2 + b.W) * 4;
+            dc.DrawEllipse(null, _bubblePen, new Point(x, b.Y), b.R, b.R);
+            dc.DrawEllipse(Fx.Solid(Fx.White, 0.55), null, new Point(x - b.R * 0.35, b.Y - b.R * 0.35), b.R * 0.3, b.R * 0.3);
+        }
+    }
+}
+
+// ============================================================================================
+//  Sternenflug: 3D-Sternenfeld mit Warp-Sprüngen
+// ============================================================================================
+
+/// <summary>
+/// Sterne kommen aus einem Fluchtpunkt auf den Betrachter zu und ziehen je nach Tempo Lichtspuren.
+/// Alle 7 Sekunden beschleunigt das Feld zu einem Warp-Sprung und bremst wieder ab.
+/// Stifte (Farbe × Deckkraft × Breite) werden zwischengespeichert.
+/// </summary>
+public sealed class Starfield : SkyEffect
+{
+    private sealed class Star { public double X, Y, Z; public int C; }
+
+    private readonly Color[] _colors;
+    private readonly Color _nebula;
+    private readonly Pen?[,,] _pens = new Pen?[3, 8, 6];
+    private readonly List<Star> _stars = new();
+    private double _speed = 1;
+
+    public Starfield(Color accent)
+    {
+        _colors = [Fx.White, Fx.Mix(accent, Fx.White, 0.45), Fx.Rgb(255, 214, 170)];
+        _nebula = accent;
+    }
+
+    private Star NewStar(Size size, bool anywhere) => new()
+    {
+        X = (R() - 0.5) * 2 * size.Width, Y = (R() - 0.5) * 2 * size.Height, Z = anywhere ? R() * 1000 + 1 : 1000,
+        C = R() < 0.12 ? 2 : R() < 0.5 ? 1 : 0,
+    };
+
+    public override void Reset(double t, Size size)
+    {
+        _stars.Clear();
+        for (var i = 0; i < 340; i++) _stars.Add(NewStar(size, true));
+    }
+
+    /// <summary>Tempo im 7-Sekunden-Takt: Reisegeschwindigkeit → Beschleunigen → Warp → Abbremsen.</summary>
+    private static double Speed(double t)
+    {
+        var ph = t % 7 / 7;
+        return ph < 0.5 ? 1 : ph < 0.65 ? 1 + 7 * Math.Pow((ph - 0.5) / 0.15, 2) : ph < 0.82 ? 8 : 8 - 7 * ((ph - 0.82) / 0.18);
+    }
+
+    public override void Update(double t, double dt, Size size)
+    {
+        _speed = Speed(t);
+        for (var i = 0; i < _stars.Count; i++)
+        {
+            _stars[i].Z -= _speed * 150 * dt;
+            if (_stars[i].Z < 1) _stars[i] = NewStar(size, false);
+        }
+    }
+
+    public override void Draw(DrawingContext dc, double t, Size size)
+    {
+        var cx = size.Width * 0.576;
+        var cy = size.Height * 0.44;
+        var r = 560 * Math.Max(size.Width / 1320, size.Height / 860);
+        dc.DrawEllipse(Fx.Glow((0, Fx.A(_nebula, 0.08 + 0.08 * _speed / 8)), (1, Fx.A(_nebula, 0))), null, new Point(cx, cy), r, r);
+
+        const double k = 320;
+        for (var i = 0; i < _stars.Count; i++)
+        {
+            var s = _stars[i];
+            var x = cx + s.X / s.Z * k;
+            var y = cy + s.Y / s.Z * k;
+            if (x < -60 || x > size.Width + 60 || y < -60 || y > size.Height + 60)
+            {
+                _stars[i] = NewStar(size, false);
+                continue;
+            }
+            var tz = s.Z + 6 + _speed * 22; // Lichtspur: Position etwas weiter „hinten“
+            var alpha = (int)Math.Round(Math.Clamp((1000 - s.Z) / 600, 0, 1) * 7);
+            if (alpha == 0) continue;
+            var width = (int)Math.Round(Math.Clamp(3 * (1 - s.Z / 1000), 0.7, 3) / 0.5) - 1; // 0…5
+            dc.DrawLine(PenFor(s.C, alpha, Math.Clamp(width, 0, 5)), new Point(cx + s.X / tz * k, cy + s.Y / tz * k), new Point(x, y));
+        }
+    }
+
+    private Pen PenFor(int color, int alpha, int width) =>
+        _pens[color, alpha, width] ??= Fx.RoundPen(Fx.Solid(_colors[color], alpha / 7.0), 0.5 + width * 0.5);
+}
+
+// ============================================================================================
+//  Neon-Regen: Regen vor unscharfen Stadtlichtern
+// ============================================================================================
+
+/// <summary>
+/// Schräger Regen in mehreren Helligkeiten vor großen, unscharfen Lichtpunkten (einige flackern
+/// wie defekte Leuchtreklame). Unten spritzen Tropfen als kleine Ringe auf.
+/// </summary>
+public sealed class NeonRain : SkyEffect
+{
+    private const double Slant = 0.18;
+    private sealed class Drop { public double X, Y, L, V; public int A; }
+    private sealed record Light(double X, double Y, double R, Color C, double P, bool Flicker);
+    private sealed record Splash(double X, double Y, double T0);
+
+    private readonly Color[] _colors;
+    private readonly Pen[] _dropPens = new Pen[6];
+    private readonly Pen[] _splashPens = new Pen[8];
+    private readonly List<Drop> _drops = new();
+    private readonly List<Light> _lights = new();
+    private readonly List<Splash> _splashes = new();
+
+    public NeonRain(Color a, Color b)
+    {
+        _colors = [a, b, Fx.Rgb(255, 170, 60), Fx.Mix(a, b, 0.5)];
+        var rain = Fx.Mix(a, Fx.White, 0.75);
+        for (var i = 0; i < _dropPens.Length; i++) _dropPens[i] = Fx.RoundPen(Fx.Solid(rain, 0.10 + i * 0.055), 1.2);
+        for (var i = 0; i < _splashPens.Length; i++)
+        {
+            _splashPens[i] = new Pen(Fx.Solid(a, 0.5 * (1 - i / 8.0)), 1);
+            _splashPens[i].Freeze();
+        }
+    }
+
+    private Drop NewDrop(Size size, bool anywhere) => new()
+    {
+        X = R() * (size.Width + 180), Y = anywhere ? R() * size.Height : -R() * 200, L = 14 + R() * 28, V = 900 + R() * 600, A = Rng.Next(_dropPens.Length),
+    };
+
+    public override void Reset(double t, Size size)
+    {
+        _drops.Clear();
+        _lights.Clear();
+        _splashes.Clear();
+        var count = (int)(240 * Math.Clamp(size.Width * size.Height / (1320.0 * 860), 0.6, 1.6));
+        for (var i = 0; i < count; i++) _drops.Add(NewDrop(size, true));
+        for (var i = 0; i < 30; i++)
+            _lights.Add(new Light(R(), 0.42 + R() * 0.6, 18 + R() * 55, _colors[Rng.Next(_colors.Length)], R() * 6, R() < 0.15));
+    }
+
+    public override void Update(double t, double dt, Size size)
+    {
+        for (var i = 0; i < _drops.Count; i++)
+        {
+            var d = _drops[i];
+            d.Y += d.V * dt;
+            d.X -= d.V * dt * Slant;
+            if (d.Y > size.Height)
+            {
+                if (R() < 0.5) _splashes.Add(new Splash(d.X, size.Height - 14 + R() * 12, t));
+                _drops[i] = NewDrop(size, false);
+            }
+        }
+        _splashes.RemoveAll(s => t - s.T0 > 0.35);
+    }
+
+    public override void Draw(DrawingContext dc, double t, Size size)
+    {
+        foreach (var l in _lights)
+        {
+            var a = 0.10 + 0.05 * Math.Sin(t * 0.7 + l.P);
+            if (l.Flicker && Math.Sin(t * 23 + l.P) > 0.6) a *= 0.3;
+            dc.DrawEllipse(Fx.Glow((0, Fx.A(l.C, a)), (0.7, Fx.A(l.C, a * 0.6)), (1, Fx.A(l.C, 0))), null,
+                new Point(l.X * size.Width, l.Y * size.Height), l.R, l.R);
+        }
+        foreach (var d in _drops)
+            dc.DrawLine(_dropPens[d.A], new Point(d.X, d.Y), new Point(d.X + d.L * Slant, d.Y - d.L));
+        foreach (var s in _splashes)
+        {
+            var a = (t - s.T0) / 0.35;
+            dc.DrawEllipse(null, _splashPens[Math.Clamp((int)(a * 8), 0, 7)], new Point(s.X, s.Y), 2 + a * 12, 1 + a * 3);
+        }
+    }
+}
+
+// ============================================================================================
+//  Datenstrom: fallende Hex-Spalten wie auf einem alten Terminal
+// ============================================================================================
+
+/// <summary>
+/// Spalten aus Hex-Zeichen laufen langsam herunter (Kopf hell, Rest blasst aus, Zeichen wechseln),
+/// dazu ein Lichtbalken, der wie beim Bildaufbau einer Röhre von oben nach unten wandert.
+/// Die Zeichen werden einmalig je Helligkeitsstufe als <see cref="FormattedText"/> vorbereitet.
+/// </summary>
+public sealed class DataStream : SkyEffect
+{
+    private const string Hex = "0123456789ABCDEF";
+    private const double ColumnWidth = 24, LineHeight = 20;
+    private sealed class Column { public double X, Y, V; public int Len, Seed; public bool On; }
+
+    private readonly Color _color;
+    private readonly FormattedText?[,] _glyphs = new FormattedText?[16, 9]; // Zeichen × Stufe (8 = Kopf)
+    private readonly Typeface _typeface;
+    private readonly List<Column> _columns = new();
+
+    public DataStream(Color color)
+    {
+        _color = color;
+        _typeface = new Typeface(new FontFamily(new Uri("pack://application:,,,/"), "./Fonts/#JetBrains Mono, Cascadia Mono, Consolas"),
+            FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    }
+
+    public override void Reset(double t, Size size)
+    {
+        _columns.Clear();
+        for (var x = 4.0; x < size.Width; x += ColumnWidth)
+            _columns.Add(new Column { X = x, Y = -R() * size.Height, V = 40 + R() * 90, Len = 8 + Rng.Next(18), Seed = Rng.Next(1000), On = R() < 0.55 });
+    }
+
+    public override void Update(double t, double dt, Size size)
+    {
+        foreach (var c in _columns)
+        {
+            c.Y += c.V * dt;
+            if (c.Y - c.Len * LineHeight > size.Height)
+            {
+                c.Y = -R() * 300;
+                c.On = R() < 0.55;
+                c.Len = 8 + Rng.Next(18);
+            }
+        }
+    }
+
+    public override void Draw(DrawingContext dc, double t, Size size)
+    {
+        var tick = (int)(t * 5);
+        foreach (var c in _columns)
+        {
+            if (!c.On) continue;
+            for (var j = 0; j < c.Len; j++)
+            {
+                var y = c.Y - j * LineHeight;
+                if (y < -LineHeight || y > size.Height) continue;
+                var level = j == 0 ? 8 : (int)Math.Round(7 * (1 - (double)j / c.Len));
+                if (level <= 0) continue;
+                dc.DrawText(Glyph((tick + c.Seed + j * 7) % 16, level), new Point(c.X, y - 15));
+            }
+        }
+
+        // Lichtbalken des Bildaufbaus
+        var by = t * 140 % (size.Height + 240) - 120;
+        var band = new LinearGradientBrush { StartPoint = new Point(0.5, 0), EndPoint = new Point(0.5, 1) };
+        band.GradientStops.Add(new GradientStop(Fx.A(_color, 0), 0));
+        band.GradientStops.Add(new GradientStop(Fx.A(_color, 0.06), 0.5));
+        band.GradientStops.Add(new GradientStop(Fx.A(_color, 0), 1));
+        band.Freeze();
+        dc.DrawRectangle(band, null, new Rect(0, by, size.Width, 120));
+    }
+
+    private FormattedText Glyph(int ch, int level) => _glyphs[ch, level] ??= new FormattedText(
+        Hex[ch].ToString(), System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight, _typeface, 15,
+        level == 8 ? Fx.Solid(Fx.Mix(_color, Fx.White, 0.6), 0.7) : Fx.Solid(_color, 0.30 * level / 7.0), PixelsPerDip);
 }

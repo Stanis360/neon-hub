@@ -143,6 +143,9 @@
                     </TabItem>
                 </TabControl>
             </DockPanel>
+
+            <!-- Bildröhren-Look (nur im Terminal-Design sichtbar) liegt über allem -->
+            <controls:CrtOverlay />
         </Grid>
     </Border>
 </Window>

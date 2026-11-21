@@ -16,11 +16,13 @@
 * Lizenz: MIT – https://github.com/Shane32/QRCoder
 * Bezug: NuGet-Paket `QRCoder` 1.8.1
 
-## Schriften Rajdhani, Orbitron und Bangers
-* Zweck: Schriften der Designs „Carbon & Orange“, „Meteor“, „Synthwave“ und „Ki-Aura“ (in die EXE eingebettet)
+## Schriften Rajdhani, Orbitron, Bangers, Exo 2, Varela Round, JetBrains Mono und VT323
+* Zweck: Schriften der Designs (in die EXE eingebettet, unverändert)
 * Lizenz: SIL Open Font License 1.1 – Lizenztexte in `src/NeonMonitor/Fonts/OFL-*.txt`
 * Rajdhani: Copyright (c) 2014 Indian Type Foundry · Orbitron: Copyright 2018 The Orbitron Project Authors ·
-  Bangers: Copyright 2010 The Bangers Project Authors
+  Bangers: Copyright 2010 The Bangers Project Authors · Exo 2: Copyright 2013 The Exo 2 Project Authors ·
+  Varela Round: Copyright 2023 The Varela Round Project Authors (Reserved Font Names „Varela“, „Varela Round“) ·
+  JetBrains Mono: Copyright 2020 The JetBrains Mono Project Authors · VT323: Copyright 2011 The VT323 Project Authors
 * Bezug: github.com/google/fonts (Stand 06bfe0d6)
 
 ## PawnIO

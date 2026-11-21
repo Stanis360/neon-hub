@@ -90,6 +90,8 @@ public static class ThemeManager
         d["TitleUppercase"] = t.TitleUppercase;
         d["TitleAlignment"] = t.TitleLeft ? HorizontalAlignment.Left : HorizontalAlignment.Center;
         d["TitleBrush"] = t.TitleAccent ? d["AccentBrush"] : d["TextBrush"];
+        d["TitlePrefix"] = t.TitlePrefix;
+        d["BigValueSize"] = 38 * t.BigScale;
         return d;
     }
 

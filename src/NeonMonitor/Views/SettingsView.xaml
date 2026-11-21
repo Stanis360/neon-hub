@@ -86,15 +86,19 @@
                         </ItemsControl>
                         <!-- Hintergrund-Effekt: mit jedem Design kombinierbar, wirkt sofort -->
                         <TextBlock Text="Hintergrund" Style="{StaticResource SectionLabel}" FontSize="13" Margin="0,8,0,6" />
-                        <WrapPanel>
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Effect" Content="Wie Design" IsChecked="{Binding EffectDesign}"
-                                         ToolTip="Der Hintergrund, der zum Design gehört (z. B. Meteore bei „Meteor“)" />
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Effect" Content="Raster" IsChecked="{Binding EffectGrid}" />
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Effect" Content="Meteorschauer" IsChecked="{Binding EffectMeteors}" />
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Effect" Content="Blitze" IsChecked="{Binding EffectLightning}" />
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Effect" Content="Ki-Aura" IsChecked="{Binding EffectAura}" />
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Effect" Content="Nur Farbe" IsChecked="{Binding EffectNone}" />
-                        </WrapPanel>
+                        <ItemsControl ItemsSource="{Binding Effects}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:EffectChoiceViewModel}">
+                                    <RadioButton Style="{StaticResource Chip}" GroupName="BackgroundEffect" Content="{Binding Name}"
+                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                         <TextBlock Style="{StaticResource SmallText}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,10"
                                    Text="Wirkt sofort und passt sich der Farbe des Designs an. Ist das Fenster minimiert, pausiert die Animation; ganz aus über den Schalter „Animation“ unten rechts." />
                         <DockPanel Visibility="{Binding ThemeChangePending, Converter={StaticResource BoolToVisibility}}" Margin="0,4,0,0">

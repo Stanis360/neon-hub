@@ -134,7 +134,8 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel VerticalAlignment="Top">
+                            <!-- Feste Breite: lange Spielnamen dürfen die Werte rechts nicht zusammendrücken -->
+                            <StackPanel VerticalAlignment="Top" Width="230">
                                 <Grid>
                                     <controls:RingGauge Style="{StaticResource Ring}"
                                                         Value="{Binding GpuLoad.BarValue}" Maximum="100"
@@ -154,7 +155,8 @@
                                     </StackPanel>
                                 </Grid>
                                 <TextBlock Text="{Binding Fps.Summary}" FontFamily="{StaticResource DisplayFont}" FontSize="16"
-                                           Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" Margin="0,6,0,0" />
+                                           Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" Margin="0,6,0,0"
+                                           TextAlignment="Center" TextWrapping="Wrap" ToolTip="{Binding Fps.Summary}" />
                                 <TextBlock Text="{Binding GpuFanText}" Style="{StaticResource SmallText}"
                                            HorizontalAlignment="Center" Margin="0,4,0,0" />
                             </StackPanel>

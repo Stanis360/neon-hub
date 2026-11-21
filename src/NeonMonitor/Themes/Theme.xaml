@@ -24,6 +24,7 @@
         <Setter Property="HorizontalAlignment" Value="{StaticResource TitleAlignment}" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         <Setter Property="infra:TextCase.Upper" Value="{StaticResource TitleUppercase}" />
+        <Setter Property="infra:TextCase.Prefix" Value="{StaticResource TitlePrefix}" />
     </Style>
 
     <Style x:Key="SectionLabel" TargetType="TextBlock">
@@ -40,7 +41,7 @@
 
     <Style x:Key="BigValue" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource BigFont}" />
-        <Setter Property="FontSize" Value="38" />
+        <Setter Property="FontSize" Value="{StaticResource BigValueSize}" />
         <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
     </Style>
 
