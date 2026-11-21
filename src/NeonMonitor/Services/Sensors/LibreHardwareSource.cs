@@ -25,6 +25,10 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
     private List<IHardware> _dimms = new();
     private List<IHardware> _storage = new();
     private int _storageTick;
+    private string _baseStatus = "";
+    private int _badBoardReads;
+    private DateTime _lastBoardReconnect = DateTime.MinValue;
+    private bool _boardInvalidLogged;
 
     /// <summary>Lüftersteuerung (Mainboard-Lüfter).</summary>
     public FanControlEngine FanControl { get; } = new();
@@ -76,6 +80,7 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
         if (_storage.Count > 0) parts.Add($"{_storage.Count} Laufwerk(e)");
         Status = parts.Count > 0 ? "OK (" + string.Join(", ", parts) + ")" : "keine Hardware erkannt";
         if (safeMode) Status += " · sicherer Modus";
+        _baseStatus = Status;
 
         Log.Info($"LHM: CPU={_cpu?.Name ?? "-"}, GPU={_gpu?.Name ?? "-"}, RAM={(_memory is null ? "-" : "ok")}, Board={_board?.Name ?? "-"}");
     }
@@ -178,12 +183,54 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
         FillStorage(s);
     }
 
+    /// <summary>
+    /// Erkennt, ob der Mainboard-Chip (Super-I/O) gerade nur „FF“ liefert: alle Spannungen auf dem Höchstwert
+    /// (z. B. 2,04 V / 4,08 V), alle Lüfterregler auf 100 % und alle Lüfter auf 0 U/min. Das passiert, wenn
+    /// die Chip-Adresse beim Start falsch erkannt wurde oder ein anderes Programm gleichzeitig zugreift.
+    /// Echte Werte sehen nie so aus.
+    /// </summary>
+    internal static bool LooksLikeInvalidSuperIo(IReadOnlyList<(SensorType Type, float? Value)> sensors)
+    {
+        var volts = sensors.Where(x => x.Type == SensorType.Voltage && x.Value.HasValue).Select(x => x.Value!.Value).ToList();
+        var controls = sensors.Where(x => x.Type == SensorType.Control && x.Value.HasValue).Select(x => x.Value!.Value).ToList();
+        var fans = sensors.Where(x => x.Type == SensorType.Fan).ToList();
+        if (volts.Count < 3 || controls.Count == 0 || fans.Count == 0) return false;
+
+        // Höchstwert eines 8-Bit-Registers: 255 × Schrittweite (8 mV bzw. 16 mV bei geteilten Eingängen)
+        static bool Saturated(float v) => Math.Abs(v - 2.04f) < 0.005f || Math.Abs(v - 4.08f) < 0.005f;
+        return volts.Count(Saturated) >= volts.Count * 0.8
+               && controls.All(c => c >= 99.9f)
+               && fans.All(f => f.Value is null or 0);
+    }
+
     /// <summary>Mainboard: Lüfter, Lüftersteuerung, Temperaturen.</summary>
     private void FillBoard(HardwareSnapshot s)
     {
         if (_board is null) return;
         UpdateRecursive(_board);
         var sensors = AllSensors(_board).ToList();
+
+        if (LooksLikeInvalidSuperIo(sensors.Select(x => (x.SensorType, x.Value)).ToList()))
+        {
+            // Keine Fantasiewerte anzeigen und die Lüftersteuerung nicht blind schreiben lassen –
+            // die Lüfter regelt in dieser Zeit das BIOS. Nach 5 Fehlmessungen den Chip neu erkennen.
+            _badBoardReads++;
+            Status = _baseStatus + " · Mainboard-Sensoren: Lesefehler";
+            if (!_boardInvalidLogged)
+            {
+                Log.Warn("Mainboard-Chip liefert ungültige Werte (alle Register FF) – Lüfter ausgeblendet, Lüftersteuerung pausiert.");
+                _boardInvalidLogged = true;
+            }
+            if (_badBoardReads >= 5 && DateTime.UtcNow - _lastBoardReconnect > TimeSpan.FromMinutes(1)) ReconnectBoard();
+            return;
+        }
+        if (_badBoardReads > 0)
+        {
+            Log.Info($"Mainboard-Sensoren liefern wieder gültige Werte (nach {_badBoardReads} Fehlmessungen).");
+            _badBoardReads = 0;
+            _boardInvalidLogged = false;
+            Status = _baseStatus;
+        }
 
         foreach (var f in sensors.Where(x => x.SensorType == SensorType.Fan && x.Value is not null))
             s.Fans.Add(new FanReading(f.Identifier.ToString(), f.Name, f.Value!.Value));
@@ -210,6 +257,27 @@ public sealed class LibreHardwareSource(bool safeMode, AppSettings settings) : I
         {
             var id = c.Identifier.ToString();
             s.FanControls.Add(new FanControlReading(id, c.Name, c.Value, FanControl.IsControlled(id)));
+        }
+    }
+
+    /// <summary>Mainboard-Chip neu erkennen (Adresse neu einlesen) – wie ein Neustart nur für diesen Teil.</summary>
+    private void ReconnectBoard()
+    {
+        if (_computer is null) return;
+        _lastBoardReconnect = DateTime.UtcNow;
+        Log.Info("Mainboard-Sensoren werden neu verbunden …");
+        try
+        {
+            FanControl.ForgetApplied(); // die neuen Regler-Objekte starten auf BIOS-Steuerung
+            _computer.IsMotherboardEnabled = false;
+            _computer.IsMotherboardEnabled = true;
+            _board = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Motherboard);
+            if (_board is not null) UpdateRecursive(_board);
+            Log.Info($"Mainboard neu verbunden: {_board?.Name ?? "nicht gefunden"}");
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Mainboard neu verbinden: {ex.Message}");
         }
     }
 

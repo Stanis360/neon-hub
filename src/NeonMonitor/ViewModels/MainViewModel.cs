@@ -238,6 +238,8 @@ public sealed class MainViewModel : ObservableObject
 
     private void Apply(HardwareSnapshot s)
     {
+        if (!IsInitializing)
+            SensorStatus = string.Join("   ·   ", _monitor.Sources.Select(x => $"{x.Name}: {(x.IsAvailable ? x.Status : "nicht verfügbar")}"));
         if (s.CpuName is not null) CpuName = s.CpuName;
         if (s.GpuName is not null) GpuName = s.GpuName;
 

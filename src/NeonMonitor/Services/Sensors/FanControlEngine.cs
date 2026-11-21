@@ -91,6 +91,9 @@ public sealed class FanControlEngine
 
     public bool IsControlled(string id) => _applied.ContainsKey(id);
 
+    /// <summary>Gesetzte Werte vergessen (nach dem Neuverbinden des Mainboards gibt es neue Regler-Objekte).</summary>
+    public void ForgetApplied() => _applied.Clear();
+
     /// <summary>Zielleistung in % inkl. Sicherheitsregeln.</summary>
     public static double Target(FanCurveConfig c, HardwareSnapshot s)
     {
