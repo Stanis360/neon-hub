@@ -72,7 +72,7 @@
                             <DataTemplate DataType="{x:Type vm:MonitorChoice}">
                                 <StackPanel Margin="0,0,24,8">
                                     <!-- Skizze eines Bildschirms mit vier Eckknöpfen -->
-                                    <Border Width="200" Height="118" CornerRadius="6" Background="#1C2124"
+                                    <Border Width="200" Height="118" CornerRadius="6" Background="{StaticResource InnerBrush}"
                                             BorderBrush="{StaticResource TrackBrush}" BorderThickness="2">
                                         <Grid>
                                             <Button Style="{StaticResource CornerButton}" Content="◤" ToolTip="oben links"

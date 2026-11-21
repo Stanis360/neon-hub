@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using NeonMonitor.Themes;
 
 namespace NeonMonitor.Controls;
 
@@ -31,8 +32,9 @@ public sealed class AnimatedBackground : Grid
         set => SetValue(IsAnimatedProperty, value);
     }
 
-    // Gleiche Akzentfarbe wie im Theme (Mintgrün), hier nur sehr transparent eingesetzt
-    private static readonly Color Accent = Color.FromRgb(0x3D, 0xDC, 0x97);
+    // Farben aus dem gewählten Design, hier nur sehr transparent eingesetzt
+    private static Color Accent => ThemeManager.ColorOf(ThemeManager.Current.Glow1);
+    private static Color Accent2 => ThemeManager.ColorOf(ThemeManager.Current.Glow2);
 
     private readonly TranslateTransform _gridShift = new();
     private readonly Canvas _orbLayer = new() { IsHitTestVisible = false };
@@ -46,7 +48,8 @@ public sealed class AnimatedBackground : Grid
         IsHitTestVisible = false;
         ClipToBounds = true;
         // Dunkles Anthrazit statt Schwarz-Grün
-        Background = new LinearGradientBrush(Color.FromRgb(0x14, 0x17, 0x19), Color.FromRgb(0x1C, 0x20, 0x23), 90);
+        Background = new LinearGradientBrush(ThemeManager.ColorOf(ThemeManager.Current.BackgroundTop),
+                                             ThemeManager.ColorOf(ThemeManager.Current.BackgroundBottom), 90);
 
         Children.Add(CreateGridLayer());
         Children.Add(_orbLayer);
@@ -69,7 +72,7 @@ public sealed class AnimatedBackground : Grid
         lines.Children.Add(new LineGeometry(new Point(0, 0), new Point(0, Cell)));
 
         var brush = new DrawingBrush(new GeometryDrawing(null,
-            new Pen(new SolidColorBrush(Color.FromArgb(0x0C, 0xFF, 0xFF, 0xFF)), 1), lines))
+            new Pen(new SolidColorBrush(ThemeManager.ColorOf(ThemeManager.Current.GridLine)), 1), lines))
         {
             TileMode = TileMode.Tile,
             Viewport = new Rect(0, 0, Cell, Cell),
@@ -97,8 +100,10 @@ public sealed class AnimatedBackground : Grid
             (600, 0.85, 0.80, new Vector(-220, -140), 60),
         ];
 
+        var index = 0;
         foreach (var (size, x, y, range, seconds) in defs)
         {
+            var glow = index++ == 0 ? Accent : Accent2;
             var move = new TranslateTransform();
             var orb = new Ellipse
             {
@@ -106,8 +111,8 @@ public sealed class AnimatedBackground : Grid
                 Height = size,
                 RenderTransform = move,
                 Fill = new RadialGradientBrush(
-                    Color.FromArgb(0x12, Accent.R, Accent.G, Accent.B),
-                    Color.FromArgb(0x00, Accent.R, Accent.G, Accent.B)),
+                    Color.FromArgb(0x14, glow.R, glow.G, glow.B),
+                    Color.FromArgb(0x00, glow.R, glow.G, glow.B)),
                 Tag = new Point(x, y), // relative Startposition
             };
             _orbLayer.Children.Add(orb);

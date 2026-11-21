@@ -6,7 +6,7 @@ später FPS (per ETW, ohne Injection), Overlay, Aufzeichnung als CSV und Sitzung
 Gebaut mit **C# / .NET 10 / WPF**. Sensoren über **LibreHardwareMonitor**, ergänzt durch
 Windows-Leistungsindikatoren als Fallback.
 
-> Stand: **Version 1.4** – Handy-Deck (Stream-Deck-Ersatz) neu; Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich, Kühlung mit
+> Stand: **Version 1.5** – 5 umschaltbare Designs neu; Live-Anzeige, FPS/Frametimes, Overlay, Aufzeichnung, Sitzungsvergleich, Kühlung mit
 > Lüftersteuerung, Engpass-Analyse, Latenz, Ruckler-Analyse, Ping/Paketverlust, Handy-Ansicht, Bericht als Bild,
 > Langzeitverlauf, Infobereich, Autostart, automatische Updates.
 
@@ -192,6 +192,9 @@ Diagramm inkl. Hardware, z. B. zum Einfügen in Discord.
 
 ## 11. Komfort
 
+* **Designs** (Einstellungen → Design, wirksam nach Neustart per Knopf): *Graphit & Mint*, *Midnight Blue*,
+  *Carbon & Orange*, *Rubin* (Adrenalin-Stil) und *Synthwave*. Gilt auch für Overlay, Hintergrund-Animation und
+  die Handy-Seite. Neue Designs: einen Eintrag in `src/NeonMonitor/Themes/ThemeCatalog.cs` ergänzen.
 * **Infobereich-Symbol** (unten rechts): Temperaturen und FPS beim Darüberfahren, Doppelklick öffnet,
   Rechtsklick: Overlay, Aufnahme, Benchmark, Beenden. Schließen (✕) versteckt das Fenster nur (abschaltbar).
 * **Autostart** (Einstellungen): über die Windows-Aufgabenplanung – startet bei der Anmeldung **ohne

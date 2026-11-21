@@ -23,12 +23,12 @@
         </Grid.LayoutTransform>
 
         <!-- Hintergrund getrennt, damit die Deckkraft nur ihn betrifft und nicht die Schrift -->
-        <Border CornerRadius="10" Background="#15181A" Opacity="{Binding BackgroundOpacity}"
-                BorderBrush="#3DDC97" BorderThickness="0,0,0,2" />
+        <Border CornerRadius="{StaticResource CardCornerRadius}" Background="{StaticResource BackgroundBrush}" Opacity="{Binding BackgroundOpacity}"
+                BorderBrush="{StaticResource AccentBrush}" BorderThickness="0,0,0,2" />
 
         <StackPanel Margin="14,10,14,12" MinWidth="170">
             <!-- Aufnahme läuft -->
-            <TextBlock Margin="0,0,0,4" FontSize="13" Foreground="#E5626F"
+            <TextBlock Margin="0,0,0,4" FontSize="13" Foreground="{StaticResource CriticalBrush}"
                        Visibility="{Binding Main.Recording.IsRecording, Converter={StaticResource BoolToVisibility}}">
                 <Run Text="● REC" />
                 <Run Text="{Binding Main.Recording.ElapsedText, Mode=OneWay}" />
@@ -36,17 +36,17 @@
 
             <!-- Kopfzeile: Spielname und Uhrzeit -->
             <DockPanel Margin="0,0,0,4">
-                <TextBlock DockPanel.Dock="Right" Text="{Binding ClockText}" FontSize="12" Foreground="#C5D0CD"
+                <TextBlock DockPanel.Dock="Right" Text="{Binding ClockText}" FontSize="12" Foreground="{StaticResource SecondaryBrush}"
                            Visibility="{Binding ShowClock, Converter={StaticResource BoolToVisibility}}" Margin="12,0,0,0" />
-                <TextBlock Text="{Binding Main.Fps.Application}" FontSize="12" Foreground="#3DDC97"
+                <TextBlock Text="{Binding Main.Fps.Application}" FontSize="12" Foreground="{StaticResource AccentBrush}"
                            TextTrimming="CharacterEllipsis" MaxWidth="200"
                            Visibility="{Binding ShowGame, Converter={StaticResource BoolToVisibility}}" />
             </DockPanel>
 
             <!-- Engpass als Text -->
             <Grid Margin="0,0,0,2" Visibility="{Binding ShowBottleneck, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Engpass" FontSize="14" Foreground="#9AA6AA" />
-                <TextBlock Text="{Binding Main.Fps.BottleneckShort}" FontSize="16" FontWeight="SemiBold" Foreground="#F2F6F5"
+                <TextBlock Text="Engpass" FontSize="14" Foreground="{StaticResource TextDimBrush}" />
+                <TextBlock Text="{Binding Main.Fps.BottleneckShort}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"
                            HorizontalAlignment="Right" />
             </Grid>
 
@@ -59,11 +59,11 @@
                                 <ColumnDefinition Width="Auto" MinWidth="78" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding Label}" FontSize="14" Foreground="#9AA6AA" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Label}" FontSize="14" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center" />
                             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                                 <TextBlock x:Name="Value" Text="{Binding Metric.DisplayValue}" FontSize="18" FontWeight="SemiBold"
-                                           Foreground="#F2F6F5" />
-                                <TextBlock Text="{Binding Metric.Unit}" FontSize="12" Foreground="#9AA6AA"
+                                           Foreground="{StaticResource TextBrush}" />
+                                <TextBlock Text="{Binding Metric.Unit}" FontSize="12" Foreground="{StaticResource TextDimBrush}"
                                            Margin="4,0,0,3" VerticalAlignment="Bottom" />
                             </StackPanel>
                             <!-- leichter Schatten, damit die Schrift auch ohne Hintergrund lesbar bleibt -->
@@ -73,13 +73,13 @@
                         </Grid>
                         <DataTemplate.Triggers>
                             <DataTrigger Binding="{Binding Group}" Value="FPS">
-                                <Setter TargetName="Value" Property="Foreground" Value="#3DDC97" />
+                                <Setter TargetName="Value" Property="Foreground" Value="{StaticResource AccentBrush}" />
                             </DataTrigger>
                             <DataTrigger Binding="{Binding Metric.Severity}" Value="Warning">
-                                <Setter TargetName="Value" Property="Foreground" Value="#E8B44C" />
+                                <Setter TargetName="Value" Property="Foreground" Value="{StaticResource WarnBrush}" />
                             </DataTrigger>
                             <DataTrigger Binding="{Binding Metric.Severity}" Value="Critical">
-                                <Setter TargetName="Value" Property="Foreground" Value="#E5626F" />
+                                <Setter TargetName="Value" Property="Foreground" Value="{StaticResource CriticalBrush}" />
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>

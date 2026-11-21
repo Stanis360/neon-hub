@@ -42,7 +42,12 @@ public partial class App : Application
         base.OnStartup(e);
 
         // Nur eine Instanz: Läuft NeonMonitor schon, bitten wir sie, ihr Fenster zu zeigen, und beenden uns.
-        _singleInstance = new Mutex(true, MutexName, out var isFirst);
+        // Beim Neustart (Designwechsel) warten wir stattdessen, bis die alte Instanz beendet ist.
+        var isRestart = e.Args.Contains("--restart", StringComparer.OrdinalIgnoreCase);
+        _singleInstance = new Mutex(false, MutexName);
+        bool isFirst;
+        try { isFirst = _singleInstance.WaitOne(isRestart ? TimeSpan.FromSeconds(20) : TimeSpan.Zero); }
+        catch (AbandonedMutexException) { isFirst = true; } // alte Instanz wurde hart beendet
         if (!isFirst)
         {
             try { EventWaitHandle.OpenExisting(ShowEventName).Set(); } catch { /* alte Version ohne Signal */ }
@@ -60,6 +65,7 @@ public partial class App : Application
         }) { IsBackground = true, Name = "Einzelinstanz" }.Start();
 
         _exitEvent = new EventWaitHandle(false, EventResetMode.ManualReset, ExitEventName);
+        _exitEvent.Reset(); // falls eine beendete Vorgängerinstanz (Neustart) es noch gesetzt hatte
         new Thread(() =>
         {
             _exitEvent.WaitOne();
@@ -85,6 +91,7 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         _settings = AppSettings.Load();
+        Themes.ThemeManager.Apply(this, _settings.Theme); // Design vor dem ersten Fenster laden
         Services.Fps.FrameTracker.SetUserIgnored(_settings.FpsIgnoredApps);
         _monitor = new HardwareMonitorService(_settings);
         _recorder = new RecordingService(_monitor, () => _settings.PricePerKwh);
@@ -94,7 +101,8 @@ public partial class App : Application
         var deck = new Services.Deck.DeckService(_settings);
         _web = new WebDashboardService(_monitor, _recorder, deck, _settings);
         _history = new HistoryService();
-        var vm = new MainViewModel(_monitor, _settings, _recorder, _playtime, alerts, _web, _history, deck, requestExit: ExitApp);
+        var vm = new MainViewModel(_monitor, _settings, _recorder, _playtime, alerts, _web, _history, deck,
+                                   requestExit: ExitApp, requestRestart: Restart);
 
         // NeonMonitor-Aktionen des Decks laufen auf dem UI-Thread
         deck.RunNeonAction = action => Dispatcher.BeginInvoke(() =>
@@ -183,6 +191,22 @@ public partial class App : Application
         HideToTray();
     }
 
+    /// <summary>NeonMonitor neu starten (z. B. nach Designwechsel). Die neue Instanz wartet, bis diese beendet ist.</summary>
+    private void Restart()
+    {
+        try
+        {
+            var exe = Environment.ProcessPath!;
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, "--restart") { UseShellExecute = false });
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Neustart", ex);
+            return;
+        }
+        ExitApp();
+    }
+
     private void ExitApp()
     {
         if (_exiting) return;
@@ -204,6 +228,7 @@ public partial class App : Application
         _showEvent?.Dispose();
         _exitEvent?.Set();          // Wartethread beenden
         _exitEvent?.Dispose();
+        try { _singleInstance?.ReleaseMutex(); } catch { /* nicht im Besitz (zweite Instanz) */ }
         _singleInstance?.Dispose();
         Log.Info("NeonMonitor beendet");
         base.OnExit(e);

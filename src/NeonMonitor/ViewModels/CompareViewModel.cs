@@ -102,7 +102,8 @@ public sealed class CompareViewModel : ObservableObject
     /// <summary>Farben der ausgewählten Sitzungen (in Auswahlreihenfolge).</summary>
     private static readonly Color[] Palette =
     [
-        Color.FromRgb(0x3D, 0xDC, 0x97), Color.FromRgb(0x5A, 0xA9, 0xE6), Color.FromRgb(0xE8, 0xB4, 0x4C),
+        // erste Farbe = Akzent des Designs, die übrigen gut unterscheidbar
+        Themes.ThemeManager.ColorOf(Themes.ThemeManager.Current.Accent), Color.FromRgb(0x5A, 0xA9, 0xE6), Color.FromRgb(0xE8, 0xB4, 0x4C),
         Color.FromRgb(0xC7, 0x7D, 0xFF), Color.FromRgb(0xE5, 0x62, 0x6F), Color.FromRgb(0xC5, 0xD0, 0xCD),
     ];
     private const int MaxSelected = 6;

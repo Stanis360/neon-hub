@@ -88,7 +88,7 @@
                 </Border>
 
                 <!-- ============ Update-Hinweis ============ -->
-                <Border DockPanel.Dock="Top" Background="#263DDC97" BorderBrush="{StaticResource AccentBrush}" BorderThickness="0,0,0,1"
+                <Border DockPanel.Dock="Top" Background="{StaticResource AccentBackBrush}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="0,0,0,1"
                         Padding="18,8" Visibility="{Binding Update.IsAvailable, Converter={StaticResource BoolToVisibility}}">
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
@@ -96,7 +96,7 @@
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource FlatButton}">
                                         <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-                                        <Setter Property="Foreground" Value="#15181A" />
+                                        <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
                                     </Style>
                                 </Button.Style>
                             </Button>

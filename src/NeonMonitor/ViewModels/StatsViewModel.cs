@@ -27,8 +27,10 @@ public sealed class StatsViewModel : ObservableObject
     private string _trendText = "";
 
     /// <summary>Farben der Verlaufslinien.</summary>
-    private static readonly Color CpuMax = Color.FromRgb(0x3D, 0xDC, 0x97), CpuAvg = Color.FromRgb(0x2B, 0xA5, 0x9A),
-                                  Hotspot = Color.FromRgb(0xC5, 0xD0, 0xCD), GpuMax = Color.FromRgb(0x5A, 0xA9, 0xE6);
+    private static readonly Color CpuMax = Themes.ThemeManager.ColorOf(Themes.ThemeManager.Current.Accent),
+                                  CpuAvg = Themes.ThemeManager.ColorOf(Themes.ThemeManager.Current.Accent2),
+                                  Hotspot = Themes.ThemeManager.ColorOf(Themes.ThemeManager.Current.Secondary),
+                                  GpuMax = Color.FromRgb(0x5A, 0xA9, 0xE6);
 
     public StatsViewModel(PlaytimeService playtime, HistoryService history)
     {

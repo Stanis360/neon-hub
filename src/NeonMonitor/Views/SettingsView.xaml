@@ -42,6 +42,63 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
+                <!-- ============ Design ============ -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Design" Style="{StaticResource CardTitle}" HorizontalAlignment="Left" Margin="0,0,0,12" />
+                        <ItemsControl ItemsSource="{Binding Themes}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ThemeChoiceViewModel}">
+                                    <Button Command="{Binding SelectCommand}" Margin="0,0,0,8" Cursor="Hand">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="Bd" Background="{StaticResource InnerBrush}" CornerRadius="{StaticResource SmallCornerRadius}"
+                                                        BorderThickness="2" BorderBrush="Transparent" Padding="10,8">
+                                                    <DockPanel>
+                                                        <!-- Mini-Vorschau: Hintergrund, Karte, Akzent, zweite Farbe -->
+                                                        <Border DockPanel.Dock="Left" Width="74" Height="44" CornerRadius="6" Background="{Binding Background}" Margin="0,0,12,0">
+                                                            <Border Margin="8,7" CornerRadius="4" Background="{Binding Panel}">
+                                                                <StackPanel VerticalAlignment="Center" Margin="6,0">
+                                                                    <Border Height="4" CornerRadius="2" Background="{Binding Accent}" Margin="0,0,10,4" />
+                                                                    <Border Height="4" CornerRadius="2" Background="{Binding Secondary}" Margin="0,0,22,0" />
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </Border>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Name}" FontFamily="{StaticResource DisplayFont}" FontSize="14" Foreground="{StaticResource TextBrush}" />
+                                                            <TextBlock Text="{Binding Description}" Style="{StaticResource SmallText}" TextWrapping="Wrap" />
+                                                        </StackPanel>
+                                                    </DockPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource ButtonHoverBrush}" />
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                    </DataTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <DockPanel Visibility="{Binding ThemeChangePending, Converter={StaticResource BoolToVisibility}}" Margin="0,4,0,0">
+                            <Button DockPanel.Dock="Right" Content="Jetzt neu starten" Command="{Binding RestartCommand}" Padding="14,6">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource FlatButton}">
+                                        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                                        <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <TextBlock Text="Das neue Design wird nach einem Neustart von NeonMonitor übernommen (dauert ein paar Sekunden)."
+                                       Style="{StaticResource SmallText}" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
                 <!-- ============ Start & Infobereich ============ -->
                 <Border Style="{StaticResource Card}">
                     <StackPanel>

@@ -13,7 +13,7 @@
 
             <!-- Hinweis, falls keine Mainboard-Sensoren da sind -->
             <Border Visibility="{Binding HasBoard, Converter={StaticResource InverseBoolToVisibility}}"
-                    Background="#2AE8B44C" CornerRadius="10" Padding="14,10" Margin="6">
+                    Background="{StaticResource WarnBackBrush}" CornerRadius="10" Padding="14,10" Margin="6">
                 <TextBlock Text="{Binding NoBoardHint}" TextWrapping="Wrap" Foreground="{StaticResource WarnBrush}" />
             </Border>
 
@@ -63,11 +63,11 @@
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding IsCpu}" Value="True">
                                             <Setter TargetName="CpuBtn" Property="Background" Value="{StaticResource AccentBrush}" />
-                                            <Setter TargetName="CpuBtn" Property="Foreground" Value="#15181A" />
+                                            <Setter TargetName="CpuBtn" Property="Foreground" Value="{StaticResource OnAccentBrush}" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding IsCase}" Value="True">
                                             <Setter TargetName="CaseBtn" Property="Background" Value="{StaticResource AccentBrush}" />
-                                            <Setter TargetName="CaseBtn" Property="Foreground" Value="#15181A" />
+                                            <Setter TargetName="CaseBtn" Property="Foreground" Value="{StaticResource OnAccentBrush}" />
                                         </DataTrigger>
                                     </DataTemplate.Triggers>
                                 </DataTemplate>
@@ -134,7 +134,7 @@
                     <ItemsControl ItemsSource="{Binding Channels}" IsEnabled="{Binding ControlEnabled}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:FanChannelViewModel}">
-                                <Border Background="#1C2124" CornerRadius="8" Padding="12,10" Margin="0,0,0,8"
+                                <Border Background="{StaticResource InnerBrush}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8"
                                         Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}">
                                     <StackPanel>
                                         <DockPanel>

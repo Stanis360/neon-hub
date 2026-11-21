@@ -11,9 +11,12 @@ public sealed class SettingsViewModel : ObservableObject
     private readonly AppSettings _s;
     private bool _autostart;
 
-    public SettingsViewModel(AppSettings settings, UpdateViewModel update, WebViewModel web)
+    public SettingsViewModel(AppSettings settings, UpdateViewModel update, WebViewModel web, Action requestRestart)
     {
         _s = settings;
+        Themes = NeonMonitor.Themes.ThemeCatalog.All
+            .Select(t => new ThemeChoiceViewModel(t, t.Id == settings.Theme, SelectTheme)).ToList();
+        RestartCommand = new RelayCommand(requestRestart);
         Update = update;
         Web = web;
         _autostart = AutostartService.IsEnabled();
@@ -35,6 +38,23 @@ public sealed class SettingsViewModel : ObservableObject
 
     /// <summary>Handy-Ansicht.</summary>
     public WebViewModel Web { get; }
+
+    // ---------------- Design ----------------
+
+    /// <summary>Alle Designs mit Vorschaufarben.</summary>
+    public IReadOnlyList<ThemeChoiceViewModel> Themes { get; }
+    public ICommand RestartCommand { get; }
+
+    /// <summary>Wurde ein anderes Design gewählt als das geladene? → Neustart nötig.</summary>
+    public bool ThemeChangePending => _s.Theme != NeonMonitor.Themes.ThemeManager.Current.Id;
+
+    private void SelectTheme(ThemeChoiceViewModel choice)
+    {
+        _s.Theme = choice.Id;
+        _s.Save();
+        foreach (var t in Themes) t.IsSelected = t == choice;
+        OnPropertyChanged(nameof(ThemeChangePending));
+    }
 
     /// <summary>Mit Windows starten (Aufgabenplanung, ohne UAC-Abfrage, minimiert im Infobereich).</summary>
     public bool Autostart

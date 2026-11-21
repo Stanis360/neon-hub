@@ -45,7 +45,7 @@
                     <ItemsControl ItemsSource="{Binding Sessions}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
-                                <Border x:Name="Row" CornerRadius="8" Padding="10,8" Margin="0,0,6,6" Background="#1C2124">
+                                <Border x:Name="Row" CornerRadius="8" Padding="10,8" Margin="0,0,6,6" Background="{StaticResource InnerBrush}">
                                     <DockPanel>
                                         <!-- Farbmarke = Farbe im Vergleich -->
                                         <Border DockPanel.Dock="Left" Width="4" CornerRadius="2" Margin="0,0,10,0" Background="{Binding ColorBrush}" />
@@ -70,7 +70,7 @@
                                 </Border>
                                 <DataTemplate.Triggers>
                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                        <Setter TargetName="Row" Property="Background" Value="#262C30" />
+                                        <Setter TargetName="Row" Property="Background" Value="{StaticResource SelectedBrush}" />
                                     </DataTrigger>
                                 </DataTemplate.Triggers>
                             </DataTemplate>
@@ -182,7 +182,7 @@
                                     <DataTemplate.Triggers>
                                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                             <Setter TargetName="Btn" Property="Background" Value="{StaticResource AccentBrush}" />
-                                            <Setter TargetName="Btn" Property="Foreground" Value="#15181A" />
+                                            <Setter TargetName="Btn" Property="Foreground" Value="{StaticResource OnAccentBrush}" />
                                         </DataTrigger>
                                     </DataTemplate.Triggers>
                                 </DataTemplate>

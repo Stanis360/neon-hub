@@ -66,7 +66,7 @@
                     <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextBrush}" FontSize="13" Margin="0,6,0,8"
                                Text="Ausschalten geht über die Energie-Knöpfe. Zum Einschalten muss das Handy ein „Weck-Paket“ an die Netzwerkkarte schicken – das kann ein Browser nicht, dafür braucht es eine kostenlose Wake-on-LAN-App (z. B. „Wake On Lan“ im Play Store / „Mocha WOL“ im App Store) oder die Fritzbox (fritz.box → Heimnetz → Netzwerk → Gerät → „Computer starten“, auch in der MyFRITZ!App)." />
                     <TextBox Text="{Binding WolText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="{StaticResource MonoFont}" Margin="0,0,0,8" />
-                    <Border Background="#2AE8B44C" CornerRadius="8" Padding="10,6" Margin="0,0,0,8"
+                    <Border Background="{StaticResource WarnBackBrush}" CornerRadius="8" Padding="10,6" Margin="0,0,0,8"
                             Visibility="{Binding WolWifiOnly, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource WarnBrush}" FontSize="12"
                                    Text="Der PC hängt nur per WLAN im Netz. Wake-on-LAN funktioniert fast nur mit LAN-Kabel – aus dem ausgeschalteten Zustand wacht WLAN in der Regel nicht auf. Aus dem Standby kann es klappen." />
@@ -102,7 +102,7 @@
                     <ItemsControl ItemsSource="{Binding Buttons}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:DeckButtonViewModel}">
-                                <Border Background="#1C2124" CornerRadius="10" Padding="12" Margin="0,0,0,8">
+                                <Border Background="{StaticResource InnerBrush}" CornerRadius="10" Padding="12" Margin="0,0,0,8">
                                     <DockPanel>
                                         <!-- Vorschau wie auf dem Handy -->
                                         <Border DockPanel.Dock="Left" Width="88" Height="88" CornerRadius="14" Margin="0,0,14,0"

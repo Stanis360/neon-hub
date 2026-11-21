@@ -31,7 +31,18 @@ public sealed class WebDashboardService : IDisposable
     private HttpListener? _listener;
     private CancellationTokenSource? _cts;
     private volatile string _json = "{}";
-    private static readonly string Html = LoadHtml();
+    private static string? _html;
+    /// <summary>Seite mit den Farben des aktuellen Designs.</summary>
+    private static string Html => _html ??= ApplyTheme(LoadHtml());
+
+    private static string ApplyTheme(string html)
+    {
+        var t = Themes.ThemeManager.Current;
+        static string Rgb(string hex) => hex.Length == 9 ? "#" + hex[3..] : hex; // #AARRGGBB → #RRGGBB
+        var css = $":root {{ --bg:{t.Background}; --panel:{Rgb(t.Panel)}; --track:{t.Track}; --accent:{t.Accent}; " +
+                  $"--second:{t.Secondary}; --text:{t.Text}; --dim:{t.TextDim}; --ontext:{t.OnAccent}; --radius:{t.CardRadius}px; }}";
+        return html.Replace("/*THEME*/", css);
+    }
 
     public WebDashboardService(HardwareMonitorService monitor, RecordingService recorder, DeckService deck, AppSettings settings)
     {

@@ -38,7 +38,7 @@ public sealed class MainViewModel : ObservableObject
 
     public MainViewModel(HardwareMonitorService monitor, AppSettings settings, RecordingService recorder,
                          PlaytimeService playtime, AlertService alerts, WebDashboardService web, HistoryService history,
-                         Services.Deck.DeckService deck, Action requestExit)
+                         Services.Deck.DeckService deck, Action requestExit, Action requestRestart)
     {
         _history = history;
         Web = new WebViewModel(web, settings);
@@ -88,7 +88,7 @@ public sealed class MainViewModel : ObservableObject
         Recording = new RecordingViewModel(recorder, settings);
         Compare = new CompareViewModel();
         Cooling = new CoolingViewModel(settings, monitor.Lhm.FanControl);
-        Settings = new SettingsViewModel(settings, Update, Web);
+        Settings = new SettingsViewModel(settings, Update, Web, requestRestart);
         Stats = new StatsViewModel(playtime, history);
         Recording.SessionSaved += _ => Stats.Refresh();
         Recording.SessionSaved += _ => Compare.Refresh();

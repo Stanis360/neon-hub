@@ -24,9 +24,9 @@
                     </DockPanel>
                     <TextBlock Text="{Binding TrendText}" Foreground="{StaticResource TextBrush}" FontSize="13" Margin="0,8,0,8" TextWrapping="Wrap" />
                     <WrapPanel Margin="0,0,0,6">
-                        <TextBlock Style="{StaticResource SmallText}" Margin="0,0,14,0"><Run Text="■" Foreground="#3DDC97" /><Run Text=" max. CPU" /></TextBlock>
-                        <TextBlock Style="{StaticResource SmallText}" Margin="0,0,14,0"><Run Text="■" Foreground="#2BA59A" /><Run Text=" Ø CPU beim Spielen" /></TextBlock>
-                        <TextBlock Style="{StaticResource SmallText}" Margin="0,0,14,0"><Run Text="■" Foreground="#C5D0CD" /><Run Text=" max. GPU-Hotspot" /></TextBlock>
+                        <TextBlock Style="{StaticResource SmallText}" Margin="0,0,14,0"><Run Text="■" Foreground="{StaticResource AccentBrush}" /><Run Text=" max. CPU" /></TextBlock>
+                        <TextBlock Style="{StaticResource SmallText}" Margin="0,0,14,0"><Run Text="■" Foreground="{StaticResource Accent2Brush}" /><Run Text=" Ø CPU beim Spielen" /></TextBlock>
+                        <TextBlock Style="{StaticResource SmallText}" Margin="0,0,14,0"><Run Text="■" Foreground="{StaticResource SecondaryBrush}" /><Run Text=" max. GPU-Hotspot" /></TextBlock>
                         <TextBlock Style="{StaticResource SmallText}"><Run Text="■" Foreground="#5AA9E6" /><Run Text=" max. GPU" /></TextBlock>
                     </WrapPanel>
                     <controls:MultiLineChart Height="220" Lines="{Binding TempLines}" Unit="°" StartDate="{Binding ChartStart}" XMax="{Binding ChartDays}" />

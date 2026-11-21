@@ -51,7 +51,7 @@
 
     <!-- Große Kennzahl (FPS-Seite): Beschriftung, großer Wert, Einheit, Höchstwert -->
     <DataTemplate x:Key="StatBlock" DataType="{x:Type vm:MetricViewModel}">
-        <Border Background="#1AFFFFFF" CornerRadius="10" Padding="16,10" Margin="5">
+        <Border Background="{StaticResource StatTileBrush}" CornerRadius="{StaticResource CardCornerRadius}" Padding="16,10" Margin="5">
             <StackPanel>
                 <TextBlock Text="{Binding Label}" Style="{StaticResource SectionLabel}" />
                 <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
@@ -86,7 +86,7 @@
         <DataTemplate.Triggers>
             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                 <Setter TargetName="Btn" Property="Background" Value="{StaticResource AccentBrush}" />
-                <Setter TargetName="Btn" Property="Foreground" Value="#15181A" />
+                <Setter TargetName="Btn" Property="Foreground" Value="{StaticResource OnAccentBrush}" />
             </DataTrigger>
         </DataTemplate.Triggers>
     </DataTemplate>

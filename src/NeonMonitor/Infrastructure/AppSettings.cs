@@ -9,6 +9,9 @@ public sealed class AppSettings
     /// <summary>Abfrageintervall der Sensoren in Millisekunden.</summary>
     public int PollIntervalMs { get; set; } = 1000;
 
+    /// <summary>Gewähltes Design (Kennung aus ThemeCatalog).</summary>
+    public string Theme { get; set; } = "graphit";
+
     /// <summary>Hintergrundanimation an/aus (aus = weniger CPU/GPU-Last beim Spielen).</summary>
     public bool BackgroundAnimation { get; set; } = true;
 
