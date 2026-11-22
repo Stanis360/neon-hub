@@ -21,18 +21,21 @@ public sealed class DeckButton
     public static List<DeckButton> Defaults() =>
     [
         new() { Icon = "●", Label = "Aufnahme", Color = "#E5626F", Type = "neon", Value = "record" },
-        .. LauncherDefaults(),
+        .. LauncherDefaults().Take(4),  // Steam, Opera GX, Epic Games, Satisfactory
+        PlannerButton(),
+        .. LauncherDefaults().Skip(4),  // Call of Duty
         new() { Icon = "◧", Label = "Overlay", Color = "#3DDC97", Type = "neon", Value = "overlay" },
         new() { Icon = "🎙", Label = "Discord stumm", Color = "#5AA9E6", Type = "hotkey", Value = "Strg+Umschalt+M" },
         new() { Icon = "📸", Label = "Screenshot", Color = "#C77DFF", Type = "hotkey", Value = "Win+Umschalt+S" },
-        new() { Icon = "⏯", Label = "Play/Pause", Color = "#4A5459", Type = "media", Value = "playpause" },
-        new() { Icon = "⏭", Label = "Weiter", Color = "#4A5459", Type = "media", Value = "next" },
-        new() { Icon = "🔇", Label = "Stumm", Color = "#4A5459", Type = "media", Value = "mute" },
-        new() { Icon = "🔉", Label = "Leiser", Color = "#4A5459", Type = "media", Value = "voldown" },
-        new() { Icon = "🔊", Label = "Lauter", Color = "#4A5459", Type = "media", Value = "volup" },
-        new() { Icon = "📊", Label = "Task-Manager", Color = "#4A5459", Type = "hotkey", Value = "Strg+Umschalt+Escape" },
+        SpotifyButton(),
         .. PowerDefaults(),
     ];
+
+    public static DeckButton PlannerButton() =>
+        new() { Icon = "🗺", Label = "Satisfactory-Planer", Color = "#E8B44C", Type = "url", Value = "https://satisfactory-calculator.com" };
+
+    public static DeckButton SpotifyButton() =>
+        new() { Icon = "🎵", Label = "Spotify", Color = "#3DDC97", Type = "game", Value = "spotify" };
 
     /// <summary>Launcher und Spiele (Installationsort wird beim Auslösen gesucht, siehe <see cref="AppLauncher"/>).</summary>
     public static List<DeckButton> LauncherDefaults() =>
@@ -45,35 +48,65 @@ public sealed class DeckButton
     ];
 
     /// <summary>
-    /// Einmaliger Umbau gespeicherter Decks (Version 1): „Benchmark“ und „Adrenalin“ raus, an ihre Stelle
-    /// Steam, Opera GX, Epic Games, Satisfactory und Call of Duty. Alle anderen Knöpfe bleiben unverändert;
-    /// bereits vorhandene Launcher-Knöpfe werden nicht doppelt angelegt. Gibt true zurück, wenn sich etwas geändert hat.
+    /// Einmalige Umbauten gespeicherter Decks. Alle anderen Knöpfe bleiben unverändert; was schon da ist,
+    /// wird nicht doppelt angelegt. Gibt true zurück, wenn sich etwas geändert hat.
+    /// <list type="bullet">
+    /// <item>Version 1: „Benchmark“ und „Adrenalin“ raus, an ihre Stelle Steam, Opera GX, Epic Games, Satisfactory, Call of Duty.</item>
+    /// <item>Version 2: Play/Pause, Weiter, Stumm, Leiser, Lauter und Task-Manager raus; Satisfactory-Planer (hinter
+    /// „Satisfactory“) und Spotify (an die Stelle der Medienknöpfe) rein.</item>
+    /// </list>
     /// </summary>
     public static bool MigrateLayout(List<DeckButton> buttons, ref int version)
     {
-        if (version >= 1) return false;
-        version = 1;
+        if (version >= 2) return false;
 
-        var insertAt = -1;
-        void RemoveFirst(Predicate<DeckButton> match)
+        if (version < 1)
+        {
+            var at = RemoveAll(buttons, b => b.Type == "neon" && b.Value == "benchmark",
+                                        b => b.Type == "hotkey" && (b.Label == "Adrenalin" || b.Value == "Alt+R"));
+            InsertMissing(buttons, at, LauncherDefaults());
+        }
+
+        var mediaAt = RemoveAll(buttons,
+            b => b.Type == "media" && b.Value == "playpause", b => b.Type == "media" && b.Value == "next",
+            b => b.Type == "media" && b.Value == "mute", b => b.Type == "media" && b.Value == "voldown",
+            b => b.Type == "media" && b.Value == "volup",
+            b => b.Type == "hotkey" && (b.Label == "Task-Manager" || b.Value == "Strg+Umschalt+Escape"));
+        var satisfactory = buttons.FindIndex(b => b.Type == "game" && b.Value == "satisfactory");
+        InsertMissing(buttons, satisfactory < 0 ? -1 : satisfactory + 1, [PlannerButton()]);
+        // Medienknöpfe lagen hinter dem Planer → Position nach dessen Einfügen um eins verschieben
+        if (mediaAt >= 0 && satisfactory >= 0 && satisfactory < mediaAt) mediaAt++;
+        InsertMissing(buttons, mediaAt, [SpotifyButton()]);
+
+        version = 2;
+        return true;
+    }
+
+    /// <summary>Entfernt je den ersten Treffer und gibt die kleinste frei gewordene Position zurück (-1 = nichts entfernt).</summary>
+    private static int RemoveAll(List<DeckButton> buttons, params Predicate<DeckButton>[] matches)
+    {
+        var at = -1;
+        foreach (var match in matches)
         {
             var i = buttons.FindIndex(match);
-            if (i < 0) return;
+            if (i < 0) continue;
             buttons.RemoveAt(i);
-            insertAt = insertAt < 0 ? i : Math.Min(insertAt, i);
+            at = at < 0 ? i : Math.Min(at, i);
         }
-        RemoveFirst(b => b.Type == "neon" && b.Value == "benchmark");
-        RemoveFirst(b => b.Type == "hotkey" && (b.Label == "Adrenalin" || b.Value == "Alt+R"));
+        return at;
+    }
 
-        var missing = LauncherDefaults().Where(l => !buttons.Any(b => b.Type == "game" && b.Value == l.Value)).ToList();
-        if (insertAt < 0)
+    /// <summary>Fügt fehlende Knöpfe ein (gleiche Art + Wert = schon vorhanden); ohne Position vor die Energie-Knöpfe.</summary>
+    private static void InsertMissing(List<DeckButton> buttons, int at, List<DeckButton> wanted)
+    {
+        var missing = wanted.Where(w => !buttons.Any(b => b.Type == w.Type && b.Value == w.Value)).ToList();
+        if (missing.Count == 0) return;
+        if (at < 0 || at > buttons.Count)
         {
-            // Nichts ersetzt: vor die Energie-Knöpfe, sonst ans Ende
             var power = buttons.FindIndex(b => b.Type == "power");
-            insertAt = power < 0 ? buttons.Count : power;
+            at = power < 0 ? buttons.Count : power;
         }
-        buttons.InsertRange(insertAt, missing);
-        return true;
+        buttons.InsertRange(at, missing);
     }
 
     /// <summary>

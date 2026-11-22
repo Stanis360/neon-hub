@@ -222,7 +222,7 @@ Diagramm inkl. Hardware, z. B. zum Einfügen in Discord.
 * **Handy-Deck** (Reiter „Deck“, auf dem Handy oben „Deck“): große Knöpfe wie bei einem Stream Deck.
   Aktionen: **Tastenkürzel** (z. B. Discord stumm, Screenshot, Adrenalin – Kombination einfach im Feld drücken),
   **Programm/Datei** starten (mit normalen Rechten, nicht als Admin), **Webseite** öffnen,
-  **Spiele & Launcher** (Steam, Opera GX, Epic Games, Satisfactory, Call of Duty – der Installationsort wird
+  **Spiele & Launcher** (Steam, Opera GX, Epic Games, Satisfactory, Call of Duty, Spotify – der Installationsort wird
   automatisch gefunden: Steam-Bibliotheken, Epic-Manifeste, Battle.net), **Medien** (Play/Pause,
   Weiter, Lautstärke, Stumm), **Text** eintippen, **NeonMonitor** (Aufnahme, Benchmark, Overlay, Fenster),
   **System** (Ausschalten/Neustart mit 15 s Vorwarnung und Rückfrage auf dem Handy, Abbrechen, Standby,

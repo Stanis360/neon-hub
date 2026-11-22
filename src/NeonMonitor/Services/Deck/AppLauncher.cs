@@ -22,6 +22,7 @@ public static class AppLauncher
         ["epic"] = "Epic Games",
         ["satisfactory"] = "Satisfactory",
         ["cod"] = "Call of Duty",
+        ["spotify"] = "Spotify",
     };
 
     // Steam-App-IDs: Satisfactory, Call of Duty HQ (enthält die aktuellen CoD-Teile)
@@ -41,6 +42,8 @@ public static class AppLauncher
                               ?? SteamGameUri(SteamLibraries(), SatisfactorySteamId),
             "cod" => SteamGameUri(SteamLibraries(), CallOfDutySteamId)
                      ?? BattleNet(),
+            // Desktop-Version liegt in %AppData%, die Store-Version ist nur über spotify: erreichbar
+            "spotify" => File.Exists(SpotifyExe()) ? SpotifyExe() : HasUriHandler("spotify") ? "spotify:" : null,
             _ => null,
         };
     }
@@ -136,7 +139,10 @@ public static class AppLauncher
     private static string? Str(JsonElement e, string name) =>
         e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
-    // ---------------- Opera GX, Battle.net ----------------
+    // ---------------- Opera GX, Battle.net, Spotify ----------------
+
+    private static string SpotifyExe() =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spotify", "Spotify.exe");
 
     private static string? OperaGx()
     {
